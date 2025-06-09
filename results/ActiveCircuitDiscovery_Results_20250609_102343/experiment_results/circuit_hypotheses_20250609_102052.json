@@ -1,0 +1,53 @@
+[
+  {
+    "core_features": [
+      7812
+    ],
+    "optional_features": [
+      7445
+    ],
+    "connections": [],
+    "confidence": NaN,
+    "num_supporting_evidence": 3
+  },
+  {
+    "core_features": [],
+    "optional_features": [
+      4127,
+      4892,
+      7812
+    ],
+    "connections": [],
+    "confidence": 0.25,
+    "num_supporting_evidence": 5
+  },
+  {
+    "core_features": [],
+    "optional_features": [
+      4892,
+      7812
+    ],
+    "connections": [],
+    "confidence": 0.25,
+    "num_supporting_evidence": 5
+  },
+  {
+    "core_features": [],
+    "optional_features": [
+      7812
+    ],
+    "connections": [],
+    "confidence": NaN,
+    "num_supporting_evidence": 5
+  },
+  {
+    "core_features": [],
+    "optional_features": [
+      4892,
+      7812
+    ],
+    "connections": [],
+    "confidence": 0.25,
+    "num_supporting_evidence": 5
+  }
+]

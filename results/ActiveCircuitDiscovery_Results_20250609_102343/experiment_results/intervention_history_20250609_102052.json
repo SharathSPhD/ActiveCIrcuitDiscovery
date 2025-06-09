@@ -1,0 +1,842 @@
+[
+  {
+    "intervention_type": "ablation",
+    "target_feature_id": 7445,
+    "target_feature_description": "California state references",
+    "effect_size": 0.8760162591934204,
+    "target_token_change": 6.327491753665981e-06,
+    "intervention_layer": 10
+  },
+  {
+    "intervention_type": "ablation",
+    "target_feature_id": 7812,
+    "target_feature_description": "Location completion and geography",
+    "effect_size": 0.8809230327606201,
+    "target_token_change": 6.251668349221973e-06,
+    "intervention_layer": 10
+  },
+  {
+    "intervention_type": "ablation",
+    "target_feature_id": 7812,
+    "target_feature_description": "Location completion and geography",
+    "effect_size": 0.8809230327606201,
+    "target_token_change": 6.251668349221973e-06,
+    "intervention_layer": 10
+  },
+  {
+    "intervention_type": "ablation",
+    "target_feature_id": 7445,
+    "target_feature_description": "California state references",
+    "effect_size": 0.8760162591934204,
+    "target_token_change": 6.327491753665981e-06,
+    "intervention_layer": 10
+  },
+  {
+    "intervention_type": "ablation",
+    "target_feature_id": 7812,
+    "target_feature_description": "Location completion and geography",
+    "effect_size": 0.8809230327606201,
+    "target_token_change": 6.251668349221973e-06,
+    "intervention_layer": 10
+  },
+  {
+    "intervention_type": "ablation",
+    "target_feature_id": 7812,
+    "target_feature_description": "Location completion and geography",
+    "effect_size": 0.8809230327606201,
+    "target_token_change": 6.251668349221973e-06,
+    "intervention_layer": 10
+  },
+  {
+    "intervention_type": "ablation",
+    "target_feature_id": 7445,
+    "target_feature_description": "California state references",
+    "effect_size": 0.8760162591934204,
+    "target_token_change": 6.327491753665981e-06,
+    "intervention_layer": 10
+  },
+  {
+    "intervention_type": "ablation",
+    "target_feature_id": 7812,
+    "target_feature_description": "Location completion and geography",
+    "effect_size": 0.8809230327606201,
+    "target_token_change": 6.251668349221973e-06,
+    "intervention_layer": 10
+  },
+  {
+    "intervention_type": "ablation",
+    "target_feature_id": 7812,
+    "target_feature_description": "Location completion and geography",
+    "effect_size": 0.8809230327606201,
+    "target_token_change": 6.251668349221973e-06,
+    "intervention_layer": 10
+  },
+  {
+    "intervention_type": "ablation",
+    "target_feature_id": 7445,
+    "target_feature_description": "California state references",
+    "effect_size": 0.8760162591934204,
+    "target_token_change": 6.327491753665981e-06,
+    "intervention_layer": 10
+  },
+  {
+    "intervention_type": "ablation",
+    "target_feature_id": 7812,
+    "target_feature_description": "Location completion and geography",
+    "effect_size": 0.8809230327606201,
+    "target_token_change": 6.251668349221973e-06,
+    "intervention_layer": 10
+  },
+  {
+    "intervention_type": "ablation",
+    "target_feature_id": 7445,
+    "target_feature_description": "California state references",
+    "effect_size": 0.8760162591934204,
+    "target_token_change": 6.327491753665981e-06,
+    "intervention_layer": 10
+  },
+  {
+    "intervention_type": "ablation",
+    "target_feature_id": 7445,
+    "target_feature_description": "California state references",
+    "effect_size": 0.8760162591934204,
+    "target_token_change": 6.327491753665981e-06,
+    "intervention_layer": 10
+  },
+  {
+    "intervention_type": "ablation",
+    "target_feature_id": 7812,
+    "target_feature_description": "Location completion and geography",
+    "effect_size": 0.8809230327606201,
+    "target_token_change": 6.251668349221973e-06,
+    "intervention_layer": 10
+  },
+  {
+    "intervention_type": "ablation",
+    "target_feature_id": 7812,
+    "target_feature_description": "Location completion and geography",
+    "effect_size": 0.8809230327606201,
+    "target_token_change": 6.251668349221973e-06,
+    "intervention_layer": 10
+  },
+  {
+    "intervention_type": "ablation",
+    "target_feature_id": 7812,
+    "target_feature_description": "Location completion and geography",
+    "effect_size": 0.8809230327606201,
+    "target_token_change": 6.251668349221973e-06,
+    "intervention_layer": 10
+  },
+  {
+    "intervention_type": "ablation",
+    "target_feature_id": 7812,
+    "target_feature_description": "Location completion and geography",
+    "effect_size": 0.8809230327606201,
+    "target_token_change": 6.251668349221973e-06,
+    "intervention_layer": 10
+  },
+  {
+    "intervention_type": "ablation",
+    "target_feature_id": 7812,
+    "target_feature_description": "Location completion and geography",
+    "effect_size": 0.8809230327606201,
+    "target_token_change": 6.251668349221973e-06,
+    "intervention_layer": 10
+  },
+  {
+    "intervention_type": "ablation",
+    "target_feature_id": 7445,
+    "target_feature_description": "California state references",
+    "effect_size": 0.8760162591934204,
+    "target_token_change": 6.327491753665981e-06,
+    "intervention_layer": 10
+  },
+  {
+    "intervention_type": "ablation",
+    "target_feature_id": 7812,
+    "target_feature_description": "Location completion and geography",
+    "effect_size": 0.8809230327606201,
+    "target_token_change": 6.251668349221973e-06,
+    "intervention_layer": 10
+  },
+  {
+    "intervention_type": "ablation",
+    "target_feature_id": 7445,
+    "target_feature_description": "California state references",
+    "effect_size": 0.8760162591934204,
+    "target_token_change": 6.327491753665981e-06,
+    "intervention_layer": 10
+  },
+  {
+    "intervention_type": "ablation",
+    "target_feature_id": 7812,
+    "target_feature_description": "Location completion and geography",
+    "effect_size": 0.8809230327606201,
+    "target_token_change": 6.251668349221973e-06,
+    "intervention_layer": 10
+  },
+  {
+    "intervention_type": "ablation",
+    "target_feature_id": 7445,
+    "target_feature_description": "California state references",
+    "effect_size": 0.8760162591934204,
+    "target_token_change": 6.327491753665981e-06,
+    "intervention_layer": 10
+  },
+  {
+    "intervention_type": "ablation",
+    "target_feature_id": 4127,
+    "target_feature_description": "San Francisco Bay Area geography",
+    "effect_size": 1.9640040397644043,
+    "target_token_change": 3.907147989680448e-06,
+    "intervention_layer": 8
+  },
+  {
+    "intervention_type": "ablation",
+    "target_feature_id": 4892,
+    "target_feature_description": "Bridge colors and visual descriptions",
+    "effect_size": 1.9643476009368896,
+    "target_token_change": 3.90715495794669e-06,
+    "intervention_layer": 8
+  },
+  {
+    "intervention_type": "ablation",
+    "target_feature_id": 7812,
+    "target_feature_description": "Location completion and geography",
+    "effect_size": 2.8030214309692383,
+    "target_token_change": 3.7262656675807193e-06,
+    "intervention_layer": 10
+  },
+  {
+    "intervention_type": "ablation",
+    "target_feature_id": 4892,
+    "target_feature_description": "Bridge colors and visual descriptions",
+    "effect_size": 1.9643476009368896,
+    "target_token_change": 3.90715495794669e-06,
+    "intervention_layer": 8
+  },
+  {
+    "intervention_type": "ablation",
+    "target_feature_id": 4127,
+    "target_feature_description": "San Francisco Bay Area geography",
+    "effect_size": 1.9640040397644043,
+    "target_token_change": 3.907147989680448e-06,
+    "intervention_layer": 8
+  },
+  {
+    "intervention_type": "ablation",
+    "target_feature_id": 7812,
+    "target_feature_description": "Location completion and geography",
+    "effect_size": 2.8030214309692383,
+    "target_token_change": 3.7262656675807193e-06,
+    "intervention_layer": 10
+  },
+  {
+    "intervention_type": "ablation",
+    "target_feature_id": 7812,
+    "target_feature_description": "Location completion and geography",
+    "effect_size": 2.8030214309692383,
+    "target_token_change": 3.7262656675807193e-06,
+    "intervention_layer": 10
+  },
+  {
+    "intervention_type": "ablation",
+    "target_feature_id": 4892,
+    "target_feature_description": "Bridge colors and visual descriptions",
+    "effect_size": 1.9643476009368896,
+    "target_token_change": 3.90715495794669e-06,
+    "intervention_layer": 8
+  },
+  {
+    "intervention_type": "ablation",
+    "target_feature_id": 4127,
+    "target_feature_description": "San Francisco Bay Area geography",
+    "effect_size": 1.9640040397644043,
+    "target_token_change": 3.907147989680448e-06,
+    "intervention_layer": 8
+  },
+  {
+    "intervention_type": "ablation",
+    "target_feature_id": 4127,
+    "target_feature_description": "San Francisco Bay Area geography",
+    "effect_size": 1.9640040397644043,
+    "target_token_change": 3.907147989680448e-06,
+    "intervention_layer": 8
+  },
+  {
+    "intervention_type": "ablation",
+    "target_feature_id": 4127,
+    "target_feature_description": "San Francisco Bay Area geography",
+    "effect_size": 1.9640040397644043,
+    "target_token_change": 3.907147989680448e-06,
+    "intervention_layer": 8
+  },
+  {
+    "intervention_type": "ablation",
+    "target_feature_id": 4892,
+    "target_feature_description": "Bridge colors and visual descriptions",
+    "effect_size": 1.9643476009368896,
+    "target_token_change": 3.90715495794669e-06,
+    "intervention_layer": 8
+  },
+  {
+    "intervention_type": "ablation",
+    "target_feature_id": 4892,
+    "target_feature_description": "Bridge colors and visual descriptions",
+    "effect_size": 1.9643476009368896,
+    "target_token_change": 3.90715495794669e-06,
+    "intervention_layer": 8
+  },
+  {
+    "intervention_type": "ablation",
+    "target_feature_id": 4127,
+    "target_feature_description": "San Francisco Bay Area geography",
+    "effect_size": 1.9640040397644043,
+    "target_token_change": 3.907147989680448e-06,
+    "intervention_layer": 8
+  },
+  {
+    "intervention_type": "ablation",
+    "target_feature_id": 7812,
+    "target_feature_description": "Location completion and geography",
+    "effect_size": 2.8030214309692383,
+    "target_token_change": 3.7262656675807193e-06,
+    "intervention_layer": 10
+  },
+  {
+    "intervention_type": "ablation",
+    "target_feature_id": 7812,
+    "target_feature_description": "Location completion and geography",
+    "effect_size": 2.8030214309692383,
+    "target_token_change": 3.7262656675807193e-06,
+    "intervention_layer": 10
+  },
+  {
+    "intervention_type": "ablation",
+    "target_feature_id": 7812,
+    "target_feature_description": "Location completion and geography",
+    "effect_size": 2.8030214309692383,
+    "target_token_change": 3.7262656675807193e-06,
+    "intervention_layer": 10
+  },
+  {
+    "intervention_type": "ablation",
+    "target_feature_id": 7812,
+    "target_feature_description": "Location completion and geography",
+    "effect_size": 2.8030214309692383,
+    "target_token_change": 3.7262656675807193e-06,
+    "intervention_layer": 10
+  },
+  {
+    "intervention_type": "ablation",
+    "target_feature_id": 7812,
+    "target_feature_description": "Location completion and geography",
+    "effect_size": 2.8030214309692383,
+    "target_token_change": 3.7262656675807193e-06,
+    "intervention_layer": 10
+  },
+  {
+    "intervention_type": "ablation",
+    "target_feature_id": 4127,
+    "target_feature_description": "San Francisco Bay Area geography",
+    "effect_size": 1.9640040397644043,
+    "target_token_change": 3.907147989680448e-06,
+    "intervention_layer": 8
+  },
+  {
+    "intervention_type": "ablation",
+    "target_feature_id": 4892,
+    "target_feature_description": "Bridge colors and visual descriptions",
+    "effect_size": 1.9643476009368896,
+    "target_token_change": 3.90715495794669e-06,
+    "intervention_layer": 8
+  },
+  {
+    "intervention_type": "ablation",
+    "target_feature_id": 7812,
+    "target_feature_description": "Location completion and geography",
+    "effect_size": 2.8030214309692383,
+    "target_token_change": 3.7262656675807193e-06,
+    "intervention_layer": 10
+  },
+  {
+    "intervention_type": "ablation",
+    "target_feature_id": 4127,
+    "target_feature_description": "San Francisco Bay Area geography",
+    "effect_size": 1.9640040397644043,
+    "target_token_change": 3.907147989680448e-06,
+    "intervention_layer": 8
+  },
+  {
+    "intervention_type": "ablation",
+    "target_feature_id": 4892,
+    "target_feature_description": "Bridge colors and visual descriptions",
+    "effect_size": 1.9643476009368896,
+    "target_token_change": 3.90715495794669e-06,
+    "intervention_layer": 8
+  },
+  {
+    "intervention_type": "ablation",
+    "target_feature_id": 4892,
+    "target_feature_description": "Bridge colors and visual descriptions",
+    "effect_size": 0.8534414172172546,
+    "target_token_change": 2.0339273078207043e-05,
+    "intervention_layer": 8
+  },
+  {
+    "intervention_type": "ablation",
+    "target_feature_id": 7812,
+    "target_feature_description": "Location completion and geography",
+    "effect_size": 1.37725830078125,
+    "target_token_change": 2.5749139602737614e-05,
+    "intervention_layer": 10
+  },
+  {
+    "intervention_type": "ablation",
+    "target_feature_id": 7812,
+    "target_feature_description": "Location completion and geography",
+    "effect_size": 1.37725830078125,
+    "target_token_change": 2.5749139602737614e-05,
+    "intervention_layer": 10
+  },
+  {
+    "intervention_type": "ablation",
+    "target_feature_id": 7812,
+    "target_feature_description": "Location completion and geography",
+    "effect_size": 1.37725830078125,
+    "target_token_change": 2.5749139602737614e-05,
+    "intervention_layer": 10
+  },
+  {
+    "intervention_type": "ablation",
+    "target_feature_id": 4892,
+    "target_feature_description": "Bridge colors and visual descriptions",
+    "effect_size": 0.8534414172172546,
+    "target_token_change": 2.0339273078207043e-05,
+    "intervention_layer": 8
+  },
+  {
+    "intervention_type": "ablation",
+    "target_feature_id": 4892,
+    "target_feature_description": "Bridge colors and visual descriptions",
+    "effect_size": 0.8534414172172546,
+    "target_token_change": 2.0339273078207043e-05,
+    "intervention_layer": 8
+  },
+  {
+    "intervention_type": "ablation",
+    "target_feature_id": 7812,
+    "target_feature_description": "Location completion and geography",
+    "effect_size": 1.37725830078125,
+    "target_token_change": 2.5749139602737614e-05,
+    "intervention_layer": 10
+  },
+  {
+    "intervention_type": "ablation",
+    "target_feature_id": 7812,
+    "target_feature_description": "Location completion and geography",
+    "effect_size": 1.37725830078125,
+    "target_token_change": 2.5749139602737614e-05,
+    "intervention_layer": 10
+  },
+  {
+    "intervention_type": "ablation",
+    "target_feature_id": 7812,
+    "target_feature_description": "Location completion and geography",
+    "effect_size": 1.37725830078125,
+    "target_token_change": 2.5749139602737614e-05,
+    "intervention_layer": 10
+  },
+  {
+    "intervention_type": "ablation",
+    "target_feature_id": 4892,
+    "target_feature_description": "Bridge colors and visual descriptions",
+    "effect_size": 0.8534414172172546,
+    "target_token_change": 2.0339273078207043e-05,
+    "intervention_layer": 8
+  },
+  {
+    "intervention_type": "ablation",
+    "target_feature_id": 7812,
+    "target_feature_description": "Location completion and geography",
+    "effect_size": 1.37725830078125,
+    "target_token_change": 2.5749139602737614e-05,
+    "intervention_layer": 10
+  },
+  {
+    "intervention_type": "ablation",
+    "target_feature_id": 7812,
+    "target_feature_description": "Location completion and geography",
+    "effect_size": 1.37725830078125,
+    "target_token_change": 2.5749139602737614e-05,
+    "intervention_layer": 10
+  },
+  {
+    "intervention_type": "ablation",
+    "target_feature_id": 7812,
+    "target_feature_description": "Location completion and geography",
+    "effect_size": 1.37725830078125,
+    "target_token_change": 2.5749139602737614e-05,
+    "intervention_layer": 10
+  },
+  {
+    "intervention_type": "ablation",
+    "target_feature_id": 7812,
+    "target_feature_description": "Location completion and geography",
+    "effect_size": 1.37725830078125,
+    "target_token_change": 2.5749139602737614e-05,
+    "intervention_layer": 10
+  },
+  {
+    "intervention_type": "ablation",
+    "target_feature_id": 7812,
+    "target_feature_description": "Location completion and geography",
+    "effect_size": 1.37725830078125,
+    "target_token_change": 2.5749139602737614e-05,
+    "intervention_layer": 10
+  },
+  {
+    "intervention_type": "ablation",
+    "target_feature_id": 4892,
+    "target_feature_description": "Bridge colors and visual descriptions",
+    "effect_size": 0.8534414172172546,
+    "target_token_change": 2.0339273078207043e-05,
+    "intervention_layer": 8
+  },
+  {
+    "intervention_type": "ablation",
+    "target_feature_id": 7812,
+    "target_feature_description": "Location completion and geography",
+    "effect_size": 1.37725830078125,
+    "target_token_change": 2.5749139602737614e-05,
+    "intervention_layer": 10
+  },
+  {
+    "intervention_type": "ablation",
+    "target_feature_id": 4892,
+    "target_feature_description": "Bridge colors and visual descriptions",
+    "effect_size": 0.8534414172172546,
+    "target_token_change": 2.0339273078207043e-05,
+    "intervention_layer": 8
+  },
+  {
+    "intervention_type": "ablation",
+    "target_feature_id": 7812,
+    "target_feature_description": "Location completion and geography",
+    "effect_size": 1.37725830078125,
+    "target_token_change": 2.5749139602737614e-05,
+    "intervention_layer": 10
+  },
+  {
+    "intervention_type": "ablation",
+    "target_feature_id": 4892,
+    "target_feature_description": "Bridge colors and visual descriptions",
+    "effect_size": 0.8534414172172546,
+    "target_token_change": 2.0339273078207043e-05,
+    "intervention_layer": 8
+  },
+  {
+    "intervention_type": "ablation",
+    "target_feature_id": 7812,
+    "target_feature_description": "Location completion and geography",
+    "effect_size": 1.9092707633972168,
+    "target_token_change": 2.4440949806248113e-06,
+    "intervention_layer": 10
+  },
+  {
+    "intervention_type": "ablation",
+    "target_feature_id": 7812,
+    "target_feature_description": "Location completion and geography",
+    "effect_size": 1.9092707633972168,
+    "target_token_change": 2.4440949806248113e-06,
+    "intervention_layer": 10
+  },
+  {
+    "intervention_type": "ablation",
+    "target_feature_id": 7812,
+    "target_feature_description": "Location completion and geography",
+    "effect_size": 1.9092707633972168,
+    "target_token_change": 2.4440949806248113e-06,
+    "intervention_layer": 10
+  },
+  {
+    "intervention_type": "ablation",
+    "target_feature_id": 7812,
+    "target_feature_description": "Location completion and geography",
+    "effect_size": 1.9092707633972168,
+    "target_token_change": 2.4440949806248113e-06,
+    "intervention_layer": 10
+  },
+  {
+    "intervention_type": "ablation",
+    "target_feature_id": 7812,
+    "target_feature_description": "Location completion and geography",
+    "effect_size": 1.9092707633972168,
+    "target_token_change": 2.4440949806248113e-06,
+    "intervention_layer": 10
+  },
+  {
+    "intervention_type": "ablation",
+    "target_feature_id": 7812,
+    "target_feature_description": "Location completion and geography",
+    "effect_size": 1.9092707633972168,
+    "target_token_change": 2.4440949806248113e-06,
+    "intervention_layer": 10
+  },
+  {
+    "intervention_type": "ablation",
+    "target_feature_id": 7812,
+    "target_feature_description": "Location completion and geography",
+    "effect_size": 1.9092707633972168,
+    "target_token_change": 2.4440949806248113e-06,
+    "intervention_layer": 10
+  },
+  {
+    "intervention_type": "ablation",
+    "target_feature_id": 7812,
+    "target_feature_description": "Location completion and geography",
+    "effect_size": 1.9092707633972168,
+    "target_token_change": 2.4440949806248113e-06,
+    "intervention_layer": 10
+  },
+  {
+    "intervention_type": "ablation",
+    "target_feature_id": 7812,
+    "target_feature_description": "Location completion and geography",
+    "effect_size": 1.9092707633972168,
+    "target_token_change": 2.4440949806248113e-06,
+    "intervention_layer": 10
+  },
+  {
+    "intervention_type": "ablation",
+    "target_feature_id": 7812,
+    "target_feature_description": "Location completion and geography",
+    "effect_size": 1.9092707633972168,
+    "target_token_change": 2.4440949806248113e-06,
+    "intervention_layer": 10
+  },
+  {
+    "intervention_type": "ablation",
+    "target_feature_id": 7812,
+    "target_feature_description": "Location completion and geography",
+    "effect_size": 1.9092707633972168,
+    "target_token_change": 2.4440949806248113e-06,
+    "intervention_layer": 10
+  },
+  {
+    "intervention_type": "ablation",
+    "target_feature_id": 7812,
+    "target_feature_description": "Location completion and geography",
+    "effect_size": 1.9092707633972168,
+    "target_token_change": 2.4440949806248113e-06,
+    "intervention_layer": 10
+  },
+  {
+    "intervention_type": "ablation",
+    "target_feature_id": 7812,
+    "target_feature_description": "Location completion and geography",
+    "effect_size": 1.9092707633972168,
+    "target_token_change": 2.4440949806248113e-06,
+    "intervention_layer": 10
+  },
+  {
+    "intervention_type": "ablation",
+    "target_feature_id": 7812,
+    "target_feature_description": "Location completion and geography",
+    "effect_size": 1.9092707633972168,
+    "target_token_change": 2.4440949806248113e-06,
+    "intervention_layer": 10
+  },
+  {
+    "intervention_type": "ablation",
+    "target_feature_id": 7812,
+    "target_feature_description": "Location completion and geography",
+    "effect_size": 1.9092707633972168,
+    "target_token_change": 2.4440949806248113e-06,
+    "intervention_layer": 10
+  },
+  {
+    "intervention_type": "ablation",
+    "target_feature_id": 7812,
+    "target_feature_description": "Location completion and geography",
+    "effect_size": 1.9092707633972168,
+    "target_token_change": 2.4440949806248113e-06,
+    "intervention_layer": 10
+  },
+  {
+    "intervention_type": "ablation",
+    "target_feature_id": 7812,
+    "target_feature_description": "Location completion and geography",
+    "effect_size": 1.9092707633972168,
+    "target_token_change": 2.4440949806248113e-06,
+    "intervention_layer": 10
+  },
+  {
+    "intervention_type": "ablation",
+    "target_feature_id": 7812,
+    "target_feature_description": "Location completion and geography",
+    "effect_size": 1.9092707633972168,
+    "target_token_change": 2.4440949806248113e-06,
+    "intervention_layer": 10
+  },
+  {
+    "intervention_type": "ablation",
+    "target_feature_id": 4892,
+    "target_feature_description": "Bridge colors and visual descriptions",
+    "effect_size": 0.7343957424163818,
+    "target_token_change": 1.0310246294054082e-05,
+    "intervention_layer": 8
+  },
+  {
+    "intervention_type": "ablation",
+    "target_feature_id": 7812,
+    "target_feature_description": "Location completion and geography",
+    "effect_size": 2.430985450744629,
+    "target_token_change": 1.0229329320488034e-05,
+    "intervention_layer": 10
+  },
+  {
+    "intervention_type": "ablation",
+    "target_feature_id": 7812,
+    "target_feature_description": "Location completion and geography",
+    "effect_size": 2.430985450744629,
+    "target_token_change": 1.0229329320488034e-05,
+    "intervention_layer": 10
+  },
+  {
+    "intervention_type": "ablation",
+    "target_feature_id": 7812,
+    "target_feature_description": "Location completion and geography",
+    "effect_size": 2.430985450744629,
+    "target_token_change": 1.0229329320488034e-05,
+    "intervention_layer": 10
+  },
+  {
+    "intervention_type": "ablation",
+    "target_feature_id": 4892,
+    "target_feature_description": "Bridge colors and visual descriptions",
+    "effect_size": 0.7343957424163818,
+    "target_token_change": 1.0310246294054082e-05,
+    "intervention_layer": 8
+  },
+  {
+    "intervention_type": "ablation",
+    "target_feature_id": 4892,
+    "target_feature_description": "Bridge colors and visual descriptions",
+    "effect_size": 0.7343957424163818,
+    "target_token_change": 1.0310246294054082e-05,
+    "intervention_layer": 8
+  },
+  {
+    "intervention_type": "ablation",
+    "target_feature_id": 4892,
+    "target_feature_description": "Bridge colors and visual descriptions",
+    "effect_size": 0.7343957424163818,
+    "target_token_change": 1.0310246294054082e-05,
+    "intervention_layer": 8
+  },
+  {
+    "intervention_type": "ablation",
+    "target_feature_id": 4892,
+    "target_feature_description": "Bridge colors and visual descriptions",
+    "effect_size": 0.7343957424163818,
+    "target_token_change": 1.0310246294054082e-05,
+    "intervention_layer": 8
+  },
+  {
+    "intervention_type": "ablation",
+    "target_feature_id": 4892,
+    "target_feature_description": "Bridge colors and visual descriptions",
+    "effect_size": 0.7343957424163818,
+    "target_token_change": 1.0310246294054082e-05,
+    "intervention_layer": 8
+  },
+  {
+    "intervention_type": "ablation",
+    "target_feature_id": 7812,
+    "target_feature_description": "Location completion and geography",
+    "effect_size": 2.430985450744629,
+    "target_token_change": 1.0229329320488034e-05,
+    "intervention_layer": 10
+  },
+  {
+    "intervention_type": "ablation",
+    "target_feature_id": 7812,
+    "target_feature_description": "Location completion and geography",
+    "effect_size": 2.430985450744629,
+    "target_token_change": 1.0229329320488034e-05,
+    "intervention_layer": 10
+  },
+  {
+    "intervention_type": "ablation",
+    "target_feature_id": 7812,
+    "target_feature_description": "Location completion and geography",
+    "effect_size": 2.430985450744629,
+    "target_token_change": 1.0229329320488034e-05,
+    "intervention_layer": 10
+  },
+  {
+    "intervention_type": "ablation",
+    "target_feature_id": 7812,
+    "target_feature_description": "Location completion and geography",
+    "effect_size": 2.430985450744629,
+    "target_token_change": 1.0229329320488034e-05,
+    "intervention_layer": 10
+  },
+  {
+    "intervention_type": "ablation",
+    "target_feature_id": 7812,
+    "target_feature_description": "Location completion and geography",
+    "effect_size": 2.430985450744629,
+    "target_token_change": 1.0229329320488034e-05,
+    "intervention_layer": 10
+  },
+  {
+    "intervention_type": "ablation",
+    "target_feature_id": 7812,
+    "target_feature_description": "Location completion and geography",
+    "effect_size": 2.430985450744629,
+    "target_token_change": 1.0229329320488034e-05,
+    "intervention_layer": 10
+  },
+  {
+    "intervention_type": "ablation",
+    "target_feature_id": 4892,
+    "target_feature_description": "Bridge colors and visual descriptions",
+    "effect_size": 0.7343957424163818,
+    "target_token_change": 1.0310246294054082e-05,
+    "intervention_layer": 8
+  },
+  {
+    "intervention_type": "ablation",
+    "target_feature_id": 7812,
+    "target_feature_description": "Location completion and geography",
+    "effect_size": 2.430985450744629,
+    "target_token_change": 1.0229329320488034e-05,
+    "intervention_layer": 10
+  },
+  {
+    "intervention_type": "ablation",
+    "target_feature_id": 4892,
+    "target_feature_description": "Bridge colors and visual descriptions",
+    "effect_size": 0.7343957424163818,
+    "target_token_change": 1.0310246294054082e-05,
+    "intervention_layer": 8
+  },
+  {
+    "intervention_type": "ablation",
+    "target_feature_id": 7812,
+    "target_feature_description": "Location completion and geography",
+    "effect_size": 2.430985450744629,
+    "target_token_change": 1.0229329320488034e-05,
+    "intervention_layer": 10
+  },
+  {
+    "intervention_type": "ablation",
+    "target_feature_id": 4892,
+    "target_feature_description": "Bridge colors and visual descriptions",
+    "effect_size": 0.7343957424163818,
+    "target_token_change": 1.0310246294054082e-05,
+    "intervention_layer": 8
+  }
+]

@@ -1,0 +1,43 @@
+# Default Configuration for YorK_RP Active Inference Circuit Discovery
+# This file contains the default parameters for all experiment components
+
+model:
+  name: "gpt2-small"
+  device: "auto"  # auto, cpu, cuda
+  max_context_length: 1024
+  use_cache: true
+
+sae:
+  enabled: true
+  auto_discover_layers: true      # Auto-discover active layers instead of forcing targets
+  target_layers: []               # Empty - will be populated by auto-discovery
+  activation_threshold: 0.05
+  max_features_per_layer: 20
+  neuronpedia_source: true
+  layer_search_range: [0, -1]     # Search all layers: [start, end] (-1 = last layer)
+
+active_inference:
+  enabled: true
+  epistemic_weight: 0.7
+  exploration_weight: 0.6
+  convergence_threshold: 0.15
+  max_interventions: 20
+  use_pymdp: true
+
+experiment:
+  name: "golden_gate_bridge_discovery"
+  output_dir: "experiment_results"
+  max_parallel_jobs: 1
+  save_intermediate_results: true
+  generate_visualizations: true
+
+research_questions:
+  rq1_correspondence_target: 70.0  # Percentage
+  rq2_efficiency_target: 30.0      # Percentage improvement  
+  rq3_predictions_target: 3        # Number of validated predictions
+
+logging:
+  level: "INFO"
+  file_output: true
+  console_output: true
+  max_file_size_mb: 10
