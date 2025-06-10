@@ -31,7 +31,7 @@ from datetime import datetime
 
 # Import ActiveCircuitDiscovery components using new modular structure
 try:
-    from experiments.runner import YorKExperimentRunner, run_golden_gate_experiment
+    from experiments.runner import YorKExperimentRunner
     from core.data_structures import ExperimentResult
     from config.experiment_config import get_config
     from circuit_analysis.tracer import CircuitTracer

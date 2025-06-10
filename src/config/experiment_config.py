@@ -36,6 +36,12 @@ class SAEConfig:
     activation_threshold: float = 0.05
     max_features_per_layer: int = 20
     neuronpedia_source: bool = True
+    sample_inputs_for_layer_discovery: List[str] = field(default_factory=list)
+    auto_discover_min_layers: int = 6
+    auto_discover_max_layers: int = 8
+    auto_discover_layer_ratio: float = 0.5
+    fallback_sae_feature_multiplier: int = 4
+    fallback_sae_weight_scale: float = 0.1
 
 @dataclass
 class ActiveInferenceConfig:
@@ -46,6 +52,9 @@ class ActiveInferenceConfig:
     convergence_threshold: float = 0.15
     max_interventions: int = 20
     use_pymdp: bool = True
+    baseline_intervention_multiplier: float = 3.0
+    baseline_convergence_std_threshold: float = 0.05
+    baseline_convergence_recent_effects_count: int = 5
 
 @dataclass
 class ExperimentConfig:
@@ -62,6 +71,7 @@ class ResearchQuestionConfig:
     rq1_correspondence_target: float = 70.0  # Percentage
     rq2_efficiency_target: float = 30.0      # Percentage improvement
     rq3_predictions_target: int = 3          # Number of validated predictions
+    prediction_validation_confidence_threshold: float = 0.7
     
 @dataclass
 class LoggingConfig:
@@ -146,7 +156,13 @@ class ConfigManager:
                 'layer_search_range': config.sae.layer_search_range,
                 'activation_threshold': config.sae.activation_threshold,
                 'max_features_per_layer': config.sae.max_features_per_layer,
-                'neuronpedia_source': config.sae.neuronpedia_source
+                'neuronpedia_source': config.sae.neuronpedia_source,
+                'sample_inputs_for_layer_discovery': config.sae.sample_inputs_for_layer_discovery,
+                'auto_discover_min_layers': config.sae.auto_discover_min_layers,
+                'auto_discover_max_layers': config.sae.auto_discover_max_layers,
+                'auto_discover_layer_ratio': config.sae.auto_discover_layer_ratio,
+                'fallback_sae_feature_multiplier': config.sae.fallback_sae_feature_multiplier,
+                'fallback_sae_weight_scale': config.sae.fallback_sae_weight_scale
             },
             'active_inference': {
                 'enabled': config.active_inference.enabled,
@@ -154,7 +170,10 @@ class ConfigManager:
                 'exploration_weight': config.active_inference.exploration_weight,
                 'convergence_threshold': config.active_inference.convergence_threshold,
                 'max_interventions': config.active_inference.max_interventions,
-                'use_pymdp': config.active_inference.use_pymdp
+                'use_pymdp': config.active_inference.use_pymdp,
+                'baseline_intervention_multiplier': config.active_inference.baseline_intervention_multiplier,
+                'baseline_convergence_std_threshold': config.active_inference.baseline_convergence_std_threshold,
+                'baseline_convergence_recent_effects_count': config.active_inference.baseline_convergence_recent_effects_count
             },
             'experiment': {
                 'name': config.experiment.name,
@@ -166,7 +185,8 @@ class ConfigManager:
             'research_questions': {
                 'rq1_correspondence_target': config.research_questions.rq1_correspondence_target,
                 'rq2_efficiency_target': config.research_questions.rq2_efficiency_target,
-                'rq3_predictions_target': config.research_questions.rq3_predictions_target
+                'rq3_predictions_target': config.research_questions.rq3_predictions_target,
+                'prediction_validation_confidence_threshold': config.research_questions.prediction_validation_confidence_threshold
             },
             'logging': {
                 'level': config.logging.level,

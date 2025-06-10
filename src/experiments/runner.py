@@ -321,7 +321,7 @@ class YorKExperimentRunner(IExperimentRunner):
             logger.info(f"Running {strategy} baseline strategy")
             
             intervention_count = 0
-            max_baseline_interventions = self.config.active_inference.max_interventions * 3  # Allow more for baselines
+            max_baseline_interventions = self.config.active_inference.max_interventions * self.config.active_inference.baseline_intervention_multiplier
             strategy_features = all_features.copy()
             baseline_effects = []
             
@@ -349,9 +349,9 @@ class YorKExperimentRunner(IExperimentRunner):
                     intervention_count += 1
                     
                     # Simple convergence check for baseline (less sophisticated than AI)
-                    if len(baseline_effects) >= 5:
-                        recent_effects = baseline_effects[-5:]
-                        if np.std(recent_effects) < 0.05:  # Low variance = convergence
+                    if len(baseline_effects) >= self.config.active_inference.baseline_convergence_recent_effects_count:
+                        recent_effects = baseline_effects[-self.config.active_inference.baseline_convergence_recent_effects_count:]
+                        if np.std(recent_effects) < self.config.active_inference.baseline_convergence_std_threshold:  # Low variance = convergence
                             logger.info(f"{strategy} baseline converged after {intervention_count} interventions")
                             break
                             
@@ -365,12 +365,23 @@ class YorKExperimentRunner(IExperimentRunner):
         return baseline_counts
     
     def _calculate_correspondence_from_result(self, result: InterventionResult) -> CorrespondenceMetrics:
-        """Calculate correspondence metrics from intervention result."""
-        # This should use the AI agent's correspondence calculation
-        # For now, create basic metrics
+        """
+        Calculate correspondence metrics from intervention result. (Placeholder)
+        """
+        # This method is intended to use the AI agent's internal state and models
+        # to calculate how well an intervention's outcome corresponded with the agent's predictions or beliefs.
+        #
+        # CURRENT STATUS: This is a basic placeholder.
+        # The ActiveInferenceAgent currently does not provide a dedicated method to calculate these detailed
+        # CorrespondenceMetrics directly from its post-intervention state in a way that's easily consumable here.
+        # A more robust implementation would require the ActiveInferenceAgent.update_beliefs method to be
+        # fully implemented and potentially return or update specific correspondence data based on its model.
+        #
+        # The current values are simplistic stand-ins derived directly from the InterventionResult's
+        # effect_size or target_token_change, and do not reflect a deep model correspondence.
         return CorrespondenceMetrics(
-            belief_updating_correspondence=min(1.0, result.effect_size),
-            precision_weighting_correspondence=min(1.0, abs(result.target_token_change)),
+            belief_updating_correspondence=min(1.0, result.effect_size), # Simplistic stand-in
+            precision_weighting_correspondence=min(1.0, abs(result.target_token_change)), # Simplistic stand-in
             prediction_error_correspondence=min(1.0, result.effect_size * 0.8),
             overall_correspondence=(min(1.0, result.effect_size) + min(1.0, abs(result.target_token_change)) + min(1.0, result.effect_size * 0.8)) / 3.0
         )
@@ -404,7 +415,7 @@ class YorKExperimentRunner(IExperimentRunner):
         
         for prediction in predictions:
             # Simple validation based on confidence threshold
-            if hasattr(prediction, 'confidence') and prediction.confidence > 0.7:
+            if hasattr(prediction, 'confidence') and prediction.confidence > self.config.research_questions.prediction_validation_confidence_threshold:
                 prediction.validation_status = 'validated'
                 validated_count += 1
             else:

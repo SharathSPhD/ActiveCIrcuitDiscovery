@@ -15,6 +15,15 @@ sae:
   max_features_per_layer: 20
   neuronpedia_source: true
   layer_search_range: [0, -1]     # Search all layers: [start, end] (-1 = last layer)
+  sample_inputs_for_layer_discovery:
+    - "The Golden Gate Bridge is located in"
+    - "When I think about cats, I"
+    - "The capital of France is"
+  auto_discover_min_layers: 6
+  auto_discover_max_layers: 8
+  auto_discover_layer_ratio: 0.5
+  fallback_sae_feature_multiplier: 4
+  fallback_sae_weight_scale: 0.1
 
 active_inference:
   enabled: true
@@ -23,6 +32,9 @@ active_inference:
   convergence_threshold: 0.15
   max_interventions: 20
   use_pymdp: true
+  baseline_intervention_multiplier: 3.0
+  baseline_convergence_std_threshold: 0.05
+  baseline_convergence_recent_effects_count: 5
 
 experiment:
   name: "golden_gate_bridge_discovery"
@@ -35,6 +47,7 @@ research_questions:
   rq1_correspondence_target: 70.0  # Percentage
   rq2_efficiency_target: 30.0      # Percentage improvement  
   rq3_predictions_target: 3        # Number of validated predictions
+  prediction_validation_confidence_threshold: 0.7
 
 logging:
   level: "INFO"

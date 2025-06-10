@@ -83,7 +83,8 @@ print("Project setup complete!")
 
 # Import the main components from the project
 try:
-    from experiments.runner import YorKExperimentRunner, run_golden_gate_experiment
+    from experiments.golden_gate_bridge import run_golden_gate_experiment
+    from experiments.runner import YorKExperimentRunner # Assuming YorKExperimentRunner is still needed from here
     from core.data_structures import ExperimentResult
     from config.experiment_config import get_config
     from visualization.visualizer import CircuitVisualizer

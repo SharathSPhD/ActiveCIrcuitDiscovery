@@ -26,7 +26,11 @@ class SAEFeature:
     description: str
     max_activation: float
     examples: List[str]
+    # Represents the learned feature direction (e.g., from the SAE encoder).
+    # Should be populated by CircuitTracer._analyze_activations_with_sae if data is available.
     feature_vector: Optional[np.ndarray] = None
+    # Represents the SAE's reconstruction vector for that feature (e.g., from the SAE decoder).
+    # Should be populated by CircuitTracer._analyze_activations_with_sae if data is available.
     decoder_weights: Optional[np.ndarray] = None
     
     def __post_init__(self):

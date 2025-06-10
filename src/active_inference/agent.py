@@ -6,16 +6,6 @@ from typing import Dict, List, Optional, Tuple, Any
 import logging
 from pathlib import Path
 
-# pymdp integration
-try:
-    import pymdp
-    from pymdp import Agent
-    from pymdp.maths import softmax, kl_div, dot
-    from pymdp.utils import obj_array, random_A_matrix, random_B_matrix
-    PYMDP_AVAILABLE = True
-except ImportError:
-    PYMDP_AVAILABLE = False
-
 # Project imports with proper relative imports
 try:
     from ..core.interfaces import IActiveInferenceAgent
@@ -47,8 +37,25 @@ class ActiveInferenceAgent(IActiveInferenceAgent):
         """Initialize Active Inference agent with configuration."""
         self.config = config
         self.tracer = tracer
-        self.use_pymdp = config.active_inference.use_pymdp and PYMDP_AVAILABLE
         
+        # Handle pymdp dependency
+        try:
+            import pymdp
+            from pymdp import Agent
+            from pymdp.maths import softmax, kl_div, dot
+            from pymdp.utils import obj_array, random_A_matrix, random_B_matrix
+            self.pymdp_is_available = True
+        except ImportError:
+            self.pymdp_is_available = False
+
+        config_use_pymdp = config.active_inference.use_pymdp
+
+        if config_use_pymdp and not self.pymdp_is_available:
+            logger.warning("pymdp is configured to be used but is not installed. Falling back to non-pymdp mode.")
+            self.use_pymdp = False
+        else:
+            self.use_pymdp = config_use_pymdp and self.pymdp_is_available
+
         # Active Inference parameters
         self.epistemic_weight = config.active_inference.epistemic_weight
         self.exploration_weight = config.active_inference.exploration_weight
@@ -63,7 +70,7 @@ class ActiveInferenceAgent(IActiveInferenceAgent):
         # pymdp agent if available
         self.pymdp_agent = None
         
-        logger.info(f"ActiveInferenceAgent initialized with pymdp={self.use_pymdp}")
+        logger.info(f"ActiveInferenceAgent initialized. Using pymdp: {self.use_pymdp} (available: {self.pymdp_is_available}, configured: {config.active_inference.use_pymdp})")
     
     def initialize_beliefs(self, features: Dict[int, List[SAEFeature]]) -> BeliefState:
         """Initialize belief state from discovered features."""
