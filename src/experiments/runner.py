@@ -11,11 +11,11 @@ import logging
 
 # Project imports with proper relative imports
 try:
-    from ..core.interfaces import IExperimentRunner
-    from ..core.data_structures import ExperimentResult, SAEFeature, InterventionResult, CorrespondenceMetrics
-    from ..config.experiment_config import CompleteConfig, get_config, InterventionType
-    from ..circuit_analysis.tracer import CircuitTracer
-    from ..active_inference.agent import ActiveInferenceAgent
+    from core.interfaces import IExperimentRunner
+    from core.data_structures import ExperimentResult, SAEFeature, InterventionResult, CorrespondenceMetrics
+    from config.experiment_config import CompleteConfig, get_config, InterventionType
+    from circuit_analysis.tracer import CircuitTracer
+    from active_inference.agent import ActiveInferenceAgent
 except ImportError:
     # Fallback for direct execution
     import sys

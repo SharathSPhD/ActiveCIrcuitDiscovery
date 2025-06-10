@@ -2,6 +2,7 @@
 # Following patterns from https://pymdp-rtd.readthedocs.io/en/latest/
 
 import numpy as np
+from types import SimpleNamespace
 from typing import Dict, List, Optional, Tuple, Any
 import logging
 from pathlib import Path
@@ -18,19 +19,19 @@ except ImportError:
 
 # Project imports with proper relative imports
 try:
-    from ..core.interfaces import IActiveInferenceAgent
-    from ..core.data_structures import (
-        SAEFeature, InterventionResult, BeliefState, 
+    from core.interfaces import IActiveInferenceAgent
+    from core.data_structures import (
+        SAEFeature, InterventionResult, BeliefState,
         CorrespondenceMetrics, NovelPrediction
     )
-    from ..config.experiment_config import CompleteConfig, InterventionType
+    from config.experiment_config import CompleteConfig, InterventionType
 except ImportError:
     # Fallback for direct execution
     import sys
     sys.path.append(str(Path(__file__).parent.parent))
     from core.interfaces import IActiveInferenceAgent
     from core.data_structures import (
-        SAEFeature, InterventionResult, BeliefState, 
+        SAEFeature, InterventionResult, BeliefState,
         CorrespondenceMetrics, NovelPrediction
     )
     from config.experiment_config import CompleteConfig, InterventionType
@@ -123,28 +124,81 @@ class ActiveInferenceAgent(IActiveInferenceAgent):
         logger.info(f"Initialized beliefs for {len(all_features)} features with confidence {confidence:.3f}")
         return self.belief_state
     
-    def calculate_expected_free_energy(self, feature: SAEFeature, 
-                                     intervention_type: InterventionType) -> float:
-        """Calculate expected free energy for potential intervention."""
+    def calculate_expected_free_energy(
+        self, feature: SAEFeature, intervention_type: InterventionType
+    ) -> float:
+        """Calculate a very rough estimate of expected free energy."""
         if self.belief_state is None:
             return 0.0
-        
+
         epistemic_value = self._calculate_epistemic_value(feature, intervention_type)
         pragmatic_value = self._calculate_pragmatic_value(feature, intervention_type)
-        
-        # Enhanced EFE with pymdp integration
+
         if self.use_pymdp and self.belief_state.generative_model is not None:
             model_uncertainty_reduction = self._calculate_model_uncertainty_reduction(feature)
             causal_info_gain = self._calculate_causal_information_gain(feature)
-            
             expected_free_energy = (
-                self.epistemic_weight * (epistemic_value + model_uncertainty_reduction) +
-                (1 - self.epistemic_weight) * (pragmatic_value + causal_info_gain)
+                self.epistemic_weight * (epistemic_value + model_uncertainty_reduction)
+                + (1 - self.epistemic_weight) * (pragmatic_value + causal_info_gain)
             )
         else:
             expected_free_energy = (
-                self.epistemic_weight * epistemic_value + 
-                (1 - self.epistemic_weight) * pragmatic_value
+                self.epistemic_weight * epistemic_value
+                + (1 - self.epistemic_weight) * pragmatic_value
             )
-        
+
         return expected_free_energy
+
+    # ------------------------------------------------------------------
+    # Helper and update methods used by the simplified agent
+    # ------------------------------------------------------------------
+    def _initialize_connection_beliefs(self, features: List[SAEFeature]) -> Dict[Tuple[int, int], float]:
+        """Create a simple fully connected belief graph."""
+        beliefs: Dict[Tuple[int, int], float] = {}
+        ids = [f.feature_id for f in features]
+        for i in ids:
+            for j in ids:
+                if i != j:
+                    beliefs[(i, j)] = 0.5
+        return beliefs
+
+    def _initialize_pymdp_components(self, features: List[SAEFeature]):
+        """Generate minimal PyMDP generative model components."""
+        n = len(features)
+        A = np.eye(n)
+        B = np.stack([np.eye(n) for _ in range(n)])
+        return {"A": A, "B": B}, np.ones(n) / n, np.eye(n)
+
+    def _calculate_initial_confidence(self, feature_importances: Dict[int, float], uncertainty: Dict[int, float]) -> float:
+        if not uncertainty:
+            return 0.0
+        return max(0.0, 1.0 - np.mean(list(uncertainty.values())))
+
+    def _calculate_epistemic_value(self, feature: SAEFeature, intervention_type: InterventionType) -> float:
+        return float(feature.max_activation)
+
+    def _calculate_pragmatic_value(self, feature: SAEFeature, intervention_type: InterventionType) -> float:
+        return float(1.0 - feature.activation_threshold)
+
+    def _calculate_model_uncertainty_reduction(self, feature: SAEFeature) -> float:
+        return 0.05
+
+    def _calculate_causal_information_gain(self, feature: SAEFeature) -> float:
+        return 0.05
+
+    def _create_empty_belief_state(self) -> BeliefState:
+        return BeliefState(qs=np.array([1.0]), feature_importances={}, connection_beliefs={}, uncertainty={}, confidence=0.0)
+
+    def update_beliefs(self, intervention_result: InterventionResult) -> CorrespondenceMetrics:
+        self.intervention_history.append(intervention_result)
+        if self.belief_state:
+            self.belief_state.confidence = min(1.0, self.belief_state.confidence + 0.01)
+        return CorrespondenceMetrics(0.0, 0.0, 0.0, 0.0)
+
+    def generate_predictions(self) -> List[NovelPrediction]:
+        return []
+
+    def check_convergence(self, threshold: float = 0.15) -> bool:
+        if not self.belief_state:
+            return False
+        return self.belief_state.confidence >= (1.0 - threshold)

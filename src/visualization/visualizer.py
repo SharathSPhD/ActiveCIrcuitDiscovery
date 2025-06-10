@@ -25,9 +25,9 @@ except ImportError:
 
 # Project imports
 try:
-    from ..core.interfaces import IVisualizationGenerator
-    from ..core.data_structures import (
-        AttributionGraph, ExperimentResult, InterventionResult, 
+    from core.interfaces import IVisualizationGenerator
+    from core.data_structures import (
+        AttributionGraph, ExperimentResult, InterventionResult,
         CorrespondenceMetrics, BeliefState, SAEFeature
     )
 except ImportError:

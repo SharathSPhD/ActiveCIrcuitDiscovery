@@ -10,7 +10,7 @@ from .data_structures import (
     SAEFeature, InterventionResult, AttributionGraph, BeliefState,
     CorrespondenceMetrics, NovelPrediction, ExperimentResult
 )
-from ..config.experiment_config import CompleteConfig, InterventionType
+from config.experiment_config import CompleteConfig, InterventionType
 
 class ICircuitTracer(ABC):
     """Interface for circuit discovery and analysis."""
