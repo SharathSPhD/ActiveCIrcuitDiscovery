@@ -162,13 +162,13 @@ class NovelPrediction:
 class BeliefState:
     """State representation for Active Inference agent."""
     # Core pymdp components
-    qs: np.ndarray  # Posterior beliefs over states
-    
+    qs: np.ndarray = field(default_factory=lambda: np.array([1.0]))  # Posterior beliefs over states
+
     # Feature-specific beliefs
-    feature_importances: Dict[int, float]
-    connection_beliefs: Dict[Tuple[int, int], float]
-    uncertainty: Dict[int, float]
-    confidence: float
+    feature_importances: Dict[int, float] = field(default_factory=dict)
+    connection_beliefs: Dict[Tuple[int, int], float] = field(default_factory=dict)
+    uncertainty: Dict[int, float] = field(default_factory=dict)
+    confidence: float = 0.0
     
     # Optional pymdp integration
     generative_model: Optional[Dict[str, Any]] = None

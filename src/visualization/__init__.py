@@ -1,1 +1,6 @@
-# YorK_RP Visualization Module\n\"\"\"Visualization system for Active Inference Circuit Discovery.\"\"\"\n\nfrom .visualizer import CircuitVisualizer\n\n__all__ = ['CircuitVisualizer']
+# YorK_RP Visualization Module
+"""Visualization system for Active Inference Circuit Discovery."""
+
+from .visualizer import CircuitVisualizer
+
+__all__ = ["CircuitVisualizer"]
