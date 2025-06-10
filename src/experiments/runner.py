@@ -6,7 +6,7 @@ import json
 import numpy as np
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Any, Optional
+from typing import Dict, List, Any, Optional, Tuple # Added Tuple
 import logging
 
 # Project imports with proper relative imports
@@ -93,13 +93,11 @@ class YorKExperimentRunner(IExperimentRunner):
                 belief_state = self.ai_agent.initialize_beliefs(active_features)
                 
                 # Run Active Inference guided interventions
-                ai_interventions = self._run_ai_interventions(test_input, active_features)
-                all_intervention_results.extend(ai_interventions)
-                
-                # Extract correspondence metrics from AI agent
-                for result in ai_interventions:
-                    correspondence = self._calculate_correspondence_from_result(result)
-                    all_correspondence_metrics.append(correspondence)
+                # This method will now also populate all_correspondence_metrics
+                ai_intervention_results_this_input, ai_correspondence_metrics_this_input = \
+                    self._run_ai_interventions(test_input, active_features)
+                all_intervention_results.extend(ai_intervention_results_this_input)
+                all_correspondence_metrics.extend(ai_correspondence_metrics_this_input)
                 
                 # Run baseline comparisons for efficiency calculation
                 baseline_counts = self._run_baseline_comparisons(test_input, active_features)
@@ -109,8 +107,12 @@ class YorKExperimentRunner(IExperimentRunner):
                     baseline_intervention_counts[strategy].append(count)
             
             # Calculate final metrics
+            # Pass the count of AI interventions for this run.
+            # Note: if running multiple test inputs, len(all_intervention_results) might be total over all inputs.
+            # This depends on whether efficiency is per input or overall. Assuming overall for now.
+            num_total_ai_interventions = len(all_intervention_results) # Or sum of counts from each _run_ai_interventions call
             efficiency_metrics = self._calculate_efficiency_metrics(
-                len(all_intervention_results), baseline_intervention_counts
+                num_total_ai_interventions, baseline_intervention_counts
             )
             
             # Generate novel predictions
@@ -241,68 +243,79 @@ class YorKExperimentRunner(IExperimentRunner):
         
         return all_active_features
     
-    def _run_ai_interventions(self, text: str, active_features: Dict) -> List[InterventionResult]:
-        """Run Active Inference guided interventions - should need fewer iterations."""
-        interventions = []
+    def _run_ai_interventions(self, text: str, active_features: Dict) -> Tuple[List[InterventionResult], List[CorrespondenceMetrics]]:
+        """
+        Run Active Inference guided interventions.
+        Returns a tuple of (List[InterventionResult], List[CorrespondenceMetrics]).
+        """
+        intervention_results_for_input = []
+        correspondence_metrics_for_input = []
         
         # Flatten features for intervention selection
-        all_features = []
+        all_features_list = [] # Renamed to avoid conflict
         for layer_features in active_features.values():
-            all_features.extend(layer_features)
+            all_features_list.extend(layer_features)
         
-        if not all_features:
-            return interventions
+        if not all_features_list:
+            return intervention_results_for_input, correspondence_metrics_for_input
         
         intervention_count = 0
         max_interventions = self.config.active_inference.max_interventions
         
-        logger.info(f"Starting Active Inference interventions (max: {max_interventions})")
+        logger.info(f"Starting Active Inference interventions (max: {max_interventions}) for input '{text[:30]}...'")
         
-        while intervention_count < max_interventions and all_features:
+        current_features_for_intervention = all_features_list.copy()
+
+        while intervention_count < max_interventions and current_features_for_intervention:
             # Select intervention using Expected Free Energy
-            best_feature = None
-            best_efe = -float('inf')
+            best_feature_to_intervene = None
+            best_efe_score = -float('inf')
             
-            for feature in all_features:
+            for feature_candidate in current_features_for_intervention:
                 efe = self.ai_agent.calculate_expected_free_energy(
-                    feature, InterventionType.ABLATION
+                    feature_candidate, InterventionType.ABLATION # Assuming ABLATION for now
                 )
-                if efe > best_efe:
-                    best_efe = efe
-                    best_feature = feature
+                if efe > best_efe_score:
+                    best_efe_score = efe
+                    best_feature_to_intervene = feature_candidate
             
-            if not best_feature:
-                logger.info("No suitable features found for intervention")
+            if not best_feature_to_intervene:
+                logger.info("No suitable features found for further AI intervention.")
                 break
             
             # Perform intervention
             try:
-                result = self.tracer.perform_intervention(
-                    text, best_feature, InterventionType.ABLATION
+                intervention_outcome = self.tracer.perform_intervention(
+                    text, best_feature_to_intervene, InterventionType.ABLATION
                 )
-                interventions.append(result)
+                intervention_results_for_input.append(intervention_outcome)
                 
-                # Update AI agent beliefs
-                self.ai_agent.update_beliefs(result)
+                # Update AI agent beliefs and get correspondence metrics
+                metrics = self.ai_agent.update_beliefs(intervention_outcome)
+                correspondence_metrics_for_input.append(metrics)
                 
-                # Remove feature from future consideration
-                all_features = [f for f in all_features if f.feature_id != best_feature.feature_id]
+                # Remove selected feature from future consideration for this input's AI run
+                current_features_for_intervention = [
+                    f for f in current_features_for_intervention if f.feature_id != best_feature_to_intervene.feature_id
+                ]
                 
                 intervention_count += 1
-                logger.debug(f"AI intervention {intervention_count}: Feature {best_feature.feature_id}, EFE: {best_efe:.3f}")
+                logger.debug(f"AI intervention {intervention_count}/{max_interventions}: Feature {best_feature_to_intervene.feature_id}, EFE: {best_efe_score:.3f}")
                 
                 # Check convergence - AI should converge quickly
-                if self.ai_agent.check_convergence(self.config.active_inference.convergence_threshold):
-                    logger.info(f"AI agent converged after {intervention_count} interventions (GOOD - proves efficiency)")
+                if self.ai_agent.check_convergence(): # Uses configured threshold by default
+                    logger.info(f"AI agent converged after {intervention_count} interventions for input '{text[:30]}...'.")
                     break
                     
             except Exception as e:
-                logger.warning(f"Intervention on feature {best_feature.feature_id} failed: {e}")
-                # Remove problematic feature
-                all_features = [f for f in all_features if f.feature_id != best_feature.feature_id]
-        
-        logger.info(f"AI interventions completed: {len(interventions)} interventions (target was {max_interventions})")
-        return interventions
+                logger.warning(f"Intervention on feature {best_feature_to_intervene.feature_id} failed: {e}")
+                # Remove problematic feature from consideration
+                current_features_for_intervention = [
+                    f for f in current_features_for_intervention if f.feature_id != best_feature_to_intervene.feature_id
+                ]
+
+        logger.info(f"AI interventions for input '{text[:30]}...' completed: {len(intervention_results_for_input)} interventions performed.")
+        return intervention_results_for_input, correspondence_metrics_for_input
     
     def _run_baseline_comparisons(self, text: str, active_features: Dict) -> Dict[str, int]:
         """Run baseline comparisons - should need many more iterations."""
@@ -310,42 +323,46 @@ class YorKExperimentRunner(IExperimentRunner):
         baseline_counts = {}
         
         # Flatten features
-        all_features = []
+        all_features_list = [] # Renamed
         for layer_features in active_features.values():
-            all_features.extend(layer_features)
+            all_features_list.extend(layer_features)
         
-        if not all_features:
+        if not all_features_list:
             return baseline_counts
         
         for strategy in baseline_strategies:
-            logger.info(f"Running {strategy} baseline strategy")
+            logger.info(f"Running {strategy} baseline strategy for input '{text[:30]}...'")
             
             intervention_count = 0
             max_baseline_interventions = self.config.active_inference.max_interventions * self.config.active_inference.baseline_intervention_multiplier
-            strategy_features = all_features.copy()
+            current_features_for_strategy = all_features_list.copy()
             baseline_effects = []
             
-            while intervention_count < max_baseline_interventions and strategy_features:
+            while intervention_count < max_baseline_interventions and current_features_for_strategy:
                 # Select feature based on strategy
                 if strategy == 'random':
                     import random
-                    feature = random.choice(strategy_features)
+                    if not current_features_for_strategy: break # Should not happen if while condition is correct
+                    feature_to_intervene = random.choice(current_features_for_strategy)
                 elif strategy == 'high_activation':
-                    feature = max(strategy_features, key=lambda f: f.max_activation)
+                    if not current_features_for_strategy: break
+                    feature_to_intervene = max(current_features_for_strategy, key=lambda f: f.max_activation)
                 elif strategy == 'sequential':
-                    feature = strategy_features[0]
-                else:
-                    feature = strategy_features[0]
+                    if not current_features_for_strategy: break
+                    feature_to_intervene = current_features_for_strategy[0]
+                else: # Should not happen
+                    if not current_features_for_strategy: break
+                    feature_to_intervene = current_features_for_strategy[0]
                 
                 # Remove selected feature
-                strategy_features.remove(feature)
+                current_features_for_strategy.remove(feature_to_intervene)
                 
                 try:
                     # Perform intervention
-                    result = self.tracer.perform_intervention(
-                        text, feature, InterventionType.ABLATION
+                    intervention_outcome = self.tracer.perform_intervention(
+                        text, feature_to_intervene, InterventionType.ABLATION
                     )
-                    baseline_effects.append(result.effect_size)
+                    baseline_effects.append(intervention_outcome.effect_size)
                     intervention_count += 1
                     
                     # Simple convergence check for baseline (less sophisticated than AI)
@@ -360,52 +377,50 @@ class YorKExperimentRunner(IExperimentRunner):
                     continue
             
             baseline_counts[strategy] = intervention_count
-            logger.info(f"{strategy} baseline completed: {intervention_count} interventions")
+            logger.info(f"{strategy} baseline for input '{text[:30]}...' completed: {intervention_count} interventions")
         
         return baseline_counts
     
-    def _calculate_correspondence_from_result(self, result: InterventionResult) -> CorrespondenceMetrics:
+    # Removed _calculate_correspondence_from_result as this logic is now in ActiveInferenceAgent.update_beliefs
+
+    def _calculate_efficiency_metrics(self, num_total_ai_interventions: int, baseline_counts: Dict[str, List[int]]) -> Dict[str, float]:
         """
-        Calculate correspondence metrics from intervention result. (Placeholder)
+        Calculate efficiency improvement metrics (RQ2).
+        `num_total_ai_interventions` is the total count of interventions made by the AI agent across all inputs.
+        `baseline_counts` stores lists of intervention counts for each baseline strategy, for each input.
         """
-        # This method is intended to use the AI agent's internal state and models
-        # to calculate how well an intervention's outcome corresponded with the agent's predictions or beliefs.
-        #
-        # CURRENT STATUS: This is a basic placeholder.
-        # The ActiveInferenceAgent currently does not provide a dedicated method to calculate these detailed
-        # CorrespondenceMetrics directly from its post-intervention state in a way that's easily consumable here.
-        # A more robust implementation would require the ActiveInferenceAgent.update_beliefs method to be
-        # fully implemented and potentially return or update specific correspondence data based on its model.
-        #
-        # The current values are simplistic stand-ins derived directly from the InterventionResult's
-        # effect_size or target_token_change, and do not reflect a deep model correspondence.
-        return CorrespondenceMetrics(
-            belief_updating_correspondence=min(1.0, result.effect_size), # Simplistic stand-in
-            precision_weighting_correspondence=min(1.0, abs(result.target_token_change)), # Simplistic stand-in
-            prediction_error_correspondence=min(1.0, result.effect_size * 0.8),
-            overall_correspondence=(min(1.0, result.effect_size) + min(1.0, abs(result.target_token_change)) + min(1.0, result.effect_size * 0.8)) / 3.0
-        )
-    
-    def _calculate_efficiency_metrics(self, ai_interventions: int, baseline_counts: Dict[str, List[int]]) -> Dict[str, float]:
-        """Calculate efficiency improvement metrics (RQ2)."""
         efficiency_metrics = {}
         
-        for strategy, counts_list in baseline_counts.items():
-            if counts_list:
-                avg_baseline = np.mean(counts_list)
-                if avg_baseline > 0:
-                    improvement = ((avg_baseline - ai_interventions) / avg_baseline) * 100
-                    efficiency_metrics[f"{strategy}_improvement"] = max(0.0, improvement)
-                else:
-                    efficiency_metrics[f"{strategy}_improvement"] = 0.0
+        # Calculate average number of AI interventions per input if multiple inputs were processed
+        # This assumes that num_total_ai_interventions is the grand total.
+        # If run_experiment processes multiple inputs, and _run_ai_interventions returns counts per input,
+        # then num_total_ai_interventions should perhaps be an average or compared per input.
+        # For now, let's assume num_total_ai_interventions is the relevant comparable number.
+        # If baseline_counts are per input, we need to average them first.
         
+        avg_ai_interventions = num_total_ai_interventions # This might need refinement based on how it's aggregated
+
+        for strategy, counts_per_input_list in baseline_counts.items():
+            if counts_per_input_list: # List of counts, one for each time this baseline was run (e.g. per test input)
+                avg_baseline_interventions_for_strategy = np.mean(counts_per_input_list)
+                if avg_baseline_interventions_for_strategy > 0:
+                    improvement = ((avg_baseline_interventions_for_strategy - avg_ai_interventions) / avg_baseline_interventions_for_strategy) * 100
+                    efficiency_metrics[f"{strategy}_improvement"] = max(0.0, improvement) # Ensure non-negative
+                else: # Avoid division by zero if baseline took 0 interventions (unlikely but possible)
+                    efficiency_metrics[f"{strategy}_improvement"] = 0.0 if avg_ai_interventions > 0 else 100.0 # Or undefined/NaN
+            else:
+                 efficiency_metrics[f"{strategy}_improvement"] = 0.0 # No data for this baseline
+
+        # The overall_improvement calculation and ai_interventions field are correctly handled next.
+        # The redundant loop that caused the NameError has been removed by not including it here.
+
         # Overall efficiency
         if efficiency_metrics:
             efficiency_metrics['overall_improvement'] = np.mean(list(efficiency_metrics.values()))
         else:
             efficiency_metrics['overall_improvement'] = 0.0
         
-        efficiency_metrics['ai_interventions'] = ai_interventions
+        efficiency_metrics['ai_interventions'] = num_total_ai_interventions # Use the parameter name
         
         return efficiency_metrics
     

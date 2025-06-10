@@ -200,9 +200,11 @@ class CircuitTracer(ICircuitTracer):
         }
         logger.info(f"Created fallback SAE analyzer for layer {layer} (synthetic features only)")
     
-    def find_active_features(self, text: str, threshold: float = 0.05) -> Dict[int, List[SAEFeature]]:
-        """Find active SAE features for given input text."""
-        logger.debug(f"Finding active features for: '{text[:50]}...'")
+    def find_active_features(self, text: str) -> Dict[int, List[SAEFeature]]:
+        """
+        Find active SAE features for given input text using the configured activation threshold.
+        """
+        logger.debug(f"Finding active features for: '{text[:50]}...' with threshold {self.config.sae.activation_threshold}")
         
         tokens = self.model.to_tokens(text)
         active_features = {}
@@ -219,7 +221,9 @@ class CircuitTracer(ICircuitTracer):
                     continue
                 
                 activations = cache[resid_key]
-                features = self._analyze_activations_with_sae(activations, layer, threshold)
+                features = self._analyze_activations_with_sae(
+                    activations, layer, self.config.sae.activation_threshold
+                )
                 
                 if features:
                     active_features[layer] = features[:self.config.sae.max_features_per_layer]
@@ -283,67 +287,101 @@ class CircuitTracer(ICircuitTracer):
     def _analyze_activations_with_sae(self, activations: torch.Tensor, layer_idx: int, threshold: float) -> List[SAEFeature]:
         """
         Analyzes activations using the SAE for a specific layer to find active features.
-        (Placeholder - this method needs full implementation for real feature extraction)
 
         Args:
             activations: The activations tensor from the model (e.g., hook_resid_post).
+                         Shape: (batch_size, sequence_length, d_model)
             layer_idx: The layer index for which the SAE should be used.
             threshold: The activation threshold to consider a feature active.
 
         Returns:
             A list of SAEFeature objects that are active.
         """
-        logger.debug(f"Analyzing activations for layer {layer_idx} using its SAE analyzer.")
+        logger.debug(f"Analyzing activations for layer {layer_idx} with threshold {threshold}.")
         sae_analyzer = self.sae_analyzers.get(layer_idx)
 
         if not sae_analyzer:
             logger.warning(f"No SAE analyzer found for layer {layer_idx}. Cannot analyze activations.")
             return []
 
-        # Example of how one might interact with a real SAE (e.g., sae_lens)
-        # or the fallback structure. This is highly simplified.
         active_sae_features = []
 
-        if sae_analyzer['type'] == 'fallback':
-            # Fallback logic: very basic, not real feature analysis
-            # This is just to allow the pipeline to run.
-            # For instance, consider a feature active if its random "projection" is high.
-            # The fallback 'encoder' is (d_model, n_features)
-            # Activations are likely (batch, seq_len, d_model)
-            # We'd need to reshape/select activations. Taking mean over batch/seq for simplicity.
-            reshaped_activations = activations.reshape(-1, sae_analyzer['d_model']) # (N, d_model)
+        # Ensure activations are on the same device as the SAE/model
+        activations = activations.to(self.device)
 
-            # "Project" onto random feature directions
+        if isinstance(sae_analyzer, dict) and sae_analyzer.get('type') == 'fallback':
+            # Fallback SAE (dictionary based)
+            encoder_weights = sae_analyzer['encoder'].to(self.device) # d_model x n_features
+            decoder_weights = sae_analyzer['decoder'].to(self.device) # n_features x d_model
+            n_features = sae_analyzer['n_features']
+
+            # Reshape activations: (batch_size * sequence_length, d_model)
+            d_model = activations.shape[-1]
+            reshaped_activations = activations.reshape(-1, d_model)
+
+            # Simplified feature activation: ReLU(activations @ W_enc)
             # (N, d_model) @ (d_model, n_features) -> (N, n_features)
-            feature_activations = torch.matmul(reshaped_activations, sae_analyzer['encoder'])
+            feature_acts_raw = torch.relu(reshaped_activations @ encoder_weights)
 
-            # Consider a feature active if its max "activation" across N samples exceeds threshold
-            # This is a simplification. Real SAEs have specific ways to get feature activations.
-            for i in range(sae_analyzer['n_features']):
-                max_act_for_feature = torch.max(feature_activations[:, i]).item()
-                if max_act_for_feature > threshold:
+            if feature_acts_raw.numel() == 0: # Handle empty inputs
+                max_feature_acts = torch.zeros(n_features, device=self.device)
+            else:
+                # Max over N (batch*seq samples): (n_features)
+                max_feature_acts = torch.max(feature_acts_raw, dim=0)[0]
+
+            for feature_idx in range(n_features):
+                max_activation = max_feature_acts[feature_idx].item()
+                if max_activation > threshold:
                     active_sae_features.append(
                         SAEFeature(
-                            feature_id=i,
+                            feature_id=feature_idx,
                             layer=layer_idx,
                             activation_threshold=threshold,
-                            description=f"Fallback feature {i} for layer {layer_idx}",
-                            max_activation=min(1.0, max_act_for_feature), # Cap at 1.0 for consistency
-                            examples=[], # No real examples for fallback
-                            # feature_vector and decoder_weights could be slices of the fallback tensors
-                            feature_vector=sae_analyzer['encoder'][:, i].cpu().numpy(),
-                            decoder_weights=sae_analyzer['decoder'][i, :].cpu().numpy()
+                            description=f"Fallback Layer {layer_idx} SAE Feature {feature_idx}",
+                            max_activation=min(1.0, max_activation), # Cap at 1.0 for data structure constraint
+                            examples=[],
+                            feature_vector=encoder_weights[:, feature_idx].detach().cpu().numpy(),
+                            decoder_weights=decoder_weights[feature_idx, :].detach().cpu().numpy()
                         )
                     )
-            logger.info(f"Fallback SAE for layer {layer_idx} 'found' {len(active_sae_features)} synthetic features.")
+            logger.info(f"Fallback SAE for layer {layer_idx} processed {len(active_sae_features)} synthetic features.")
 
-        else: # This would be for a real SAE (e.g., sae_lens.SAE object)
-            # This part needs to be implemented to correctly use the sae_lens SAE API
-            # For example:
-            #   hidden_pre = sae_analyzer.encode(activations) # Get feature activations
-            #   # Iterate through features, check against threshold, create SAEFeature objects
-            logger.warning(f"Real SAE processing for layer {layer_idx} in _analyze_activations_with_sae is not fully implemented.")
-            # Return empty for now to avoid errors with incompatible SAE object interaction
-            return []
+        elif SAE_LENS_AVAILABLE and isinstance(sae_analyzer, SAE):
+            # Real SAE (sae_lens.SAE object)
+            sae_model = sae_analyzer
+
+            # SAE Lens encode method: (batch_size, seq_len, d_model) -> (batch_size, seq_len, d_sae)
+            # The direct output of encode is usually what's considered feature activations.
+            feature_acts = sae_model.encode(activations) # Shape: (batch, seq, d_sae)
+
+            if feature_acts.numel() == 0: # Handle cases where activations might be empty
+                 max_feature_acts = torch.zeros(sae_model.cfg.d_sae, device=self.device)
+            else:
+                # Max over batch and sequence: (d_sae)
+                max_feature_acts_batch_seq = torch.max(feature_acts, dim=0)[0] # (seq, d_sae)
+                max_feature_acts = torch.max(max_feature_acts_batch_seq, dim=0)[0] # (d_sae)
+
+            for feature_idx in range(sae_model.cfg.d_sae):
+                max_activation = max_feature_acts[feature_idx].item()
+                if max_activation > threshold:
+                    # W_enc: (d_model, d_sae), W_dec: (d_sae, d_model)
+                    feature_vec = sae_model.W_enc[:, feature_idx].detach().cpu().numpy()
+                    decoder_vec = sae_model.W_dec[feature_idx, :].detach().cpu().numpy()
+
+                    active_sae_features.append(
+                        SAEFeature(
+                            feature_id=feature_idx,
+                            layer=layer_idx,
+                            activation_threshold=threshold,
+                            description=f"Layer {layer_idx} SAE Feature {feature_idx}",
+                            max_activation=min(1.0, max_activation), # Cap at 1.0
+                            examples=[], # Placeholder
+                            feature_vector=feature_vec,
+                            decoder_weights=decoder_vec
+                        )
+                    )
+            logger.info(f"Real SAE for layer {layer_idx} found {len(active_sae_features)} features.")
+        else:
+            logger.warning(f"Unknown SAE analyzer type for layer {layer_idx}: {type(sae_analyzer)}. Skipping.")
 
         return active_sae_features
