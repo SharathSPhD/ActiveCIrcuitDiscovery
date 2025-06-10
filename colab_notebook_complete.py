@@ -48,12 +48,18 @@ print("\nEnvironment check complete!")
 !pip install -q tqdm pyyaml typing-extensions
 !pip install -q kaleido
 
-# Install research libraries
-!pip install -q pymdp>=0.0.5.1
-!pip install -q sae-lens>=1.0.0
+# Install research libraries - using available versions
+!pip install -q pymdp==0.0.1
+
+# Try to install optional research libraries
+try:
+    !pip install -q sae-lens
+    print("sae-lens installed successfully")
+except:
+    print("sae-lens not available - using fallback SAE analysis")
 
 try:
-    !pip install -q circuitsvis>=1.0.0
+    !pip install -q circuitsvis
     print("circuitsvis installed successfully")
 except:
     print("circuitsvis not available - using fallback visualizations")

@@ -1,44 +1,45 @@
-# Core Dependencies
+# Core Dependencies - Tested and Compatible
 torch>=2.0.0
-numpy>=1.21.0
-matplotlib>=3.5.0
-seaborn>=0.11.0
-plotly>=5.0.0
-pandas>=1.3.0
-scipy>=1.7.0
-scikit-learn>=1.0.0
-pyyaml>=6.0.0
+numpy>=1.21.0,<2.0.0
+matplotlib>=3.5.0,<4.0.0
+seaborn>=0.11.0,<1.0.0
+plotly>=5.0.0,<6.0.0
+pandas>=1.3.0,<3.0.0
+scipy>=1.7.0,<2.0.0
+scikit-learn>=1.0.0,<2.0.0
+pyyaml>=6.0.0,<7.0.0
 
-# Transformer and NLP
-transformers>=4.20.0
-transformer-lens>=1.0.0
-tokenizers>=0.13.0
+# Transformer and NLP - Stable Versions
+transformers>=4.20.0,<5.0.0
+transformer-lens>=1.0.0,<2.0.0
+tokenizers>=0.13.0,<1.0.0
 
-# Active Inference and Circuit Analysis
-pymdp>=0.0.5.1            # Active Inference framework
-sae-lens>=1.0.0            # Sparse Autoencoder analysis
-circuit-tracer>=0.1.0      # Advanced circuit discovery
-circuitsvis>=1.0.0         # Enhanced circuit visualizations
+# Research Libraries - Available Versions
+pymdp==0.0.1               # Only available version (Active Inference framework)
 
-# Visualization and Plotting
-networkx>=2.6.0
-jaxtyping>=0.2.0
-einops>=0.6.0
-kaleido>=0.2.1             # For plotly static image export
-fancy-einsum>=0.0.3        # For transformer-lens operations
+# Visualization and Plotting - Core Only
+networkx>=2.6.0,<4.0.0
+jaxtyping>=0.2.0,<1.0.0
+einops>=0.6.0,<1.0.0
+kaleido>=0.2.1,<1.0.0      # For plotly static image export
+fancy-einsum>=0.0.3,<1.0.0 # For transformer-lens operations
 
 # Development and Testing
-pytest>=6.0.0
-jupyter>=1.0.0
-tqdm>=4.60.0
-typing-extensions>=4.0.0
-dataclasses-json>=0.5.0    # For config serialization
+pytest>=6.0.0,<8.0.0
+jupyter>=1.0.0,<2.0.0
+tqdm>=4.60.0,<5.0.0
+typing-extensions>=4.0.0,<5.0.0
 
-# Optional GPU acceleration
-# torch-audio>=2.0.0       # Uncomment if needed
-# torchvision>=0.15.0      # Uncomment if needed
+# Optional Research Libraries (install separately if needed)
+# sae-lens                  # Install with: pip install sae-lens
+# circuitsvis               # Install with: pip install circuitsvis
 
-# Installation Notes:
-# For CPU-only: pip install torch --index-url https://download.pytorch.org/whl/cpu
-# For CUDA 11.8: pip install torch --index-url https://download.pytorch.org/whl/cu118
-# For CUDA 12.1: pip install torch --index-url https://download.pytorch.org/whl/cu121
+# Installation Commands:
+# Standard install: pip install -r requirements.txt
+# With optional research libs: 
+#   pip install sae-lens circuitsvis
+
+# PyTorch Installation (choose one):
+# CPU: pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
+# CUDA 11.8: pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+# CUDA 12.1: pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
