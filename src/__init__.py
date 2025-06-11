@@ -16,10 +16,15 @@ Main Components:
 """
 
 from .config import get_config, CompleteConfig
-from .core import SAEFeature, InterventionResult, ExperimentResult
+from .core import (
+    SAEFeature, InterventionResult, ExperimentResult,
+    CorrespondenceCalculator, EnhancedPredictionGenerator,
+    PredictionValidator, StatisticalValidator
+)
 from .circuit_analysis import CircuitTracer
 from .active_inference import ActiveInferenceAgent
 from .experiments import YorKExperimentRunner
+from .visualization import CircuitVisualizer
 
 __version__ = "1.0.0"
 __author__ = "YorK Research Project"
@@ -32,7 +37,12 @@ __all__ = [
     'ExperimentResult',
     'CircuitTracer',
     'ActiveInferenceAgent',
-    'YorKExperimentRunner'
+    'YorKExperimentRunner',
+    'CircuitVisualizer',
+    'CorrespondenceCalculator',
+    'EnhancedPredictionGenerator',
+    'PredictionValidator',
+    'StatisticalValidator'
 ]
 
 # Quick setup function for common use cases

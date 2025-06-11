@@ -194,3 +194,382 @@ class CircuitTracer(ICircuitTracer):
         total_features = sum(len(features) for features in active_features.values())
         logger.info(f"Found {total_features} active features across {len(active_features)} layers")
         return active_features
+    
+    def perform_intervention(self, text: str, feature: SAEFeature, 
+                           intervention_type: InterventionType) -> InterventionResult:
+        """Perform intervention on specified feature."""
+        logger.debug(f"Performing {intervention_type.value} intervention on feature {feature.feature_id}")
+        
+        tokens = self.model.to_tokens(text)
+        
+        # Get baseline activations and logits
+        with torch.no_grad():
+            baseline_logits, baseline_cache = self.model.run_with_cache(tokens)
+            baseline_logits = baseline_logits[:, -1, :]  # Last token logits
+        
+        # Perform intervention based on type
+        if intervention_type == InterventionType.ABLATION:
+            intervened_logits = self._perform_ablation_intervention(
+                tokens, feature, baseline_cache
+            )
+        elif intervention_type == InterventionType.ACTIVATION_PATCHING:
+            intervened_logits = self._perform_activation_patching(
+                tokens, feature, baseline_cache
+            )
+        elif intervention_type == InterventionType.MEAN_ABLATION:
+            intervened_logits = self._perform_mean_ablation(
+                tokens, feature, baseline_cache
+            )
+        else:
+            raise ValueError(f"Unknown intervention type: {intervention_type}")
+        
+        # Calculate metrics
+        effect_size = self._calculate_effect_size(baseline_logits, intervened_logits)
+        target_token_change = self._calculate_target_token_change(
+            baseline_logits, intervened_logits, tokens
+        )
+        
+        return InterventionResult(
+            intervention_type=intervention_type,
+            target_feature=feature,
+            original_logits=baseline_logits,
+            intervened_logits=intervened_logits,
+            effect_size=effect_size,
+            target_token_change=target_token_change,
+            intervention_layer=feature.layer,
+            metadata={
+                'input_text': text,
+                'feature_activation': feature.max_activation,
+                'intervention_success': True
+            }
+        )
+    
+    def build_attribution_graph(self, text: str) -> AttributionGraph:
+        """Build complete attribution graph for circuit analysis."""
+        logger.info(f"Building attribution graph for: '{text[:50]}...'")
+        
+        # Find active features
+        active_features = self.find_active_features(text)
+        
+        if not active_features:
+            logger.warning("No active features found for attribution graph")
+            return self._create_empty_attribution_graph(text)
+        
+        # Flatten features and create nodes
+        all_features = []
+        for layer_features in active_features.values():
+            all_features.extend(layer_features)
+        
+        nodes = {}
+        for i, feature in enumerate(all_features):
+            # Calculate causal influence through intervention
+            intervention_result = self.perform_intervention(
+                text, feature, InterventionType.ABLATION
+            )
+            
+            nodes[i] = CircuitNode(
+                feature=feature,
+                activation_value=feature.max_activation,
+                causal_influence=intervention_result.effect_size
+            )
+        
+        # Build edges through attribution analysis
+        edges = self._compute_feature_attributions(text, all_features, nodes)
+        
+        # Calculate overall confidence
+        confidence = self._calculate_graph_confidence(nodes, edges)
+        
+        # Create attribution graph
+        attribution_graph = AttributionGraph(
+            input_text=text,
+            nodes=nodes,
+            edges=edges,
+            target_output=self._get_target_output(text),
+            confidence=confidence,
+            metadata={
+                'total_features': len(all_features),
+                'total_edges': len(edges),
+                'layers_analyzed': list(active_features.keys()),
+                'method': 'cross_layer_attribution'
+            }
+        )
+        
+        logger.info(f"Built attribution graph with {len(nodes)} nodes and {len(edges)} edges")
+        return attribution_graph
+    
+    def get_feature_activations(self, text: str, layer: int) -> torch.Tensor:
+        """Get feature activations for specific layer."""
+        tokens = self.model.to_tokens(text)
+        
+        with torch.no_grad():
+            _, cache = self.model.run_with_cache(tokens)
+            
+            resid_key = f"blocks.{layer}.hook_resid_post"
+            if resid_key in cache:
+                activations = cache[resid_key]
+                
+                # Apply SAE if available
+                if layer in self.sae_analyzers:
+                    sae = self.sae_analyzers[layer]
+                    if isinstance(sae, dict):  # Fallback SAE
+                        # Simple linear transformation
+                        activations_flat = activations.view(-1, activations.size(-1))
+                        feature_activations = torch.matmul(activations_flat, sae['encoder'])
+                        return F.relu(feature_activations)
+                    else:
+                        # Real SAE
+                        return sae.encode(activations)
+                
+                return activations
+        
+        return torch.zeros(1, 1, self.model.cfg.d_model, device=self.device)
+    
+    def _perform_ablation_intervention(self, tokens: torch.Tensor, 
+                                     feature: SAEFeature, 
+                                     baseline_cache: Dict) -> torch.Tensor:
+        """Perform feature ablation intervention."""
+        
+        def ablation_hook(activations, hook):
+            if feature.layer in self.sae_analyzers:
+                sae = self.sae_analyzers[feature.layer]
+                if isinstance(sae, dict):  # Fallback SAE
+                    # Zero out specific feature in encoder space
+                    activations_flat = activations.view(-1, activations.size(-1))
+                    feature_activations = torch.matmul(activations_flat, sae['encoder'])
+                    feature_activations[:, feature.feature_id] = 0.0
+                    # Reconstruct
+                    reconstructed = torch.matmul(feature_activations, sae['decoder'])
+                    return reconstructed.view(activations.shape)
+                else:
+                    # Real SAE ablation
+                    feature_acts = sae.encode(activations)
+                    feature_acts[:, :, feature.feature_id] = 0.0
+                    return sae.decode(feature_acts)
+            return activations
+        
+        # Run with intervention hook
+        hook_point = f"blocks.{feature.layer}.hook_resid_post"
+        with self.model.hooks([(hook_point, ablation_hook)]):
+            logits = self.model(tokens)
+        
+        return logits[:, -1, :]
+    
+    def _perform_activation_patching(self, tokens: torch.Tensor,
+                                   feature: SAEFeature,
+                                   baseline_cache: Dict) -> torch.Tensor:
+        """Perform activation patching intervention."""
+        
+        # Get clean activation for this feature
+        clean_activation = baseline_cache[f"blocks.{feature.layer}.hook_resid_post"]
+        
+        def patching_hook(activations, hook):
+            if feature.layer in self.sae_analyzers:
+                sae = self.sae_analyzers[feature.layer]
+                if isinstance(sae, dict):  # Fallback SAE
+                    # Patch specific feature with clean activation
+                    activations_flat = activations.view(-1, activations.size(-1))
+                    clean_flat = clean_activation.view(-1, clean_activation.size(-1))
+                    
+                    feature_acts = torch.matmul(activations_flat, sae['encoder'])
+                    clean_feature_acts = torch.matmul(clean_flat, sae['encoder'])
+                    
+                    # Patch specific feature
+                    feature_acts[:, feature.feature_id] = clean_feature_acts[:, feature.feature_id]
+                    
+                    # Reconstruct
+                    reconstructed = torch.matmul(feature_acts, sae['decoder'])
+                    return reconstructed.view(activations.shape)
+                else:
+                    # Real SAE patching
+                    feature_acts = sae.encode(activations)
+                    clean_feature_acts = sae.encode(clean_activation)
+                    feature_acts[:, :, feature.feature_id] = clean_feature_acts[:, :, feature.feature_id]
+                    return sae.decode(feature_acts)
+            return activations
+        
+        hook_point = f"blocks.{feature.layer}.hook_resid_post"
+        with self.model.hooks([(hook_point, patching_hook)]):
+            logits = self.model(tokens)
+        
+        return logits[:, -1, :]
+    
+    def _perform_mean_ablation(self, tokens: torch.Tensor,
+                             feature: SAEFeature,
+                             baseline_cache: Dict) -> torch.Tensor:
+        """Perform mean ablation intervention."""
+        
+        # Calculate mean activation for this feature across dataset
+        # For now, use zero ablation as approximation
+        return self._perform_ablation_intervention(tokens, feature, baseline_cache)
+    
+    def _calculate_effect_size(self, baseline_logits: torch.Tensor, 
+                             intervened_logits: torch.Tensor) -> float:
+        """Calculate intervention effect size."""
+        # L2 norm of logit difference, normalized
+        diff = intervened_logits - baseline_logits
+        l2_norm = torch.norm(diff).item()
+        
+        # Normalize by baseline logit magnitude
+        baseline_norm = torch.norm(baseline_logits).item()
+        normalized_effect = l2_norm / (baseline_norm + 1e-8)
+        
+        return min(1.0, normalized_effect)
+    
+    def _calculate_target_token_change(self, baseline_logits: torch.Tensor,
+                                     intervened_logits: torch.Tensor,
+                                     tokens: torch.Tensor) -> float:
+        """Calculate change in target token probability."""
+        # Get the most likely next token from baseline
+        target_token = torch.argmax(baseline_logits, dim=-1)
+        
+        # Calculate probability change
+        baseline_probs = F.softmax(baseline_logits, dim=-1)
+        intervened_probs = F.softmax(intervened_logits, dim=-1)
+        
+        baseline_prob = baseline_probs[0, target_token].item()
+        intervened_prob = intervened_probs[0, target_token].item()
+        
+        return baseline_prob - intervened_prob
+    
+    def _compute_feature_attributions(self, text: str, features: List[SAEFeature],
+                                    nodes: Dict[int, CircuitNode]) -> Dict[Tuple[int, int], float]:
+        """Compute attribution edges between features."""
+        edges = {}
+        
+        # For each pair of features from different layers
+        for i, feature_i in enumerate(features):
+            for j, feature_j in enumerate(features):
+                if i != j and feature_i.layer < feature_j.layer:
+                    # Calculate attribution strength
+                    attribution = self._calculate_pairwise_attribution(
+                        text, feature_i, feature_j
+                    )
+                    
+                    if abs(attribution) > 0.1:  # Threshold for significant edges
+                        edges[(i, j)] = attribution
+                        nodes[i].add_downstream(j)
+                        nodes[j].add_upstream(i)
+        
+        return edges
+    
+    def _calculate_pairwise_attribution(self, text: str, 
+                                      source_feature: SAEFeature,
+                                      target_feature: SAEFeature) -> float:
+        """Calculate attribution between two features."""
+        # Simplified attribution: correlation between activations
+        
+        tokens = self.model.to_tokens(text)
+        
+        with torch.no_grad():
+            _, cache = self.model.run_with_cache(tokens)
+            
+            # Get activations for both features
+            source_acts = self.get_feature_activations(text, source_feature.layer)
+            target_acts = self.get_feature_activations(text, target_feature.layer)
+            
+            if source_acts.numel() > source_feature.feature_id and target_acts.numel() > target_feature.feature_id:
+                source_val = source_acts.flatten()[source_feature.feature_id].item()
+                target_val = target_acts.flatten()[target_feature.feature_id].item()
+                
+                # Simple correlation proxy
+                return source_val * target_val / (source_feature.max_activation + 1e-8)
+        
+        return 0.0
+    
+    def _calculate_graph_confidence(self, nodes: Dict[int, CircuitNode],
+                                  edges: Dict[Tuple[int, int], float]) -> float:
+        """Calculate overall graph confidence."""
+        if not nodes:
+            return 0.0
+        
+        # Base confidence on node causal influences and edge strengths
+        node_confidences = [node.causal_influence for node in nodes.values()]
+        edge_strengths = [abs(weight) for weight in edges.values()]
+        
+        avg_node_confidence = np.mean(node_confidences) if node_confidences else 0.0
+        avg_edge_strength = np.mean(edge_strengths) if edge_strengths else 0.0
+        
+        # Combine with connectivity bonus
+        connectivity_bonus = min(0.2, len(edges) / (len(nodes) * (len(nodes) - 1) / 2))
+        
+        overall_confidence = (0.6 * avg_node_confidence + 
+                            0.3 * avg_edge_strength + 
+                            0.1 * connectivity_bonus)
+        
+        return min(1.0, max(0.0, overall_confidence))
+    
+    def _get_target_output(self, text: str) -> str:
+        """Get target output for the input text."""
+        tokens = self.model.to_tokens(text)
+        
+        with torch.no_grad():
+            logits = self.model(tokens)
+            next_token_id = torch.argmax(logits[:, -1, :], dim=-1)
+            next_token = self.model.to_string(next_token_id)
+        
+        return next_token.strip()
+    
+    def _create_empty_attribution_graph(self, text: str) -> AttributionGraph:
+        """Create empty attribution graph for edge cases."""
+        return AttributionGraph(
+            input_text=text,
+            nodes={},
+            edges={},
+            target_output="",
+            confidence=0.0,
+            metadata={'error': 'no_active_features'}
+        )
+    
+    def _analyze_activations_with_sae(self, activations: torch.Tensor, 
+                                    layer: int, threshold: float) -> List[SAEFeature]:
+        """Analyze activations using SAE to extract features."""
+        features = []
+        
+        if layer not in self.sae_analyzers:
+            return features
+        
+        sae = self.sae_analyzers[layer]
+        
+        if isinstance(sae, dict):  # Fallback SAE
+            # Simple feature extraction
+            activations_flat = activations.view(-1, activations.size(-1))
+            feature_activations = torch.matmul(activations_flat, sae['encoder'])
+            feature_activations = F.relu(feature_activations)
+            
+            # Find features above threshold
+            for feature_id in range(feature_activations.size(-1)):
+                activation_val = feature_activations[:, feature_id].max().item()
+                if activation_val > threshold:
+                    features.append(SAEFeature(
+                        feature_id=feature_id,
+                        layer=layer,
+                        activation_threshold=threshold,
+                        description=f"Feature {feature_id} in layer {layer}",
+                        max_activation=activation_val,
+                        examples=[f"Activation: {activation_val:.3f}"]
+                    ))
+        else:
+            # Real SAE feature extraction
+            try:
+                feature_activations = sae.encode(activations)
+                
+                # Find features above threshold
+                active_indices = (feature_activations > threshold).nonzero(as_tuple=True)
+                
+                for batch_idx, pos_idx, feature_idx in zip(*active_indices):
+                    activation_val = feature_activations[batch_idx, pos_idx, feature_idx].item()
+                    
+                    features.append(SAEFeature(
+                        feature_id=feature_idx.item(),
+                        layer=layer,
+                        activation_threshold=threshold,
+                        description=f"SAE Feature {feature_idx.item()} in layer {layer}",
+                        max_activation=activation_val,
+                        examples=[f"Position {pos_idx.item()}: {activation_val:.3f}"]
+                    ))
+            except Exception as e:
+                logger.warning(f"SAE analysis failed for layer {layer}: {e}")
+        
+        # Sort by activation strength and limit
+        features.sort(key=lambda f: f.max_activation, reverse=True)
+        return features

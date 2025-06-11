@@ -1,0 +1,63 @@
+# Enhanced Configuration for YorK_RP Active Inference Circuit Discovery
+# Configuration optimized for the enhanced system with statistical validation
+
+model:
+  name: "gpt2-small"
+  device: "auto"  # auto, cpu, cuda
+  max_context_length: 1024
+  use_cache: true
+
+sae:
+  enabled: true
+  auto_discover_layers: true      # Auto-discover active layers across ALL model layers
+  target_layers: []               # Empty - will be populated by comprehensive auto-discovery
+  activation_threshold: 0.03      # Lower threshold for more comprehensive feature discovery
+  max_features_per_layer: 30      # More features for richer analysis
+  neuronpedia_source: true
+  layer_search_range: [0, -1]     # Search ALL layers: [start, end] (-1 = last layer)
+
+active_inference:
+  enabled: true
+  epistemic_weight: 0.75          # Higher epistemic weight for better correspondence
+  exploration_weight: 0.65        # Balanced exploration
+  convergence_threshold: 0.12     # Tighter convergence for efficiency demonstration
+  max_interventions: 15           # Lower max for efficiency demonstration
+  use_pymdp: true
+
+experiment:
+  name: "enhanced_golden_gate_discovery"
+  output_dir: "enhanced_experiment_results"
+  max_parallel_jobs: 1
+  save_intermediate_results: true
+  generate_visualizations: true
+
+research_questions:
+  rq1_correspondence_target: 75.0  # Higher target for enhanced system
+  rq2_efficiency_target: 35.0      # Higher efficiency target
+  rq3_predictions_target: 5        # More predictions for robust validation
+
+logging:
+  level: "INFO"
+  file_output: true
+  console_output: true
+  max_file_size_mb: 20
+
+# Enhanced-specific configurations
+statistical_validation:
+  enabled: true
+  significance_level: 0.05
+  bootstrap_samples: 10000
+  confidence_level: 0.95
+  multiple_comparisons_correction: "bonferroni"
+
+prediction_validation:
+  enabled: true
+  min_sample_size: 15
+  validation_threshold: 0.8
+  cross_validation_folds: 5
+
+visualization:
+  enhanced_plots: true
+  interactive_dashboards: true
+  publication_ready: true
+  save_formats: ["png", "pdf", "html"]

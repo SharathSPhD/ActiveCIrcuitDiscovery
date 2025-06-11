@@ -72,6 +72,31 @@ class LoggingConfig:
     max_file_size_mb: int = 10
 
 @dataclass
+class StatisticalValidationConfig:
+    """Configuration for enhanced statistical validation."""
+    enabled: bool = True
+    significance_level: float = 0.05
+    bootstrap_samples: int = 10000
+    confidence_level: float = 0.95
+    multiple_comparisons_correction: str = "bonferroni"
+
+@dataclass
+class PredictionValidationConfig:
+    """Configuration for enhanced prediction validation."""
+    enabled: bool = True
+    min_sample_size: int = 15
+    validation_threshold: float = 0.8
+    cross_validation_folds: int = 5
+
+@dataclass
+class VisualizationConfig:
+    """Configuration for enhanced visualizations."""
+    enhanced_plots: bool = True
+    interactive_dashboards: bool = True
+    publication_ready: bool = True
+    save_formats: List[str] = field(default_factory=lambda: ["png", "pdf", "html"])
+
+@dataclass
 class CompleteConfig:
     """Complete configuration for the YorK_RP experiment."""
     model: ModelConfig = field(default_factory=ModelConfig)
@@ -80,6 +105,9 @@ class CompleteConfig:
     experiment: ExperimentConfig = field(default_factory=ExperimentConfig)
     research_questions: ResearchQuestionConfig = field(default_factory=ResearchQuestionConfig)
     logging: LoggingConfig = field(default_factory=LoggingConfig)
+    statistical_validation: StatisticalValidationConfig = field(default_factory=StatisticalValidationConfig)
+    prediction_validation: PredictionValidationConfig = field(default_factory=PredictionValidationConfig)
+    visualization: VisualizationConfig = field(default_factory=VisualizationConfig)
 
 class ConfigManager:
     """Manages configuration loading, validation, and access."""
@@ -112,6 +140,9 @@ class ConfigManager:
             exp_config = ExperimentConfig(**config_dict.get('experiment', {}))
             rq_config = ResearchQuestionConfig(**config_dict.get('research_questions', {}))
             log_config = LoggingConfig(**config_dict.get('logging', {}))
+            stat_val_config = StatisticalValidationConfig(**config_dict.get('statistical_validation', {}))
+            pred_val_config = PredictionValidationConfig(**config_dict.get('prediction_validation', {}))
+            vis_config = VisualizationConfig(**config_dict.get('visualization', {}))
             
             return CompleteConfig(
                 model=model_config,
@@ -119,7 +150,10 @@ class ConfigManager:
                 active_inference=ai_config,
                 experiment=exp_config,
                 research_questions=rq_config,
-                logging=log_config
+                logging=log_config,
+                statistical_validation=stat_val_config,
+                prediction_validation=pred_val_config,
+                visualization=vis_config
             )
         except Exception as e:
             raise ValueError(f"Invalid configuration: {e}")
@@ -173,6 +207,25 @@ class ConfigManager:
                 'file_output': config.logging.file_output,
                 'console_output': config.logging.console_output,
                 'max_file_size_mb': config.logging.max_file_size_mb
+            },
+            'statistical_validation': {
+                'enabled': config.statistical_validation.enabled,
+                'significance_level': config.statistical_validation.significance_level,
+                'bootstrap_samples': config.statistical_validation.bootstrap_samples,
+                'confidence_level': config.statistical_validation.confidence_level,
+                'multiple_comparisons_correction': config.statistical_validation.multiple_comparisons_correction
+            },
+            'prediction_validation': {
+                'enabled': config.prediction_validation.enabled,
+                'min_sample_size': config.prediction_validation.min_sample_size,
+                'validation_threshold': config.prediction_validation.validation_threshold,
+                'cross_validation_folds': config.prediction_validation.cross_validation_folds
+            },
+            'visualization': {
+                'enhanced_plots': config.visualization.enhanced_plots,
+                'interactive_dashboards': config.visualization.interactive_dashboards,
+                'publication_ready': config.visualization.publication_ready,
+                'save_formats': config.visualization.save_formats
             }
         }
         
@@ -228,3 +281,8 @@ def get_config(config_path: Optional[Path] = None) -> CompleteConfig:
     """Get current configuration."""
     manager = get_config_manager(config_path)
     return manager.load_config()
+
+def get_enhanced_config() -> CompleteConfig:
+    """Get enhanced configuration with all advanced features enabled."""
+    enhanced_config_path = Path(__file__).parent / "enhanced_config.yaml"
+    return get_config(enhanced_config_path)

@@ -1,18 +1,27 @@
 #!/usr/bin/env python3
 """
-ActiveCircuitDiscovery: Golden Gate Bridge Circuit Discovery Experiment
-======================================================================
+Enhanced Golden Gate Bridge Circuit Discovery Experiment
+=======================================================
 
-Main experiment demonstrating Active Inference approach to circuit discovery
-using the Golden Gate Bridge as a canonical example in mechanistic interpretability.
+Complete Active Inference approach to circuit discovery using the Golden Gate Bridge
+as a canonical example in mechanistic interpretability research.
 
-This experiment validates the three core research questions:
-- RQ1: Active Inference correspondence with circuit behavior (>70% target)
-- RQ2: Efficiency improvement over baseline methods (30% target) 
-- RQ3: Novel predictions from Active Inference analysis (3+ target)
+This enhanced experiment validates all three research questions with:
+- Proper correspondence metrics calibration [0,100%]
+- Enhanced novel prediction generation and validation
+- Comprehensive statistical testing and validation
+- Complete circuit tracer and Active Inference agent
+
+Research Questions Validated:
+- RQ1: Active Inference correspondence with circuit behavior (≥70% target)
+- RQ2: Efficiency improvement over baseline methods (≥30% target) 
+- RQ3: Novel predictions from Active Inference analysis (≥3 target)
 
 Usage:
     python experiments/golden_gate_bridge.py
+    
+    # With statistical validation:
+    python experiments/golden_gate_bridge.py --with-stats
     
     # Or from project root:
     python -m experiments.golden_gate_bridge
@@ -29,28 +38,31 @@ sys.path.insert(0, str(project_root / "src"))
 import logging
 from datetime import datetime
 
-# Import ActiveCircuitDiscovery components using new modular structure
+# Import enhanced ActiveCircuitDiscovery components
 try:
-    from experiments.runner import YorKExperimentRunner, run_golden_gate_experiment
+    from experiments.runner import YorKExperimentRunner
     from core.data_structures import ExperimentResult
-    from config.experiment_config import get_config
+    from config.experiment_config import CompleteConfig
     from circuit_analysis.tracer import CircuitTracer
     from active_inference.agent import ActiveInferenceAgent
+    from core.statistical_validation import perform_comprehensive_validation
+    from core.prediction_system import EnhancedPredictionGenerator
     
-    print("[SUCCESS] All ActiveCircuitDiscovery components imported successfully")
+    print("[SUCCESS] All enhanced ActiveCircuitDiscovery components imported successfully")
+    ENHANCED_MODE = True
     
 except ImportError as e:
-    print(f"[ERROR] Import error: {e}")
-    print("Trying fallback imports...")
+    print(f"[WARNING] Enhanced components import error: {e}")
+    print("Trying basic imports...")
     
     try:
-        # Fallback to direct imports
+        # Fallback to basic imports
         import torch
         import transformer_lens
         import numpy as np
         
         print("[FALLBACK] Using basic transformer analysis")
-        FALLBACK_MODE = True
+        ENHANCED_MODE = False
         
     except ImportError as e2:
         print(f"[CRITICAL] Cannot import basic dependencies: {e2}")
@@ -112,6 +124,18 @@ def run_golden_gate_bridge_experiment():
         # Save results
         output_dir = runner.config.experiment.output_dir
         runner.save_results(results, output_dir)
+        
+        # Enhanced statistical validation
+        if ENHANCED_MODE:
+            from core.statistical_validation import perform_comprehensive_validation
+            statistical_validation = perform_comprehensive_validation(results)
+            print("\n📊 Statistical Validation:")
+            print("-" * 40)
+            if 'statistical_summary' in statistical_validation:
+                stats = statistical_validation['statistical_summary']
+                print(f"   Tests performed: {stats.get('total_tests', 0)}")
+                print(f"   Significant results: {stats.get('significant_tests', 0)}")
+                print(f"   Average effect size: {stats.get('average_effect_size', 0):.3f}")
         
         # Research question validation
         rq_validation = runner.validate_research_questions(
@@ -290,6 +314,8 @@ def main():
                        help="Run fallback demo instead of full experiment")
     parser.add_argument("--full", action="store_true", 
                        help="Run full experiment (default)")
+    parser.add_argument("--with-stats", action="store_true",
+                       help="Include comprehensive statistical validation")
     
     args = parser.parse_args()
     
@@ -298,6 +324,28 @@ def main():
     else:
         # Run full experiment by default
         result = run_golden_gate_bridge_experiment()
+        
+        # Enhanced statistical validation if requested
+        if args.with_stats and ENHANCED_MODE and result['success']:
+            print("\n" + "="*70)
+            print("🔬 COMPREHENSIVE STATISTICAL ANALYSIS")
+            print("="*70)
+            try:
+                from core.statistical_validation import perform_comprehensive_validation
+                validation = perform_comprehensive_validation(result['results'])
+                
+                if 'statistical_summary' in validation:
+                    stats = validation['statistical_summary']
+                    print(f"\n📈 Statistical Summary:")
+                    print(f"   Total tests: {stats.get('total_tests', 0)}")
+                    print(f"   Significant: {stats.get('significant_tests', 0)}")
+                    print(f"   Significance rate: {stats.get('significance_rate', 0):.1%}")
+                    print(f"   Avg effect size: {stats.get('average_effect_size', 0):.3f}")
+                    print(f"   Avg power: {stats.get('average_power', 0):.3f}")
+                
+                print("\n✅ Enhanced statistical validation completed")
+            except Exception as e:
+                print(f"⚠️  Statistical validation failed: {e}")
     
     # Exit with appropriate code
     sys.exit(0 if result['success'] else 1)

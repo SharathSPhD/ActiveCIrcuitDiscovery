@@ -185,6 +185,70 @@ class IResultsAnalyzer(ABC):
         """Generate insights from experiment results."""
         pass
 
+class IStatisticalValidator(ABC):
+    """Interface for enhanced statistical validation."""
+    
+    @abstractmethod
+    def validate_correspondence_significance(self, correspondence_metrics: List[CorrespondenceMetrics],
+                                          target_threshold: float = 70.0) -> Dict[str, Any]:
+        """Validate correspondence significance with statistical testing."""
+        pass
+    
+    @abstractmethod
+    def validate_efficiency_improvement(self, ai_interventions: List[int],
+                                      baseline_interventions: Dict[str, List[int]],
+                                      target_improvement: float = 30.0) -> Dict[str, Any]:
+        """Validate efficiency improvement with statistical testing."""
+        pass
+    
+    @abstractmethod
+    def validate_prediction_success_rate(self, predictions: List[NovelPrediction],
+                                       target_count: int = 3) -> Dict[str, Any]:
+        """Validate prediction success rate with statistical testing."""
+        pass
+
+class IPredictionGenerator(ABC):
+    """Interface for enhanced prediction generation."""
+    
+    @abstractmethod
+    def generate_attention_pattern_predictions(self, belief_state: BeliefState,
+                                             circuit_data: Dict[str, Any]) -> List[NovelPrediction]:
+        """Generate predictions about attention patterns."""
+        pass
+    
+    @abstractmethod
+    def generate_feature_interaction_predictions(self, belief_state: BeliefState,
+                                               circuit_graph: AttributionGraph) -> List[NovelPrediction]:
+        """Generate predictions about feature interactions."""
+        pass
+    
+    @abstractmethod
+    def generate_failure_mode_predictions(self, belief_state: BeliefState,
+                                        intervention_history: List[InterventionResult]) -> List[NovelPrediction]:
+        """Generate predictions about circuit failure modes."""
+        pass
+
+class IPredictionValidator(ABC):
+    """Interface for enhanced prediction validation."""
+    
+    @abstractmethod
+    def validate_attention_pattern_prediction(self, prediction: NovelPrediction,
+                                            test_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Validate attention pattern predictions."""
+        pass
+    
+    @abstractmethod
+    def validate_feature_interaction_prediction(self, prediction: NovelPrediction,
+                                              test_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Validate feature interaction predictions."""
+        pass
+    
+    @abstractmethod
+    def validate_failure_mode_prediction(self, prediction: NovelPrediction,
+                                       test_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Validate failure mode predictions."""
+        pass
+
 # Factory interfaces for dependency injection
 
 class ICircuitTracerFactory(ABC):

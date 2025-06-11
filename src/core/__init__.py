@@ -31,6 +31,39 @@ from .interfaces import (
     ValidationError
 )
 
+from .metrics import (
+    CorrespondenceCalculator,
+    EfficiencyCalculator,
+    ValidationCalculator,
+    StatisticalResult
+)
+
+from .prediction_system import (
+    PredictionGenerator,
+    AttentionPatternPredictor,
+    FeatureInteractionPredictor,
+    FailureModePredictor,
+    EnhancedPredictionGenerator,
+    PredictionEvidence,
+    ValidationResult
+)
+
+from .prediction_validator import (
+    ValidationMethod,
+    AttentionPatternValidator,
+    FeatureInteractionValidator,
+    FailureModeValidator,
+    PredictionValidator,
+    ValidationConfig
+)
+
+from .statistical_validation import (
+    StatisticalValidator,
+    StatisticalTest,
+    BootstrapResult,
+    MultipleComparisonsCorrection
+)
+
 __all__ = [
     # Data structures
     'SAEFeature',
@@ -60,5 +93,34 @@ __all__ = [
     'InterventionError',
     'ActiveInferenceError',
     'ConfigurationError',
-    'ValidationError'
+    'ValidationError',
+    
+    # Metrics
+    'CorrespondenceCalculator',
+    'EfficiencyCalculator',
+    'ValidationCalculator',
+    'StatisticalResult',
+    
+    # Prediction System
+    'PredictionGenerator',
+    'AttentionPatternPredictor',
+    'FeatureInteractionPredictor',
+    'FailureModePredictor',
+    'EnhancedPredictionGenerator',
+    'PredictionEvidence',
+    'ValidationResult',
+    
+    # Prediction Validation
+    'ValidationMethod',
+    'AttentionPatternValidator',
+    'FeatureInteractionValidator',
+    'FailureModeValidator',
+    'PredictionValidator',
+    'ValidationConfig',
+    
+    # Statistical Validation
+    'StatisticalValidator',
+    'StatisticalTest',
+    'BootstrapResult',
+    'MultipleComparisonsCorrection'
 ]

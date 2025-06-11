@@ -87,30 +87,59 @@ class CircuitNode:
         if node_id not in self.upstream_nodes:
             self.upstream_nodes.append(node_id)
 
+@dataclass
+class GraphNode:
+    """Node in the attribution graph with enhanced metadata."""
+    node_id: str
+    layer: int
+    feature_id: int
+    importance: float
+    description: str
+    
+    def __post_init__(self):
+        if not 0 <= self.importance <= 1:
+            raise ValueError(f"importance must be in [0,1], got {self.importance}")
+
+@dataclass
+class GraphEdge:
+    """Edge in the attribution graph with enhanced metadata."""
+    source_id: str
+    target_id: str
+    weight: float
+    confidence: float
+    edge_type: str = "causal"
+    
+    def __post_init__(self):
+        if not 0 <= self.confidence <= 1:
+            raise ValueError(f"confidence must be in [0,1], got {self.confidence}")
+
 @dataclass 
 class AttributionGraph:
     """Complete attribution graph for circuit discovery."""
     input_text: str
-    nodes: Dict[int, CircuitNode]
-    edges: Dict[Tuple[int, int], float]  # (source, target) -> weight
+    nodes: List[GraphNode]  # Changed to list for easier access
+    edges: List[GraphEdge]  # Changed to list for easier access
     target_output: str
     confidence: float
     metadata: Dict[str, Any] = field(default_factory=dict)
     
-    def add_edge(self, source_id: int, target_id: int, weight: float):
-        """Add edge between nodes."""
-        self.edges[(source_id, target_id)] = weight
-        if source_id in self.nodes:
-            self.nodes[source_id].add_downstream(target_id)
-        if target_id in self.nodes:
-            self.nodes[target_id].add_upstream(source_id)
+    def get_node_by_id(self, node_id: str) -> Optional[GraphNode]:
+        """Get node by ID."""
+        for node in self.nodes:
+            if node.node_id == node_id:
+                return node
+        return None
     
-    def get_node_degree(self, node_id: int) -> Tuple[int, int]:
+    def add_edge(self, source_id: str, target_id: str, weight: float, confidence: float = 1.0):
+        """Add edge between nodes."""
+        edge = GraphEdge(source_id, target_id, weight, confidence)
+        self.edges.append(edge)
+    
+    def get_node_degree(self, node_id: str) -> Tuple[int, int]:
         """Get in-degree and out-degree of node."""
-        if node_id not in self.nodes:
-            return (0, 0)
-        return (len(self.nodes[node_id].upstream_nodes), 
-                len(self.nodes[node_id].downstream_nodes))
+        in_degree = sum(1 for edge in self.edges if edge.target_id == node_id)
+        out_degree = sum(1 for edge in self.edges if edge.source_id == node_id)
+        return (in_degree, out_degree)
 
 @dataclass
 class CorrespondenceMetrics:
@@ -157,6 +186,41 @@ class NovelPrediction:
         valid_statuses = ['untested', 'validated', 'falsified']
         if self.validation_status not in valid_statuses:
             raise ValueError(f"validation_status must be one of {valid_statuses}")
+
+@dataclass
+class ValidationResult:
+    """Result from prediction validation."""
+    prediction_id: str
+    validation_status: str  # 'validated', 'falsified', 'inconclusive'
+    confidence: float
+    evidence: Dict[str, Any]
+    test_statistic: Optional[float] = None
+    p_value: Optional[float] = None
+    effect_size: Optional[float] = None
+    
+    def __post_init__(self):
+        if not 0 <= self.confidence <= 1:
+            raise ValueError(f"confidence must be in [0,1], got {self.confidence}")
+        
+        valid_statuses = ['validated', 'falsified', 'inconclusive']
+        if self.validation_status not in valid_statuses:
+            raise ValueError(f"validation_status must be one of {valid_statuses}")
+
+@dataclass
+class EfficiencyMetrics:
+    """Comprehensive efficiency metrics for RQ2 validation."""
+    ai_intervention_count: int
+    baseline_intervention_counts: Dict[str, int]
+    improvement_percentages: Dict[str, float]
+    overall_improvement: float
+    statistical_significance: Dict[str, float]  # p-values
+    confidence_intervals: Dict[str, Tuple[float, float]]
+    
+    def __post_init__(self):
+        if self.ai_intervention_count < 0:
+            raise ValueError("ai_intervention_count must be non-negative")
+        if not 0 <= self.overall_improvement <= 100:
+            raise ValueError("overall_improvement must be in [0,100]")
 
 @dataclass
 class BeliefState:

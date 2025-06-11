@@ -42,9 +42,15 @@ htmlcov/
 
 # VSCode
 .vscode/
+.claude/
+CLAUDE.md
+ENHANCEMENT_SUMMARY.md
+ImprovementPlan*.md
+YORK_RP*.md
 
 # Local environment
 .env
 .env.*
 
 results/
+knowledge_base/
