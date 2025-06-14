@@ -27,9 +27,9 @@ except ImportError:
 
 # Project imports with proper relative imports
 try:
-    from ..core.interfaces import ICircuitTracer
-    from ..core.data_structures import SAEFeature, InterventionResult, AttributionGraph, CircuitNode
-    from ..config.experiment_config import CompleteConfig, InterventionType, DeviceType
+    from core.interfaces import ICircuitTracer
+    from core.data_structures import SAEFeature, InterventionResult, AttributionGraph, CircuitNode
+    from config.experiment_config import CompleteConfig, InterventionType, DeviceType
 except ImportError:
     # Fallback for direct execution
     import sys

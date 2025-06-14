@@ -13,24 +13,24 @@ from dataclasses import asdict
 
 # Project imports with proper relative imports
 try:
-    from ..core.interfaces import IExperimentRunner
-    from ..core.data_structures import (
-        ExperimentResult, NovelPrediction, InterventionResult,
+    from core.interfaces import IExperimentRunner
+    from core.data_structures import (
+        ExperimentResult, NovelPrediction, InterventionResult, SAEFeature,
         CorrespondenceMetrics, BeliefState
     )
-    from ..config.experiment_config import CompleteConfig, get_config, InterventionType
-    from ..circuit_analysis.tracer import CircuitTracer
-    from ..active_inference.agent import ActiveInferenceAgent
-    from ..core.metrics import CorrespondenceCalculator, EfficiencyCalculator, ValidationCalculator
-    from ..core.prediction_system import EnhancedPredictionGenerator
-    from ..core.prediction_validator import PredictionValidator, ValidationConfig
+    from config.experiment_config import CompleteConfig, get_config, InterventionType
+    from circuit_analysis.tracer import CircuitTracer
+    from active_inference.agent import ActiveInferenceAgent
+    from core.metrics import CorrespondenceCalculator, EfficiencyCalculator, ValidationCalculator
+    from core.prediction_system import EnhancedPredictionGenerator
+    from core.prediction_validator import PredictionValidator, ValidationConfig
 except ImportError:
     # Fallback for direct execution
     import sys
     sys.path.append(str(Path(__file__).parent.parent))
     from core.interfaces import IExperimentRunner
     from core.data_structures import (
-        ExperimentResult, NovelPrediction, InterventionResult,
+        ExperimentResult, NovelPrediction, InterventionResult, SAEFeature,
         CorrespondenceMetrics, BeliefState
     )
     from config.experiment_config import CompleteConfig, get_config, InterventionType

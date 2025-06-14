@@ -8,7 +8,7 @@ import logging
 from scipy.stats import entropy
 from abc import ABC, abstractmethod
 
-from .data_structures import (
+from core.data_structures import (
     BeliefState, NovelPrediction, InterventionResult, 
     SAEFeature, AttributionGraph
 )

@@ -18,12 +18,12 @@ except ImportError:
 
 # Project imports with proper relative imports
 try:
-    from ..core.interfaces import IActiveInferenceAgent
-    from ..core.data_structures import (
+    from core.interfaces import IActiveInferenceAgent
+    from core.data_structures import (
         SAEFeature, InterventionResult, BeliefState, 
         CorrespondenceMetrics, NovelPrediction
     )
-    from ..config.experiment_config import CompleteConfig, InterventionType
+    from config.experiment_config import CompleteConfig, InterventionType
 except ImportError:
     # Fallback for direct execution
     import sys
@@ -208,8 +208,8 @@ class ActiveInferenceAgent(IActiveInferenceAgent):
             return []
         
         # Import here to avoid circular imports
-        from ..core.prediction_system import EnhancedPredictionGenerator
-        from ..core.data_structures import AttributionGraph
+        from core.prediction_system import EnhancedPredictionGenerator
+        from core.data_structures import AttributionGraph
         
         # Create a mock attribution graph from current beliefs
         mock_graph = self._create_mock_attribution_graph()
@@ -326,7 +326,7 @@ class ActiveInferenceAgent(IActiveInferenceAgent):
     
     def _calculate_correspondence_metrics(self, intervention_result: InterventionResult) -> CorrespondenceMetrics:
         """Calculate correspondence between AI beliefs and circuit behavior."""
-        from ..core.metrics import CorrespondenceCalculator
+        from core.metrics import CorrespondenceCalculator
         
         calculator = CorrespondenceCalculator()
         
@@ -359,7 +359,7 @@ class ActiveInferenceAgent(IActiveInferenceAgent):
     
     def _create_mock_attribution_graph(self) -> 'AttributionGraph':
         """Create mock attribution graph from beliefs for prediction generation."""
-        from ..core.data_structures import AttributionGraph, CircuitNode
+        from core.data_structures import AttributionGraph, CircuitNode
         
         # Create nodes from feature beliefs
         nodes = {}
@@ -407,7 +407,7 @@ class ActiveInferenceAgent(IActiveInferenceAgent):
     
     def _create_empty_correspondence(self) -> CorrespondenceMetrics:
         """Create empty correspondence metrics."""
-        from ..core.data_structures import CorrespondenceMetrics
+        from core.data_structures import CorrespondenceMetrics
         
         return CorrespondenceMetrics(
             belief_updating_correspondence=0.0,

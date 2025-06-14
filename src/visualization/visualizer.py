@@ -25,13 +25,13 @@ except ImportError:
 
 # Project imports
 try:
-    from ..core.interfaces import IVisualizationGenerator
-    from ..core.data_structures import (
+    from core.interfaces import IVisualizationGenerator
+    from core.data_structures import (
         AttributionGraph, ExperimentResult, InterventionResult, 
         CorrespondenceMetrics, BeliefState, SAEFeature, NovelPrediction
     )
-    from ..core.prediction_system import EnhancedPredictionGenerator
-    from ..core.statistical_validation import StatisticalTest, StatisticalValidator
+    from core.prediction_system import EnhancedPredictionGenerator
+    from core.statistical_validation import StatisticalTest, StatisticalValidator
 except ImportError:
     # Fallback for direct execution
     import sys

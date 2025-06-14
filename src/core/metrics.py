@@ -8,7 +8,7 @@ from scipy import stats
 import logging
 from dataclasses import dataclass
 
-from .data_structures import (
+from core.data_structures import (
     BeliefState, InterventionResult, CorrespondenceMetrics
 )
 

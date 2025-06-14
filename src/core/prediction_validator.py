@@ -10,8 +10,8 @@ import logging
 from dataclasses import dataclass
 from abc import ABC, abstractmethod
 
-from .data_structures import NovelPrediction, InterventionResult, AttributionGraph
-from .prediction_system import ValidationResult, PredictionEvidence
+from core.data_structures import NovelPrediction, InterventionResult, AttributionGraph
+from core.prediction_system import ValidationResult, PredictionEvidence
 
 logger = logging.getLogger(__name__)
 

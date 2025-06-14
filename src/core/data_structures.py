@@ -10,7 +10,7 @@ from pathlib import Path
 
 # Import configuration with proper relative import
 try:
-    from ..config.experiment_config import InterventionType
+    from config.experiment_config import InterventionType
 except ImportError:
     # Fallback for direct execution
     import sys

@@ -8,7 +8,7 @@ from scipy.stats import bootstrap
 from dataclasses import dataclass
 import logging
 
-from .data_structures import (
+from core.data_structures import (
     CorrespondenceMetrics, NovelPrediction, ExperimentResult
 )
 
