@@ -402,15 +402,28 @@ class YorKExperimentRunner(IExperimentRunner):
         logger.info(f"Baseline methods configured: {self.baseline_results}")
     
     def _calculate_correspondence_from_result(self, result: InterventionResult) -> CorrespondenceMetrics:
-        """Calculate correspondence metrics from intervention result."""
-        # This should use the AI agent's correspondence calculation
-        # For now, create basic metrics
-        return CorrespondenceMetrics(
-            belief_updating_correspondence=min(1.0, result.effect_size),
-            precision_weighting_correspondence=min(1.0, abs(result.target_token_change)),
-            prediction_error_correspondence=min(1.0, result.effect_size * 0.8),
-            overall_correspondence=(min(1.0, result.effect_size) + min(1.0, abs(result.target_token_change)) + min(1.0, result.effect_size * 0.8)) / 3.0
-        )
+        """Calculate correspondence metrics from intervention result using proper calculator."""
+        try:
+            # Use the AI agent's belief state and proper correspondence calculator
+            belief_state = self.ai_agent.get_current_beliefs()
+            correspondence = self.correspondence_calculator.calculate_correspondence(
+                belief_state, [result]
+            )
+            return correspondence
+        except Exception as e:
+            logger.warning(f"Correspondence calculation failed: {e}, using fallback")
+            # Fallback to basic metrics (convert to percentages)
+            belief_corr = min(100.0, max(0.0, result.effect_size * 100))
+            precision_corr = min(100.0, max(0.0, abs(result.target_token_change) * 100))
+            prediction_corr = min(100.0, max(0.0, result.effect_size * 80))
+            overall_corr = (belief_corr + precision_corr + prediction_corr) / 3.0
+            
+            return CorrespondenceMetrics(
+                belief_updating_correspondence=belief_corr,
+                precision_weighting_correspondence=precision_corr,
+                prediction_error_correspondence=prediction_corr,
+                overall_correspondence=overall_corr
+            )
     
     def _calculate_efficiency_metrics(self, ai_interventions: int, baseline_counts: Dict[str, List[int]]) -> Dict[str, float]:
         """Calculate efficiency improvement metrics (RQ2)."""

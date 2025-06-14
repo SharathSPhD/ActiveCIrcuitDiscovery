@@ -65,6 +65,20 @@ class ActiveInferenceAgent(IActiveInferenceAgent):
         
         logger.info(f"ActiveInferenceAgent initialized with pymdp={self.use_pymdp}")
     
+    def get_current_beliefs(self) -> BeliefState:
+        """Get the current belief state."""
+        if self.belief_state is None:
+            logger.warning("No belief state initialized, returning empty state")
+            return self._create_empty_belief_state()
+        return self.belief_state
+
+    def get_current_beliefs(self) -> BeliefState:
+        """Get the current belief state."""
+        if self.belief_state is None:
+            logger.warning("No belief state initialized, returning empty state")
+            return self._create_empty_belief_state()
+        return self.belief_state
+    
     def initialize_beliefs(self, features: Dict[int, List[SAEFeature]]) -> BeliefState:
         """Initialize belief state from discovered features."""
         logger.info("Initializing Active Inference beliefs from discovered features")

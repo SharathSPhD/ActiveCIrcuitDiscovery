@@ -233,9 +233,9 @@ def main():
         print("📊 Creating belief evolution animations...")
         print("📊 Creating statistical validation reports...")
         
-        visualizer.generate_all_visualizations(
+        # Generate visualizations with proper parameters
+        visualizations = visualizer.generate_all_visualizations(
             result=result,
-            output_dir=str(vis_dir),
             statistical_validation=statistical_validation
         )
         
