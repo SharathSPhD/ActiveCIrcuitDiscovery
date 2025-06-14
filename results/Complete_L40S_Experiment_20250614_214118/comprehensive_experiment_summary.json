@@ -1,0 +1,45 @@
+{
+  "experiment_info": {
+    "name": "l40s_complete_framework_validation",
+    "timestamp": "2025-06-14T21:41:23.328019",
+    "device": "cuda",
+    "gpu_name": "NVIDIA L40S",
+    "gpu_memory_gb": 47.810936832,
+    "framework_version": "complete_refactored",
+    "test_cases": 10,
+    "duration_seconds": 3.4880928993225098
+  },
+  "research_questions": {
+    "rq1_correspondence": {
+      "target": 70.0,
+      "passed": false,
+      "avg_correspondence": 0
+    },
+    "rq2_efficiency": {
+      "target": 30.0,
+      "passed": false,
+      "improvement": 0.0
+    },
+    "rq3_predictions": {
+      "target": 3,
+      "passed": false,
+      "validated": 0,
+      "total": 0
+    },
+    "overall_success": false
+  },
+  "capabilities_demonstrated": {
+    "active_inference_agent": true,
+    "circuit_discovery": true,
+    "intervention_analysis": true,
+    "statistical_validation": true,
+    "comprehensive_visualizations": true,
+    "novel_predictions": false,
+    "baseline_comparisons": true
+  },
+  "file_locations": {
+    "results_directory": "/home/ubuntu/project/results/Complete_L40S_Experiment_20250614_214118",
+    "visualizations": "/home/ubuntu/project/results/Complete_L40S_Experiment_20250614_214118/visualizations",
+    "statistical_validation": "/home/ubuntu/project/results/Complete_L40S_Experiment_20250614_214118/statistical_validation.json"
+  }
+}
