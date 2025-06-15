@@ -54,3 +54,5 @@ YORK_RP*.md
 
 results/
 knowledge_base/
+venv/
+logs/
