@@ -51,8 +51,14 @@ YORK_RP*.md
 # Local environment
 .env
 .env.*
-
-results/
+deploy.sh
+Dockerfile
+*dockerignore
+CURRENT*.md
+startup*.sh
+startup*.yaml
 knowledge_base/
 venv/
 logs/
+api_*.txt
+digit1.txt

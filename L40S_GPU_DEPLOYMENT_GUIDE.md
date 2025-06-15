@@ -62,7 +62,7 @@ matplotlib==3.10.3
 
 ## Deployment Options
 
-### Option 1: Golden Image Deployment (Recommended)
+### Option 1: Automated API Deployment (Recommended)
 
 **Advantages:**
 - ⚡ **Instant Setup:** Ready in 2-3 minutes
@@ -86,6 +86,64 @@ matplotlib==3.10.3
    # Virtual environment auto-activated
    python run_complete_experiment.py  # Ready to run\!
    ```
+
+## API Automation
+
+### Automated Droplet Creation Script
+
+The `create_snapshot_droplet_v2.py` script provides fully automated GPU droplet creation from the golden snapshot:
+
+**Key Features:**
+- ✅ Creates L40S GPU droplet from snapshot (ID: 190297195)
+- ✅ Uses correct GPU size: `gpu-l40sx1-48gb`
+- ✅ Waits for droplet to become active
+- ✅ Provides SSH connection details
+- ✅ Handles API errors gracefully
+
+**Usage:**
+```bash
+# Set your API token
+export DIGITALOCEAN_API_TOKEN="dop_v1_xxxxx"
+
+# Run the script
+python3 create_snapshot_droplet_v2.py
+```
+
+**Example Output:**
+```
+🚀 Creating GPU droplet from golden snapshot...
+   Name: snapshots-gpu-l40sx1-20250615-2226
+   Size: gpu-l40sx1-48gb (L40S GPU)
+   Region: tor1
+   Image ID: 190297195 (Golden Snapshot)
+
+✅ Droplet creation initiated successfully!
+   Droplet ID: 502453903
+   Name: snapshots-gpu-l40sx1-20250615-2226
+   Status: new
+   Region: Toronto 1
+   Size: gpu-l40sx1-48gb
+
+🔄 Waiting for droplet to become active...
+📊 Droplet Status: active
+🌐 Public IP: 146.190.249.120
+🔑 SSH Command: ssh ubuntu@146.190.249.120
+
+🎉 Droplet is now ACTIVE and ready for use!
+🚀 Ready to connect: ssh ubuntu@146.190.249.120
+```
+
+### API Endpoint Details
+
+**Create GPU Droplet:**
+- **URL:** `https://api.digitalocean.com/v2/droplets`
+- **Method:** POST
+- **Authentication:** Bearer token
+- **Required Size:** `gpu-l40sx1-48gb` (L40S with 48GB)
+- **Snapshot Image:** `190297195` (Golden snapshot)
+- **Region:** `tor1` (Toronto - where snapshot is available)
+
+**Critical Fix:** Use size slug `gpu-l40sx1-48gb` instead of numeric ID `310` to avoid "invalid size" errors.
 
 ## Quick Start
 
