@@ -89,24 +89,34 @@ matplotlib==3.10.3
 
 ## API Automation
 
-### Automated Droplet Creation Script
+### Improved Automated Droplet Creation Scripts
 
-The `create_snapshot_droplet_v2.py` script provides fully automated GPU droplet creation from the golden snapshot:
+The `create_droplet_fixed.py` script provides fully automated GPU droplet creation from the golden snapshot with improved reliability:
 
 **Key Features:**
 - ✅ Creates L40S GPU droplet from snapshot (ID: 190297195)
 - ✅ Uses correct GPU size: `gpu-l40sx1-48gb`
-- ✅ Waits for droplet to become active
-- ✅ Provides SSH connection details
+- ✅ Reads API token automatically from `digit1.txt`
+- ✅ Improved status checking with timeout protection
+- ✅ Waits for droplet to become active (typically 2-3 minutes)
+- ✅ Provides SSH connection details when ready
 - ✅ Handles API errors gracefully
+
+**Available Scripts:**
+- `create_droplet_fixed.py` - Improved deployment script (recommended)
+- `list_droplets.py` - List and check status of existing droplets
+- `create_snapshot_droplet_v2.py` - Original script (legacy)
 
 **Usage:**
 ```bash
-# Set your API token
-export DIGITALOCEAN_API_TOKEN="dop_v1_xxxxx"
+# API token should be in digit1.txt file
+# Script automatically reads token from file
 
-# Run the script
-python3 create_snapshot_droplet_v2.py
+# Run the improved script
+python3 create_droplet_fixed.py
+
+# Check existing droplets
+python3 list_droplets.py
 ```
 
 **Example Output:**

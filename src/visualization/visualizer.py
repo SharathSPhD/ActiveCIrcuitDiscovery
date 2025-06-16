@@ -47,7 +47,7 @@ except ImportError:
 logger = logging.getLogger(__name__)
 
 class CircuitVisualizer(IVisualizationGenerator):
-    """Enhanced circuit visualization system with statistical validation visualizations."""
+    """Enhanced circuit visualization system with static plots and statistical validation visualizations."""
     
     def __init__(self, output_dir: str = "visualizations"):
         """Initialize enhanced visualizer with output directory."""

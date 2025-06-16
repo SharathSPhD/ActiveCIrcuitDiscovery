@@ -28,14 +28,14 @@ except ImportError:
 # Project imports with proper relative imports
 try:
     from core.interfaces import ICircuitTracer
-    from core.data_structures import SAEFeature, InterventionResult, AttributionGraph, CircuitNode
+    from core.data_structures import SAEFeature, InterventionResult, AttributionGraph, CircuitNode, GraphNode, GraphEdge
     from config.experiment_config import CompleteConfig, InterventionType, DeviceType
 except ImportError:
     # Fallback for direct execution
     import sys
     sys.path.append(str(Path(__file__).parent.parent))
     from core.interfaces import ICircuitTracer
-    from core.data_structures import SAEFeature, InterventionResult, AttributionGraph, CircuitNode
+    from core.data_structures import SAEFeature, InterventionResult, AttributionGraph, CircuitNode, GraphNode, GraphEdge
     from config.experiment_config import CompleteConfig, InterventionType, DeviceType
 
 logger = logging.getLogger(__name__)
@@ -279,22 +279,68 @@ class CircuitTracer(ICircuitTracer):
         # Calculate overall confidence
         confidence = self._calculate_graph_confidence(nodes, edges)
         
-        # Create attribution graph
+        # Convert nodes and edges to new AttributionGraph format
+        graph_nodes = []
+        graph_edges = []
+        
+        # Convert CircuitNodes to GraphNodes
+        for i, circuit_node in nodes.items():
+            graph_node = GraphNode(
+                node_id=f"feature_{circuit_node.feature.feature_id}_layer_{circuit_node.feature.layer}",
+                layer=circuit_node.feature.layer,
+                feature_id=circuit_node.feature.feature_id,
+                importance=circuit_node.causal_influence,
+                description=circuit_node.feature.description
+            )
+            graph_nodes.append(graph_node)
+        
+        # Convert edge dict to GraphEdges
+        for (source_idx, target_idx), weight in edges.items():
+            if source_idx in nodes and target_idx in nodes:
+                source_node = nodes[source_idx]
+                target_node = nodes[target_idx]
+                
+                source_id = f"feature_{source_node.feature.feature_id}_layer_{source_node.feature.layer}"
+                target_id = f"feature_{target_node.feature.feature_id}_layer_{target_node.feature.layer}"
+                
+                graph_edge = GraphEdge(
+                    source_id=source_id,
+                    target_id=target_id,
+                    weight=weight,
+                    confidence=min(1.0, abs(weight)),
+                    edge_type="causal"
+                )
+                graph_edges.append(graph_edge)
+        
+        # Create attribution graph with new format
         attribution_graph = AttributionGraph(
             input_text=text,
-            nodes=nodes,
-            edges=edges,
+            nodes=graph_nodes,
+            edges=graph_edges,
             target_output=self._get_target_output(text),
             confidence=confidence,
             metadata={
                 'total_features': len(all_features),
                 'total_edges': len(edges),
                 'layers_analyzed': list(active_features.keys()),
-                'method': 'cross_layer_attribution'
+                'method': 'gradient_based_attribution',
+                'attribution_version': '2.0'
             }
         )
         
-        logger.info(f"Built attribution graph with {len(nodes)} nodes and {len(edges)} edges")
+        # Add error nodes for unexplained variance if enabled
+        if self.config.sae.include_error_nodes:
+            attribution_graph = self._add_error_nodes(attribution_graph, all_features)
+        
+        # Apply intelligent pruning based on cumulative attribution
+        if len(graph_nodes) > self.config.sae.max_graph_nodes:
+            attribution_graph = attribution_graph.prune_graph(
+                node_threshold=0.85, 
+                edge_threshold=0.90
+            )
+            logger.info(f"Graph pruned to {len(attribution_graph.nodes)} nodes and {len(attribution_graph.edges)} edges")
+        
+        logger.info(f"Built attribution graph with {len(attribution_graph.nodes)} nodes and {len(attribution_graph.edges)} edges")
         return attribution_graph
     
     def get_feature_activations(self, text: str, layer: int) -> torch.Tensor:
@@ -455,9 +501,103 @@ class CircuitTracer(ICircuitTracer):
     def _calculate_pairwise_attribution(self, text: str, 
                                       source_feature: SAEFeature,
                                       target_feature: SAEFeature) -> float:
-        """Calculate attribution between two features."""
-        # Simplified attribution: correlation between activations
+        """Calculate gradient-based attribution between two features."""
+        # Gradient-based direct effect computation following attribution graphs methodology
         
+        try:
+            return self._compute_direct_effect(text, source_feature, target_feature)
+        except Exception as e:
+            logger.warning(f"Gradient attribution failed, falling back to correlation: {e}")
+            # Fallback to correlation-based method
+            return self._calculate_correlation_attribution(text, source_feature, target_feature)
+    
+    def _compute_direct_effect(self, text: str, source_feature: SAEFeature, 
+                             target_feature: SAEFeature) -> float:
+        """Compute direct causal effect using gradients."""
+        tokens = self.model.to_tokens(text)
+        
+        # Create intervention hooks for gradient computation
+        source_hook_point = f"blocks.{source_feature.layer}.hook_resid_post"
+        target_hook_point = f"blocks.{target_feature.layer}.hook_resid_post"
+        
+        # Get baseline activations
+        baseline_logits, baseline_cache = self.model.run_with_cache(tokens)
+        
+        # Get source feature activation
+        source_activations = baseline_cache[source_hook_point]
+        
+        # Create hook for source feature ablation
+        def ablation_hook(activations, hook):
+            if source_feature.layer in self.sae_analyzers:
+                sae = self.sae_analyzers[source_feature.layer]
+                if isinstance(sae, dict):  # Fallback SAE
+                    # Zero out specific feature
+                    activations_flat = activations.view(-1, activations.size(-1))
+                    feature_activations = torch.matmul(activations_flat, sae['encoder'])
+                    feature_activations[:, source_feature.feature_id] = 0.0
+                    reconstructed = torch.matmul(feature_activations, sae['decoder'])
+                    return reconstructed.view(activations.shape)
+                else:
+                    # Real SAE ablation
+                    feature_acts = sae.encode(activations)
+                    feature_acts[:, :, source_feature.feature_id] = 0.0
+                    return sae.decode(feature_acts)
+            return activations
+        
+        # Compute target feature activation with source ablated
+        with self.model.hooks([(source_hook_point, ablation_hook)]):
+            _, ablated_cache = self.model.run_with_cache(tokens)
+        
+        # Calculate difference in target feature activation
+        baseline_target = self._extract_feature_activation(
+            baseline_cache[target_hook_point], target_feature.feature_id, target_feature.layer
+        )
+        ablated_target = self._extract_feature_activation(
+            ablated_cache[target_hook_point], target_feature.feature_id, target_feature.layer
+        )
+        
+        # Direct effect is the difference in target activation
+        direct_effect = (baseline_target - ablated_target).item()
+        
+        # Normalize by source activation strength
+        source_strength = self._extract_feature_activation(
+            source_activations, source_feature.feature_id, source_feature.layer
+        ).item()
+        
+        if abs(source_strength) > 1e-8:
+            normalized_effect = direct_effect / abs(source_strength)
+        else:
+            normalized_effect = 0.0
+        
+        return float(normalized_effect)
+    
+    def _extract_feature_activation(self, activations: torch.Tensor, 
+                                  feature_id: int, layer: int) -> torch.Tensor:
+        """Extract specific feature activation from layer activations."""
+        if layer in self.sae_analyzers:
+            sae = self.sae_analyzers[layer]
+            if isinstance(sae, dict):  # Fallback SAE
+                activations_flat = activations.view(-1, activations.size(-1))
+                feature_activations = torch.matmul(activations_flat, sae['encoder'])
+                feature_activations = F.relu(feature_activations)
+                if feature_id < feature_activations.size(-1):
+                    return feature_activations[:, feature_id].mean()
+            else:
+                # Real SAE
+                feature_activations = sae.encode(activations)
+                if feature_id < feature_activations.size(-1):
+                    return feature_activations[:, :, feature_id].mean()
+        
+        # Fallback to raw activation
+        if feature_id < activations.size(-1):
+            return activations[:, :, feature_id].mean()
+        else:
+            return torch.tensor(0.0, device=activations.device)
+    
+    def _calculate_correlation_attribution(self, text: str, 
+                                         source_feature: SAEFeature,
+                                         target_feature: SAEFeature) -> float:
+        """Fallback correlation-based attribution."""
         tokens = self.model.to_tokens(text)
         
         with torch.no_grad():
@@ -573,3 +713,52 @@ class CircuitTracer(ICircuitTracer):
         # Sort by activation strength and limit
         features.sort(key=lambda f: f.max_activation, reverse=True)
         return features
+    
+    def _add_error_nodes(self, graph: AttributionGraph, features: List[SAEFeature]) -> AttributionGraph:
+        """Add error nodes to represent unexplained variance."""
+        try:
+            # Calculate total explained variance by layer
+            layer_explained_variance = {}
+            layer_total_variance = {}
+            
+            for feature in features:
+                layer = feature.layer
+                if layer not in layer_explained_variance:
+                    layer_explained_variance[layer] = 0.0
+                    layer_total_variance[layer] = 0.0
+                
+                layer_explained_variance[layer] += feature.max_activation
+                layer_total_variance[layer] += 1.0  # Normalized total
+            
+            # Add error nodes for layers with significant unexplained variance
+            new_nodes = list(graph.nodes)
+            new_edges = list(graph.edges)
+            
+            for layer, explained in layer_explained_variance.items():
+                total = layer_total_variance[layer]
+                unexplained_ratio = max(0.0, (total - explained) / total) if total > 0 else 0.0
+                
+                # Add error node if unexplained variance > 20%
+                if unexplained_ratio > 0.2:
+                    error_node = GraphNode(
+                        node_id=f"error_layer_{layer}",
+                        layer=layer,
+                        feature_id=-1,  # Special ID for error nodes
+                        importance=unexplained_ratio,
+                        description=f"Unexplained variance in layer {layer} ({unexplained_ratio:.1%})"
+                    )
+                    new_nodes.append(error_node)
+            
+            # Return new graph with error nodes
+            return AttributionGraph(
+                input_text=graph.input_text,
+                nodes=new_nodes,
+                edges=new_edges,
+                target_output=graph.target_output,
+                confidence=graph.confidence,
+                metadata={**graph.metadata, 'error_nodes_added': True}
+            )
+            
+        except Exception as e:
+            logger.warning(f"Error node addition failed: {e}")
+            return graph

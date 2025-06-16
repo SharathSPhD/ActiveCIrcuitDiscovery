@@ -62,3 +62,9 @@ venv/
 logs/
 api_*.txt
 digit1.txt
+CLAUDE*.md
+critical*.md
+update.md
+gaps*.md
+IMPLEMENT*.md
+ENHANCEMENTS*.md

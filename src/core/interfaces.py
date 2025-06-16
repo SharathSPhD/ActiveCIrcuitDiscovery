@@ -298,6 +298,15 @@ class ConfigurationError(CircuitDiscoveryError):
     """Exception for configuration-related errors."""
     pass
 
+class IVisualizationBackend(ABC):
+    """Interface for visualization backends (static, interactive, etc.)."""
+    
+    @abstractmethod
+    def create_interactive_graph(self, graph: AttributionGraph, 
+                               output_path: Optional[str] = None) -> str:
+        """Create visualization of attribution graph."""
+        pass
+
 class ValidationError(CircuitDiscoveryError):
     """Exception for validation-related errors."""
     pass

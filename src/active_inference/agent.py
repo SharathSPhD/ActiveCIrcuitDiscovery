@@ -60,18 +60,21 @@ class ActiveInferenceAgent(IActiveInferenceAgent):
         self.correspondence_history = []
         self.novel_predictions = []
         
-        # pymdp agent if available
+        # Enhanced pymdp agent integration
         self.pymdp_agent = None
+        self.generative_model = None
+        self.action_space_size = 3  # ablation, patching, mean_ablation
+        
+        # Proper pymdp components
+        self.A_matrices = None  # Observation model
+        self.B_matrices = None  # Transition model  
+        self.C_vectors = None   # Preference vectors
+        self.D_vectors = None   # Prior beliefs
+        self.state_space_dims = None
+        self.obs_space_dims = None
         
         logger.info(f"ActiveInferenceAgent initialized with pymdp={self.use_pymdp}")
     
-    def get_current_beliefs(self) -> BeliefState:
-        """Get the current belief state."""
-        if self.belief_state is None:
-            logger.warning("No belief state initialized, returning empty state")
-            return self._create_empty_belief_state()
-        return self.belief_state
-
     def get_current_beliefs(self) -> BeliefState:
         """Get the current belief state."""
         if self.belief_state is None:
@@ -97,7 +100,9 @@ class ActiveInferenceAgent(IActiveInferenceAgent):
         uncertainty = {}
         
         for feature in all_features:
-            feature_importances[feature.feature_id] = feature.max_activation
+            # Normalize activation to [0,1] range for importance
+            normalized_activation = min(1.0, max(0.0, feature.max_activation))
+            feature_importances[feature.feature_id] = normalized_activation
             uncertainty[feature.feature_id] = max(0.1, 1.0 - feature.max_activation)
         
         # Initialize connection beliefs
@@ -112,6 +117,7 @@ class ActiveInferenceAgent(IActiveInferenceAgent):
             try:
                 (generative_model, posterior_beliefs, 
                  precision_matrix) = self._initialize_pymdp_components(all_features)
+                self._create_pymdp_agent(all_features)
                 logger.info("PyMDP components initialized successfully")
             except Exception as e:
                 logger.warning(f"PyMDP initialization failed: {e}")
@@ -139,27 +145,55 @@ class ActiveInferenceAgent(IActiveInferenceAgent):
     
     def calculate_expected_free_energy(self, feature: SAEFeature, 
                                      intervention_type: InterventionType) -> float:
-        """Calculate expected free energy for potential intervention."""
+        """Calculate Expected Free Energy using proper Active Inference decomposition."""
         if self.belief_state is None:
             return 0.0
         
+        # Map intervention type to action index
+        action_mapping = {
+            InterventionType.ABLATION: 0,
+            InterventionType.ACTIVATION_PATCHING: 1, 
+            InterventionType.MEAN_ABLATION: 2
+        }
+        action = action_mapping.get(intervention_type, 0)
+        
+        # Use pymdp for proper EFE calculation if available
+        if self.use_pymdp and self.pymdp_agent is not None:
+            try:
+                # Get feature state index
+                feature_state = self._feature_to_state_index(feature)
+                
+                # Calculate proper EFE using pymdp utilities
+                # EFE = Epistemic Value + Pragmatic Value
+                
+                # 1. Epistemic Value: Expected information gain about states
+                epistemic_value = self._calculate_epistemic_value_pymdp(feature_state, action)
+                
+                # 2. Pragmatic Value: Expected utility/preference satisfaction
+                pragmatic_value = self._calculate_pragmatic_value_pymdp(feature_state, action)
+                
+                # 3. Parameter information gain (model learning)
+                param_info_gain = self._calculate_parameter_info_gain(feature_state, action)
+                
+                efe = epistemic_value + pragmatic_value + param_info_gain
+                
+                # Store components in belief state for tracking
+                self.belief_state.epistemic_value = epistemic_value
+                self.belief_state.pragmatic_value = pragmatic_value
+                
+                return efe
+                
+            except Exception as e:
+                logger.warning(f"PyMDP EFE calculation failed: {e}")
+                
+        # Fallback to simplified calculation
         epistemic_value = self._calculate_epistemic_value(feature, intervention_type)
         pragmatic_value = self._calculate_pragmatic_value(feature, intervention_type)
         
-        # Enhanced EFE with pymdp integration
-        if self.use_pymdp and self.belief_state.generative_model is not None:
-            model_uncertainty_reduction = self._calculate_model_uncertainty_reduction(feature)
-            causal_info_gain = self._calculate_causal_information_gain(feature)
-            
-            expected_free_energy = (
-                self.epistemic_weight * (epistemic_value + model_uncertainty_reduction) +
-                (1 - self.epistemic_weight) * (pragmatic_value + causal_info_gain)
-            )
-        else:
-            expected_free_energy = (
-                self.epistemic_weight * epistemic_value + 
-                (1 - self.epistemic_weight) * pragmatic_value
-            )
+        expected_free_energy = (
+            self.epistemic_weight * epistemic_value + 
+            (1 - self.epistemic_weight) * pragmatic_value
+        )
         
         return expected_free_energy
     
@@ -302,8 +336,47 @@ class ActiveInferenceAgent(IActiveInferenceAgent):
                         self.belief_state.connection_beliefs[connection_key] - 0.05
                     )
     
+    def _create_pymdp_agent(self, features: List['SAEFeature']):
+        """Create proper pymdp Agent instance."""
+        if not PYMDP_AVAILABLE or self.A_matrices is None:
+            return
+        
+        try:
+            # Create pymdp Agent with proper components
+            self.pymdp_agent = Agent(
+                A=self.A_matrices,
+                B=self.B_matrices, 
+                C=self.C_vectors,
+                D=self.D_vectors,
+                use_utility=True,
+                use_states_info_gain=True,
+                use_param_info_gain=True,
+                action_precision=16.0,
+                policies=self._generate_policies()
+            )
+            
+            logger.info("PyMDP Agent created successfully")
+            
+        except Exception as e:
+            logger.warning(f"PyMDP Agent creation failed: {e}")
+            self.pymdp_agent = None
+    
+    def _generate_policies(self) -> List[List[int]]:
+        """Generate policy space for intervention selection."""
+        # Simple policies: single-step actions
+        policies = []
+        for action in range(self.action_space_size):
+            policies.append([action])  # Single-step policy
+        
+        # Add some multi-step policies for exploration
+        policies.append([0, 1])  # Ablate then patch
+        policies.append([1, 0])  # Patch then ablate
+        policies.append([2, 0])  # Mean ablate then full ablate
+        
+        return policies
+    
     def _update_pymdp_beliefs(self, intervention_result: InterventionResult):
-        """Update pymdp belief state based on intervention."""
+        """Update pymdp belief state using proper variational message passing."""
         if not self.use_pymdp or self.pymdp_agent is None:
             return
         
@@ -311,13 +384,33 @@ class ActiveInferenceAgent(IActiveInferenceAgent):
             # Create observation from intervention result
             observation = self._intervention_to_observation(intervention_result)
             
-            # Update beliefs using pymdp
-            if hasattr(self.pymdp_agent, 'infer_states'):
-                self.pymdp_agent.infer_states(observation)
+            # Perform full Active Inference update cycle
+            # 1. Infer states (posterior over hidden states)
+            self.pymdp_agent.infer_states(observation)
+            
+            # 2. Infer policies (expected free energy calculation) 
+            self.pymdp_agent.infer_policies()
+            
+            # 3. Update model parameters (learning)
+            self.pymdp_agent.update_A(observation)
+            
+            # 4. Update our belief state with pymdp posteriors
+            if hasattr(self.pymdp_agent, 'qs') and len(self.pymdp_agent.qs) > 0:
+                self.belief_state.qs = self.pymdp_agent.qs[0].copy()  # First factor
                 
-                # Update our belief state with pymdp posteriors
-                if hasattr(self.pymdp_agent, 'qs'):
-                    self.belief_state.qs = self.pymdp_agent.qs[0]  # First factor
+                # Update feature importances based on posterior
+                for i, feature_id in enumerate(self.belief_state.feature_importances.keys()):
+                    if i < len(self.belief_state.qs):
+                        # Map posterior belief to importance
+                        importance = self.belief_state.qs[i]
+                        self.belief_state.feature_importances[feature_id] = importance
+            
+            # Extract precision information for uncertainty
+            if hasattr(self.pymdp_agent, 'gamma') and self.pymdp_agent.gamma is not None:
+                avg_precision = np.mean(self.pymdp_agent.gamma)
+                # Update uncertainty inversely to precision
+                for feature_id in self.belief_state.uncertainty.keys():
+                    self.belief_state.uncertainty[feature_id] = max(0.1, 1.0 / (1.0 + avg_precision))
                     
         except Exception as e:
             logger.warning(f"PyMDP belief update failed: {e}")
@@ -499,6 +592,91 @@ class ActiveInferenceAgent(IActiveInferenceAgent):
         
         return causal_info
     
+    def _feature_to_state_index(self, feature: SAEFeature) -> int:
+        """Map feature to state space index."""
+        # Simple mapping: normalize feature importance to state index
+        if not self.state_space_dims:
+            return 0
+        
+        max_states = self.state_space_dims[0]
+        # Map feature activation to discrete state
+        state_idx = int(feature.max_activation * (max_states - 1))
+        return min(state_idx, max_states - 1)
+    
+    def _calculate_epistemic_value_pymdp(self, state_idx: int, action: int) -> float:
+        """Calculate epistemic value using pymdp information theory."""
+        if not self.use_pymdp or self.A_matrices is None:
+            return 0.0
+        
+        try:
+            # Calculate expected information gain about hidden states
+            # This is the mutual information between observations and states
+            current_qs = self.belief_state.qs.copy()
+            
+            # Predict observation distribution under this action
+            if len(self.B_matrices) > 0 and action < self.B_matrices[0].shape[2]:
+                predicted_qs = dot(self.B_matrices[0][:, :, action], current_qs)
+            else:
+                predicted_qs = current_qs
+            
+            # Calculate expected observation under predicted beliefs
+            expected_obs = dot(self.A_matrices[0], predicted_qs)
+            
+            # Calculate entropy of observation distribution
+            obs_entropy = -np.sum(expected_obs * np.log(expected_obs + 1e-16))
+            
+            # Information gain is reduction in entropy
+            max_entropy = np.log(len(expected_obs))
+            info_gain = max_entropy - obs_entropy
+            
+            return float(info_gain)
+            
+        except Exception as e:
+            logger.warning(f"Epistemic value calculation failed: {e}")
+            return 0.0
+    
+    def _calculate_pragmatic_value_pymdp(self, state_idx: int, action: int) -> float:
+        """Calculate pragmatic value using pymdp preference satisfaction."""
+        if not self.use_pymdp or self.C_vectors is None:
+            return 0.0
+        
+        try:
+            # Calculate expected utility under this action
+            current_qs = self.belief_state.qs.copy()
+            
+            # Predict next state distribution
+            if len(self.B_matrices) > 0 and action < self.B_matrices[0].shape[2]:
+                predicted_qs = dot(self.B_matrices[0][:, :, action], current_qs)
+            else:
+                predicted_qs = current_qs
+            
+            # Calculate expected observation
+            expected_obs = dot(self.A_matrices[0], predicted_qs)
+            
+            # Calculate expected utility (preference satisfaction)
+            expected_utility = dot(expected_obs, self.C_vectors[0])
+            
+            return float(expected_utility)
+            
+        except Exception as e:
+            logger.warning(f"Pragmatic value calculation failed: {e}")
+            return 0.0
+    
+    def _calculate_parameter_info_gain(self, state_idx: int, action: int) -> float:
+        """Calculate expected information gain about model parameters."""
+        if not self.use_pymdp:
+            return 0.0
+        
+        try:
+            # Simplified parameter information gain
+            # Higher for less certain model parameters
+            uncertainty = self.belief_state.get_average_uncertainty()
+            return uncertainty * 0.1  # Weight parameter learning
+            
+        except Exception as e:
+            logger.warning(f"Parameter info gain calculation failed: {e}")
+            return 0.0
+    
     def _initialize_connection_beliefs(self, features: List['SAEFeature']) -> Dict[Tuple[int, int], float]:
         """Initialize connection beliefs between features."""
         connections = {}
@@ -543,39 +721,77 @@ class ActiveInferenceAgent(IActiveInferenceAgent):
         )
     
     def _initialize_pymdp_components(self, features: List['SAEFeature']) -> Tuple[Dict[str, Any], np.ndarray, np.ndarray]:
-        """Initialize pymdp generative model components."""
+        """Initialize pymdp generative model components with proper structure."""
         if not PYMDP_AVAILABLE:
             return None, None, None
         
         try:
-            n_features = len(features)
-            n_obs_levels = 3  # Low, medium, high effect
+            n_features = max(16, len(features))  # Minimum state space size
+            n_obs_levels = 3  # Low, medium, high intervention effect
+            n_actions = 3    # Different intervention types
             
-            # Create A matrix (observation model)
-            # Maps hidden states (feature importance) to observations (intervention effects)
-            A = random_A_matrix([n_obs_levels], [n_features])
+            # Store dimensions
+            self.state_space_dims = [n_features]
+            self.obs_space_dims = [n_obs_levels]
             
-            # Create B matrix (transition model)
-            # Feature importance can change based on interventions
-            n_actions = 3  # Different intervention types
-            B = random_B_matrix([n_features], [n_actions])
+            # Create A matrix (observation model): P(obs|states)
+            # Features with higher importance more likely to show high intervention effects
+            A = obj_array([np.zeros((n_obs_levels, n_features))])
+            for s in range(n_features):
+                # Higher state indices = higher feature importance
+                importance = s / n_features
+                # High importance features more likely to show high effects
+                A[0][0, s] = 0.7 - 0.5 * importance  # Low effect
+                A[0][1, s] = 0.2 + 0.2 * importance  # Medium effect  
+                A[0][2, s] = 0.1 + 0.3 * importance  # High effect
             
-            # Create C matrix (preferences)
-            # Prefer observations that provide information
-            C = np.log(softmax(np.array([0.1, 0.5, 1.0])))  # Prefer high-effect observations
+            # Normalize to proper probabilities
+            for s in range(n_features):
+                A[0][:, s] = A[0][:, s] / A[0][:, s].sum()
             
-            # Initial posterior beliefs (uniform)
+            # Create B matrices (transition model): P(states_t+1|states_t, actions)
+            B = obj_array([np.zeros((n_features, n_features, n_actions))])
+            
+            for action in range(n_actions):
+                for s_prev in range(n_features):
+                    for s_next in range(n_features):
+                        if action == 0:  # Ablation - can decrease importance
+                            if s_next <= s_prev:
+                                B[0][s_next, s_prev, action] = 0.7 if s_next == s_prev else 0.3 / s_prev if s_prev > 0 else 0
+                        elif action == 1:  # Patching - maintains importance
+                            B[0][s_next, s_prev, action] = 0.9 if s_next == s_prev else 0.1 / (n_features - 1)
+                        else:  # Mean ablation - moderate decrease
+                            if s_next <= s_prev:
+                                B[0][s_next, s_prev, action] = 0.8 if s_next == s_prev else 0.2 / s_prev if s_prev > 0 else 0
+                    
+                    # Normalize
+                    B[0][:, s_prev, action] = B[0][:, s_prev, action] / B[0][:, s_prev, action].sum()
+            
+            # Create C vectors (preferences): prefer informative observations
+            C = obj_array([np.log(softmax(np.array([0.1, 0.3, 0.6])))])  # Prefer high-effect observations
+            
+            # Create D vectors (prior beliefs): uniform prior
+            D = obj_array([np.ones(n_features) / n_features])
+            
+            # Store matrices
+            self.A_matrices = A
+            self.B_matrices = B
+            self.C_vectors = C
+            self.D_vectors = D
+            
+            # Initial posterior beliefs
             qs = np.ones(n_features) / n_features
             
-            # Create precision matrix
-            precision_matrix = np.eye(n_features) * 2.0  # Moderate precision
+            # Create precision matrix for uncertainty tracking
+            precision_matrix = np.eye(n_features) * 2.0
             
             generative_model = {
                 'A': A,
                 'B': B, 
                 'C': C,
-                'n_states': [n_features],
-                'n_obs': [n_obs_levels],
+                'D': D,
+                'n_states': self.state_space_dims,
+                'n_obs': self.obs_space_dims,
                 'n_actions': [n_actions]
             }
             

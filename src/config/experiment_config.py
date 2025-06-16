@@ -36,6 +36,8 @@ class SAEConfig:
     activation_threshold: float = 0.05
     max_features_per_layer: int = 20
     neuronpedia_source: bool = True
+    include_error_nodes: bool = True                     # Add error nodes for unexplained variance
+    max_graph_nodes: int = 100                          # Maximum nodes before pruning
 
 @dataclass
 class ActiveInferenceConfig:
