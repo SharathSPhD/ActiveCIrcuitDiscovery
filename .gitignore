@@ -68,3 +68,5 @@ update.md
 gaps*.md
 IMPLEMENT*.md
 ENHANCEMENTS*.md
+# Virtual environment (outside project)
+../project_venv/

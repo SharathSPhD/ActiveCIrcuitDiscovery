@@ -59,7 +59,7 @@ class CircuitTracer(ICircuitTracer):
             return "cuda" if torch.cuda.is_available() else "cpu"
         return device_config.value
     
-    def _load_model(self) -> HookedTransformer:
+    def _load_model(self):
         """Load transformer model using TransformerLens."""
         if not TRANSFORMER_LENS_AVAILABLE:
             raise ImportError("TransformerLens required for circuit analysis")

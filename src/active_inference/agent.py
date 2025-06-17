@@ -466,7 +466,7 @@ class ActiveInferenceAgent(IActiveInferenceAgent):
     
     def _create_mock_attribution_graph(self) -> 'AttributionGraph':
         """Create mock attribution graph from beliefs for prediction generation."""
-        from core.data_structures import AttributionGraph, CircuitNode
+        from core.data_structures import AttributionGraph, GraphNode, GraphEdge
         
         # Create nodes from feature beliefs
         nodes = {}
@@ -481,10 +481,12 @@ class ActiveInferenceAgent(IActiveInferenceAgent):
                 'examples': []
             })()
             
-            nodes[i] = CircuitNode(
-                feature=mock_feature,
-                activation_value=importance,
-                causal_influence=importance
+            nodes[i] = GraphNode(
+                node_id=f"feature_{feature_id}_layer_{feature_id // 100}",
+                layer=feature_id // 100,
+                feature_id=feature_id,
+                importance=importance,
+                description=f"Feature {feature_id}",
             )
         
         # Create edges from connection beliefs
@@ -501,12 +503,18 @@ class ActiveInferenceAgent(IActiveInferenceAgent):
                         target_idx = idx
                 
                 if source_idx is not None and target_idx is not None:
-                    edges[(source_idx, target_idx)] = belief
+                    edges[(source_idx, target_idx)] = GraphEdge(
+                    source_id=f"feature_{source_id}_layer_{source_id // 100}",
+                    target_id=f"feature_{target_id}_layer_{target_id // 100}",
+                    weight=belief,
+                    confidence=belief,
+                    edge_type="predicted"
+                )
         
         return AttributionGraph(
             input_text="mock_input",
-            nodes=nodes,
-            edges=edges,
+            nodes=list(nodes.values()),
+            edges=list(edges.values()),
             target_output="mock_output",
             confidence=self.belief_state.confidence,
             metadata={'mock': True}
