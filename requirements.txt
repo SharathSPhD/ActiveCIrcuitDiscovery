@@ -24,7 +24,11 @@ scipy==1.15.3
 scikit-learn==1.7.0
 matplotlib==3.10.3
 seaborn==0.13.2
-plotly==6.1.2
+plotly==5.22.0
+
+# Interactive Visualization - Enhanced Framework
+dash==2.18.1
+networkx==3.4.2
 
 # Mechanistic Interpretability Tools - TESTED
 einops==0.8.1
