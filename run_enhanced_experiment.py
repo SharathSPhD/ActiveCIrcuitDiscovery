@@ -60,7 +60,7 @@ def run_enhanced_experiment():
         
         # Active Inference analysis
         logger.info("🎯 Running Active Inference analysis...")
-        for i, feature in enumerate(features[:5]):  # Test first 5 features
+        for i, feature in enumerate(list(features)[:5]):  # Test first 5 features
             efe = agent.calculate_expected_free_energy(feature, "ablation")
             logger.info(f"   Feature {i}: EFE = {efe:.3f}")
         
