@@ -28,3 +28,32 @@
 2025-06-17 11:52:40,115 - __main__ - INFO - 🔗 Building attribution graph...
 2025-06-17 11:52:40,115 - circuit_analysis.tracer - INFO - Building attribution graph for: 'The Golden Gate Bridge is located in...'
 2025-06-17 11:52:41,095 - circuit_analysis.tracer - INFO - Found 120 active features across 6 layers
+2025-06-17 11:59:25,399 - circuit_analysis.tracer - INFO - Graph pruned to 102 nodes and 4084 edges
+2025-06-17 11:59:25,399 - circuit_analysis.tracer - INFO - Built attribution graph with 102 nodes and 4084 edges
+2025-06-17 11:59:25,400 - __main__ - INFO - ✅ Created graph with 102 nodes and 4084 edges
+2025-06-17 11:59:25,400 - __main__ - INFO - 🎯 Running Active Inference analysis...
+2025-06-17 11:59:25,400 - __main__ - INFO -    Feature 0: EFE = 0.000
+2025-06-17 11:59:25,400 - __main__ - INFO -    Feature 1: EFE = 0.000
+2025-06-17 11:59:25,400 - __main__ - INFO -    Feature 2: EFE = 0.000
+2025-06-17 11:59:25,401 - __main__ - INFO -    Feature 3: EFE = 0.000
+2025-06-17 11:59:25,401 - __main__ - INFO -    Feature 4: EFE = 0.000
+2025-06-17 11:59:25,401 - __main__ - INFO - 🎨 Creating interactive visualization...
+2025-06-17 11:59:25,401 - visualization.web_visualizer - INFO - InteractiveWebVisualizer initialized
+2025-06-17 11:59:25,751 - visualization.web_visualizer - INFO - Standalone HTML saved to enhanced_experiment_output.html
+2025-06-17 11:59:25,751 - __main__ - INFO - ✅ Visualization created: enhanced_experiment_output.html
+2025-06-17 11:59:25,751 - __main__ - INFO - 💾 Saving experiment results...
+2025-06-17 11:59:25,770 - __main__ - INFO - ✅ Graph saved to results/Enhanced_Experiment_Results/attribution_graph.json
+2025-06-17 11:59:25,770 - __main__ - INFO - 🎉 Enhanced experiment completed successfully\!
+Loaded pretrained model gpt2-small into HookedTransformer
+
+============================================================
+🎯 ENHANCED EXPERIMENT SUMMARY
+============================================================
+✅ Input processed: The Golden Gate Bridge is located in
+✅ Features discovered: 6
+✅ Graph nodes: 102
+✅ Graph edges: 4084
+✅ Visualization: enhanced_experiment_output.html
+✅ Results saved: results/Enhanced_Experiment_Results
+
+🚀 Enhanced framework is production ready\!
