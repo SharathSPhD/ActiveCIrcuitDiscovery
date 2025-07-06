@@ -4,11 +4,14 @@ Create GPU droplet from golden snapshot - FIXED VERSION
 - Reads token from digit1.txt
 - Simplified status checking that doesn't hang
 - Just waits reasonable time for snapshot to become active
+- Takes snapshot name as user input argument
 """
 import os
 import json
 import requests
 import time
+import sys
+import argparse
 from datetime import datetime
 from pathlib import Path
 
@@ -27,11 +30,49 @@ def get_api_token():
         print(f"❌ Error reading token: {e}")
         return None
 
-def create_gpu_droplet_from_snapshot():
+def get_snapshot_id_by_name(snapshot_name, token):
+    """Get snapshot ID by name"""
+    url = "https://api.digitalocean.com/v2/snapshots"
+    headers = {"Authorization": f"Bearer {token}"}
+    
+    try:
+        response = requests.get(url, headers=headers, timeout=10)
+        if response.status_code == 200:
+            snapshots = response.json()['snapshots']
+            for snapshot in snapshots:
+                if snapshot['name'] == snapshot_name:
+                    print(f"✅ Found snapshot: {snapshot_name} (ID: {snapshot['id']})")
+                    return snapshot['id']
+            
+            # If exact match not found, show available snapshots
+            print(f"❌ Snapshot '{snapshot_name}' not found")
+            print("📋 Available snapshots:")
+            for snapshot in snapshots[:10]:  # Show first 10
+                print(f"   - {snapshot['name']} (ID: {snapshot['id']})")
+            return None
+        else:
+            print(f"❌ Failed to fetch snapshots: {response.status_code}")
+            return None
+    except Exception as e:
+        print(f"❌ Error fetching snapshots: {e}")
+        return None
+
+def create_gpu_droplet_from_snapshot(snapshot_name):
     # Get API token from file
     token = get_api_token()
     if not token:
         return None
+    
+    # Get snapshot ID by name
+    if snapshot_name.isdigit():
+        # If user provided ID directly
+        snapshot_id = int(snapshot_name)
+        print(f"Using snapshot ID: {snapshot_id}")
+    else:
+        # Look up snapshot by name
+        snapshot_id = get_snapshot_id_by_name(snapshot_name, token)
+        if not snapshot_id:
+            return None
     
     # API endpoint
     url = "https://api.digitalocean.com/v2/droplets"
@@ -42,12 +83,12 @@ def create_gpu_droplet_from_snapshot():
         "Authorization": f"Bearer {token}"
     }
     
-    # Payload using golden snapshot
+    # Payload using specified snapshot
     payload = {
         "name": f"snapshots-gpu-l40sx1-{datetime.now().strftime('%Y%m%d-%H%M')}",
         "size": "gpu-l40sx1-48gb",  # L40S GPU with 48GB
         "region": "tor1",           # Toronto region
-        "image": 190297195,         # Golden snapshot image ID
+        "image": snapshot_id,       # User-specified snapshot
         "ssh_keys": [48299916],     # SSH key ID
         "tags": ["gpu", "l40s", "snapshot", "activecd"],
         "vpc_uuid": "89ad4747-9fc9-42f3-a25f-180699ed0f43",
@@ -56,11 +97,11 @@ def create_gpu_droplet_from_snapshot():
         "backups": False
     }
     
-    print("🚀 Creating GPU droplet from golden snapshot...")
+    print("🚀 Creating GPU droplet from snapshot...")
     print(f"   Name: {payload['name']}")
     print(f"   Size: {payload['size']} (L40S GPU)")
     print(f"   Region: {payload['region']}")
-    print(f"   Image ID: {payload['image']} (Golden Snapshot)")
+    print(f"   Image ID: {payload['image']} (Snapshot: {snapshot_name})")
     
     try:
         # Make the API request
@@ -127,16 +168,46 @@ def check_droplet_status_simple(droplet_id, token):
         return None
 
 if __name__ == "__main__":
+    # Parse command line arguments
+    parser = argparse.ArgumentParser(description='Create GPU droplet from DigitalOcean snapshot')
+    parser.add_argument('snapshot', nargs='?', 
+                       default='ActiveCircuitDiscovery-L40S-Working-15062025',
+                       help='Snapshot name or ID (default: ActiveCircuitDiscovery-L40S-Working-15062025)')
+    parser.add_argument('--list-snapshots', action='store_true', 
+                       help='List available snapshots and exit')
+    
+    args = parser.parse_args()
+    
+    # If user wants to list snapshots
+    if args.list_snapshots:
+        token = get_api_token()
+        if token:
+            print("📋 Fetching available snapshots...")
+            url = "https://api.digitalocean.com/v2/snapshots"
+            headers = {"Authorization": f"Bearer {token}"}
+            try:
+                response = requests.get(url, headers=headers, timeout=10)
+                if response.status_code == 200:
+                    snapshots = response.json()['snapshots']
+                    print(f"Found {len(snapshots)} snapshots:")
+                    for snapshot in snapshots:
+                        print(f"   - {snapshot['name']} (ID: {snapshot['id']})")
+                else:
+                    print(f"❌ Failed to fetch snapshots: {response.status_code}")
+            except Exception as e:
+                print(f"❌ Error: {e}")
+        sys.exit(0)
+    
     # Create the droplet
-    result = create_gpu_droplet_from_snapshot()
+    result = create_gpu_droplet_from_snapshot(args.snapshot)
     
     if result:
         print(f"\n✅ Droplet '{result['name']}' created successfully!")
         print(f"   ID: {result['droplet_id']}")
         
-        # Wait for golden snapshot to become active (usually 2-3 minutes)
-        print("\n⏳ Waiting for golden snapshot to become active...")
-        print("   Golden snapshots typically become active in 2-3 minutes")
+        # Wait for snapshot to become active (usually 2-3 minutes)
+        print("\n⏳ Waiting for snapshot to become active...")
+        print("   Snapshots typically become active in 2-3 minutes")
         
         # Check status a few times with delays
         for attempt in range(6):  # Check 6 times over ~3 minutes
