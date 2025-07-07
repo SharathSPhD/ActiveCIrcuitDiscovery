@@ -15,8 +15,8 @@ from pathlib import Path
 
 # Real pymdp imports - no fallbacks
 import pymdp
-from pymdp import Agent
-from pymdp.utils import obj_array, random_A_matrix, random_B_matrix, norm_dist_obj_arr
+from pymdp.agent import Agent
+from pymdp.utils import obj_array, random_A_matrix, random_B_matrix, norm_dist
 from pymdp.maths import softmax, kl_div, entropy, spm_dot
 from pymdp import control, inference, learning
 
@@ -252,7 +252,7 @@ class ProperActiveInferenceAgent(IActiveInferenceAgent):
         logger.info(f"Initialized beliefs for {len(component_mapping)} components")
         return belief_state
     
-    def calculate_expected_free_energy(self, feature: SAEFeature, 
+    def calculate_expected_free_energy(self, feature: CircuitFeature, 
                                      intervention_type: InterventionType) -> float:
         """Calculate Expected Free Energy using real pymdp algorithms."""
         
@@ -523,7 +523,7 @@ class ProperActiveInferenceAgent(IActiveInferenceAgent):
             }
         )
     
-    def select_intervention(self, available_features: List[SAEFeature]) -> Tuple[SAEFeature, InterventionType]:
+    def select_intervention(self, available_features: List[CircuitFeature]) -> Tuple[CircuitFeature, InterventionType]:
         """Select optimal intervention using Expected Free Energy minimization."""
         
         if not available_features:

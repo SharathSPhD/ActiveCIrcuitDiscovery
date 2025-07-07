@@ -15,7 +15,7 @@ Components:
 import numpy as np
 import logging
 from typing import List, Dict, Tuple, Optional, Any
-from pymdp import Agent
+from pymdp.agent import Agent
 from pymdp.utils import obj_array
 from pymdp.maths import softmax, spm_dot, kl_div, entropy
 from pymdp import control, inference, learning

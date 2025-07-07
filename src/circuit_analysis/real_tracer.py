@@ -10,7 +10,7 @@ import numpy as np
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
 from ..core.interfaces import ICircuitTracer
-from ..core.data_structures import CircuitFeature, InterventionResult, CircuitGraph
+from ..core.data_structures import CircuitFeature, InterventionResult
 
 
 class RealCircuitTracer(ICircuitTracer):
@@ -214,7 +214,7 @@ class RealCircuitTracer(ICircuitTracer):
         # Multiply transcoder activation by scaling factor
         pass
     
-    def build_attribution_graph(self, features: List[CircuitFeature]) -> CircuitGraph:
+    def build_attribution_graph(self, features: List[CircuitFeature]) -> Dict[str, Any]:
         """
         Build circuit attribution graph using real transcoder analysis.
         Maps feature interactions and causal relationships.
