@@ -2,19 +2,18 @@
 # This file contains the default parameters for all experiment components
 
 model:
-  name: "gpt2-small"
+  name: "google/gemma-2-2b"
   device: "auto"  # auto, cpu, cuda
-  max_context_length: 1024
+  max_context_length: 2048
   use_cache: true
 
-sae:
+circuit_discovery:
   enabled: true
-  auto_discover_layers: true      # Auto-discover active layers instead of forcing targets
-  target_layers: []               # Empty - will be populated by auto-discovery
-  activation_threshold: 0.05
-  max_features_per_layer: 20
-  neuronpedia_source: true
-  layer_search_range: [0, -1]     # Search all layers: [start, end] (-1 = last layer)
+  method: "circuit_tracer"        # Use circuit-tracer instead of SAE
+  activation_threshold: 0.1
+  max_features_per_layer: 50
+  transcoder_layers: "all"        # Use transcoders for all layers
+  semantic_features: true         # Focus on semantic feature discovery
 
 active_inference:
   enabled: true

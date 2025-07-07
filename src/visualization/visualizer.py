@@ -28,7 +28,7 @@ try:
     from core.interfaces import IVisualizationGenerator
     from core.data_structures import (
         AttributionGraph, ExperimentResult, InterventionResult, 
-        CorrespondenceMetrics, BeliefState, SAEFeature, NovelPrediction
+        CorrespondenceMetrics, BeliefState, CircuitFeature, NovelPrediction
     )
     from core.prediction_system import EnhancedPredictionGenerator
     from core.statistical_validation import StatisticalTest, StatisticalValidator
@@ -39,7 +39,7 @@ except ImportError:
     from core.interfaces import IVisualizationGenerator
     from core.data_structures import (
         AttributionGraph, ExperimentResult, InterventionResult,
-        CorrespondenceMetrics, BeliefState, SAEFeature, NovelPrediction
+        CorrespondenceMetrics, BeliefState, CircuitFeature, NovelPrediction
     )
     from core.prediction_system import EnhancedPredictionGenerator
     from core.statistical_validation import StatisticalTest, StatisticalValidator

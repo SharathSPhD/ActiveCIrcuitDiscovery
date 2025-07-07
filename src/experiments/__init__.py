@@ -1,8 +1,9 @@
 # YorK_RP Experiments Module
-"""Experiment runners and orchestration."""
+"""Integrated circuit discovery experiments with Active Inference + circuit-tracer."""
 
-from .runner import YorKExperimentRunner
+from .circuit_discovery_integration import CircuitDiscoveryIntegration, CircuitDiscoveryResult
 
 __all__ = [
-    'YorKExperimentRunner'
+    'CircuitDiscoveryIntegration',
+    'CircuitDiscoveryResult'
 ]

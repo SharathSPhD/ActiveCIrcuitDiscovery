@@ -1,29 +1,29 @@
 # YorK_RP: Active Inference Approach to Circuit Discovery in Large Language Models
 """
-Research Project: Active Inference Approach to Circuit Discovery in Large Language Models
+Research Project: Enhanced Active Inference for Circuit Discovery in Large Language Models
 Module: COM00150M - Research Proposal (Computer Science)
 
-This package provides a comprehensive implementation of Active Inference principles
-for circuit discovery in transformer language models, integrating with established
-libraries like TransformerLens, SAE-lens, and pymdp.
+This package provides a production-ready implementation of Enhanced Active Inference 
+for circuit discovery in transformer language models, integrating circuit-tracer 
+with real pymdp Active Inference.
 
 Main Components:
-- config: Configuration management
-- core: Data structures and interfaces  
-- circuit_analysis: Circuit discovery with real SAE analysis
-- active_inference: Active Inference agent with pymdp integration
-- experiments: Experiment runners and orchestration
+- config: Configuration management for Gemma-2-2B + circuit-tracer
+- core: Unified data structures and interfaces  
+- circuit_analysis: Real circuit discovery with circuit-tracer transcoders
+- active_inference: Real pymdp Active Inference agent (no fallbacks)
+- experiments: Integrated experiment runners with RQ validation
 """
 
 from .config import get_config, CompleteConfig
 from .core import (
-    SAEFeature, InterventionResult, ExperimentResult,
+    CircuitFeature, InterventionResult, ExperimentResult,
     CorrespondenceCalculator, EnhancedPredictionGenerator,
     PredictionValidator, StatisticalValidator
 )
-from .circuit_analysis import CircuitTracer
-from .active_inference import ActiveInferenceAgent
-from .experiments import YorKExperimentRunner
+from .circuit_analysis import RealCircuitTracer
+from .active_inference import ProperActiveInferenceAgent
+from .experiments import CircuitDiscoveryIntegration
 from .visualization import CircuitVisualizer
 
 __version__ = "1.0.0"
@@ -31,13 +31,13 @@ __author__ = "YorK Research Project"
 
 __all__ = [
     'get_config',
-    'CompleteConfig',
-    'SAEFeature',
+    'CompleteConfig', 
+    'CircuitFeature',
     'InterventionResult', 
     'ExperimentResult',
-    'CircuitTracer',
-    'ActiveInferenceAgent',
-    'YorKExperimentRunner',
+    'RealCircuitTracer',
+    'ProperActiveInferenceAgent',
+    'CircuitDiscoveryIntegration',
     'CircuitVisualizer',
     'CorrespondenceCalculator',
     'EnhancedPredictionGenerator',
@@ -47,8 +47,8 @@ __all__ = [
 
 # Quick setup function for common use cases
 def create_experiment(config_path=None):
-    """Create a complete experiment setup with default configuration."""
+    """Create a complete experiment setup with circuit-tracer + Active Inference."""
     config = get_config(config_path)
-    runner = YorKExperimentRunner()
-    runner.setup_experiment(config)
-    return runner, config
+    integration = CircuitDiscoveryIntegration(model_name=config.model.name)
+    integration.initialize()
+    return integration, config

@@ -1,8 +1,13 @@
 # YorK_RP Active Inference Module
-"""Active Inference agent implementation with pymdp integration."""
+"""Real pymdp Active Inference agent - no fallbacks or mocks."""
 
-from .agent import ActiveInferenceAgent
+from .proper_agent import ProperActiveInferenceAgent
+from .generative_model import CircuitGenerativeModelBuilder
+from .inference_cycle import ActiveInferenceCycle, CircuitDiscoveryInferenceCycle
 
 __all__ = [
-    'ActiveInferenceAgent'
+    'ProperActiveInferenceAgent',
+    'CircuitGenerativeModelBuilder', 
+    'ActiveInferenceCycle',
+    'CircuitDiscoveryInferenceCycle'
 ]

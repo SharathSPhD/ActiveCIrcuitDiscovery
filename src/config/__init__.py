@@ -4,7 +4,7 @@
 from .experiment_config import (
     CompleteConfig,
     ModelConfig, 
-    SAEConfig,
+    CircuitDiscoveryConfig,
     ActiveInferenceConfig,
     ExperimentConfig,
     ResearchQuestionConfig,
@@ -19,7 +19,7 @@ from .experiment_config import (
 __all__ = [
     'CompleteConfig',
     'ModelConfig',
-    'SAEConfig', 
+    'CircuitDiscoveryConfig', 
     'ActiveInferenceConfig',
     'ExperimentConfig',
     'ResearchQuestionConfig',

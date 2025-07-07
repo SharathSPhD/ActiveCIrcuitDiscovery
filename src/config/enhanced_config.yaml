@@ -2,19 +2,19 @@
 # Configuration optimized for the enhanced system with statistical validation
 
 model:
-  name: "gpt2-small"
+  name: "google/gemma-2-2b"
   device: "auto"  # auto, cpu, cuda
-  max_context_length: 1024
+  max_context_length: 2048
   use_cache: true
 
-sae:
+circuit_discovery:
   enabled: true
-  auto_discover_layers: true      # Auto-discover active layers across ALL model layers
-  target_layers: []               # Empty - will be populated by comprehensive auto-discovery
-  activation_threshold: 0.03      # Lower threshold for more comprehensive feature discovery
-  max_features_per_layer: 30      # More features for richer analysis
-  neuronpedia_source: true
-  layer_search_range: [0, -1]     # Search ALL layers: [start, end] (-1 = last layer)
+  method: "circuit_tracer"        # Enhanced circuit-tracer for comprehensive discovery
+  activation_threshold: 0.05      # Lower threshold for comprehensive feature discovery
+  max_features_per_layer: 100     # More features for richer analysis
+  transcoder_layers: "all"        # Use transcoders for all layers
+  semantic_features: true         # Focus on semantic feature discovery
+  golden_gate_detection: true     # Specifically detect landmark features
 
 active_inference:
   enabled: true

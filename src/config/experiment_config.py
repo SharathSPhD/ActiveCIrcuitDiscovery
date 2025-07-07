@@ -21,23 +21,26 @@ class InterventionType(Enum):
 @dataclass
 class ModelConfig:
     """Configuration for the transformer model."""
-    name: str = "gpt2-small"
+    name: str = "google/gemma-2-2b"
     device: DeviceType = DeviceType.AUTO
-    max_context_length: int = 1024
+    max_context_length: int = 2048
     use_cache: bool = True
 
 @dataclass
-class SAEConfig:
-    """Configuration for Sparse Autoencoder analysis."""
+class CircuitDiscoveryConfig:
+    """Configuration for circuit discovery using circuit-tracer."""
     enabled: bool = True
-    auto_discover_layers: bool = True                    # Auto-discover active layers
-    target_layers: List[int] = field(default_factory=list)  # Empty by default - auto-populated
-    layer_search_range: List[int] = field(default_factory=lambda: [0, -1])  # [start, end] (-1 = last)
-    activation_threshold: float = 0.05
-    max_features_per_layer: int = 20
-    neuronpedia_source: bool = True
+    method: str = "circuit_tracer"                       # Use circuit-tracer instead of SAE
+    activation_threshold: float = 0.1
+    max_features_per_layer: int = 50
+    transcoder_layers: str = "all"                       # Use transcoders for all layers
+    semantic_features: bool = True                       # Focus on semantic feature discovery
+    golden_gate_detection: bool = False                  # Specifically detect landmark features
     include_error_nodes: bool = True                     # Add error nodes for unexplained variance
-    max_graph_nodes: int = 100                          # Maximum nodes before pruning
+    max_graph_nodes: int = 200                          # More nodes for richer circuit analysis
+
+# Backward compatibility alias
+SAEConfig = CircuitDiscoveryConfig
 
 @dataclass
 class ActiveInferenceConfig:
@@ -100,9 +103,9 @@ class VisualizationConfig:
 
 @dataclass
 class CompleteConfig:
-    """Complete configuration for the YorK_RP experiment."""
+    """Complete configuration for the Enhanced Active Inference experiment."""
     model: ModelConfig = field(default_factory=ModelConfig)
-    sae: SAEConfig = field(default_factory=SAEConfig)
+    circuit_discovery: CircuitDiscoveryConfig = field(default_factory=CircuitDiscoveryConfig)
     active_inference: ActiveInferenceConfig = field(default_factory=ActiveInferenceConfig)
     experiment: ExperimentConfig = field(default_factory=ExperimentConfig)
     research_questions: ResearchQuestionConfig = field(default_factory=ResearchQuestionConfig)

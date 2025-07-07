@@ -1,3 +1,0 @@
-2025-06-14 21:40:15,126 - __main__ - INFO - 🚀 Starting Complete ActiveCircuitDiscovery Experiment
-2025-06-14 21:40:17,882 - datasets - INFO - PyTorch version 2.5.1+cu121 available.
-2025-06-14 21:40:20,122 - __main__ - ERROR - ❌ Configuration setup failed: 'CompleteConfig' object has no attribute 'circuit_analysis'

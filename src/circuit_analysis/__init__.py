@@ -1,8 +1,8 @@
 # YorK_RP Circuit Analysis Module
-"""Circuit discovery and analysis components."""
+"""Real circuit discovery using circuit-tracer + Gemma-2-2B transcoders."""
 
-from .tracer import CircuitTracer
+from .real_tracer import RealCircuitTracer
 
 __all__ = [
-    'CircuitTracer'
+    'RealCircuitTracer'
 ]

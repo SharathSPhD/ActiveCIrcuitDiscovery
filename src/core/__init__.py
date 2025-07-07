@@ -2,7 +2,8 @@
 """Core data structures and interfaces for Active Inference Circuit Discovery."""
 
 from .data_structures import (
-    SAEFeature,
+    CircuitFeature,
+    SAEFeature,  # Backward compatibility alias
     InterventionResult,
     CircuitNode,
     AttributionGraph,
@@ -66,7 +67,8 @@ from .statistical_validation import (
 
 __all__ = [
     # Data structures
-    'SAEFeature',
+    'CircuitFeature',
+    'SAEFeature',  # Backward compatibility
     'InterventionResult', 
     'CircuitNode',
     'AttributionGraph',

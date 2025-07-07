@@ -65,34 +65,103 @@ class FeatureCache:
 feature_cache = FeatureCache()
 
 @dataclass 
-class SAEFeature:
-    """Represents a Sparse Autoencoder feature with comprehensive metadata."""
+class CircuitFeature:
+    """Unified circuit feature representation supporting both SAE and Transcoder features."""
     feature_id: int
     layer: int  
-    activation_threshold: float
+    activation_strength: float
     description: str
     max_activation: float
     examples: List[str]
+    component_type: str = "unknown"  # 'attention', 'mlp', 'residual', 'sae'
+    semantic_description: str = ""
+    intervention_sites: List[str] = field(default_factory=list)
+    feature_source: str = "sae"  # 'sae' or 'transcoder'
     feature_vector: Optional[np.ndarray] = None
     decoder_weights: Optional[np.ndarray] = None
     
     def __post_init__(self):
-        # Allow larger activations for real transformer features
         if self.max_activation < 0:
             raise ValueError(f"max_activation must be non-negative, got {self.max_activation}")
         if self.layer < 0:
             raise ValueError(f"layer must be non-negative, got {self.layer}")
+        if self.activation_strength < 0:
+            raise ValueError(f"activation_strength must be non-negative")
+        
+        # Set semantic description if not provided
+        if not self.semantic_description:
+            if self.feature_source == "transcoder":
+                self.semantic_description = f"Transcoder L{self.layer}F{self.feature_id} ({self.component_type})"
+            else:
+                self.semantic_description = f"SAE L{self.layer}F{self.feature_id}"
+    
+    @property
+    def unique_id(self) -> str:
+        """Unique identifier for the feature."""
+        source_prefix = "T" if self.feature_source == "transcoder" else "S"
+        return f"L{self.layer}{source_prefix}{self.feature_id}"
+    
+    def is_active(self, threshold: float = 0.1) -> bool:
+        """Check if feature is active above threshold."""
+        return self.activation_strength >= threshold
+    
+    @classmethod
+    def from_sae_data(cls, feature_id: int, layer: int, data: Dict[str, Any]) -> 'CircuitFeature':
+        """Create CircuitFeature from SAE/Neuronpedia data."""
+        return cls(
+            feature_id=feature_id,
+            layer=layer,
+            activation_strength=data.get('activation', 0.0),
+            description=data.get('description', f"SAE L{layer}F{feature_id}"),
+            max_activation=data.get('max_activation', 0.0),
+            examples=data.get('examples', []),
+            component_type="sae",
+            semantic_description=data.get('description', f"SAE L{layer}F{feature_id}"),
+            feature_source="sae"
+        )
+    
+    @classmethod
+    def from_transcoder_data(
+        cls, 
+        feature_id: int,
+        layer: int, 
+        activation: float,
+        component_type: str,
+        semantic_description: str,
+        intervention_sites: List[str]
+    ) -> 'CircuitFeature':
+        """Create CircuitFeature from circuit-tracer transcoder data."""
+        return cls(
+            feature_id=feature_id,
+            layer=layer,
+            activation_strength=activation,
+            description=semantic_description,
+            max_activation=activation,
+            examples=[],
+            component_type=component_type,
+            semantic_description=semantic_description,
+            intervention_sites=intervention_sites,
+            feature_source="transcoder"
+        )
+
+# Backward compatibility alias
+SAEFeature = CircuitFeature
 
 @dataclass
 class InterventionResult:
     """Results from a circuit intervention experiment."""
     intervention_type: InterventionType
-    target_feature: SAEFeature
+    target_feature: CircuitFeature
     original_logits: torch.Tensor
     intervened_logits: torch.Tensor
     effect_size: float
     target_token_change: float
     intervention_layer: int
+    effect_magnitude: float = 0.0
+    baseline_prediction: str = ""
+    intervention_prediction: str = ""
+    semantic_change: bool = False
+    statistical_significance: bool = False
     metadata: Dict[str, Any] = field(default_factory=dict)
     
     def __post_init__(self):
@@ -119,7 +188,7 @@ class InterventionResult:
 @dataclass
 class CircuitNode:
     """Node in the discovered circuit graph."""
-    feature: SAEFeature
+    feature: CircuitFeature
     activation_value: float
     causal_influence: float  
     downstream_nodes: List[int] = field(default_factory=list)
