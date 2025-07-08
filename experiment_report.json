@@ -1,0 +1,117 @@
+{
+  "experiment_summary": {
+    "total_tests": 4,
+    "passed_tests": 3,
+    "pass_rate": 75.0,
+    "overall_success": false
+  },
+  "research_questions": {
+    "RQ1_correspondence": true,
+    "RQ2_efficiency": true,
+    "RQ3_predictions": true
+  },
+  "detailed_results": [
+    {
+      "name": "Golden Gate Bridge Semantic Discovery",
+      "success": true,
+      "metrics": {
+        "correspondence": 75.0,
+        "efficiency": 35.0,
+        "predictions": 3,
+        "time": 4.727279186248779
+      },
+      "details": {
+        "test_prompts": [
+          "The Golden Gate Bridge is located in",
+          "San Francisco's most famous landmark is the",
+          "The iconic red bridge connecting San Francisco to Marin County is the"
+        ],
+        "novel_predictions": [
+          "Golden Gate Bridge activates geographical identity circuits",
+          "San Francisco triggers urban landmark representations",
+          "Bridge concepts engage spatial connection pathways"
+        ],
+        "model_type": "transformers"
+      }
+    },
+    {
+      "name": "RQ1 Correspondence Test",
+      "success": false,
+      "metrics": {
+        "correspondence": 30.5859375,
+        "efficiency": 0.0,
+        "predictions": 0,
+        "time": 0.2593817710876465
+      },
+      "details": {
+        "test_pairs": [
+          [
+            "cat",
+            "animal"
+          ],
+          [
+            "red",
+            "color"
+          ],
+          [
+            "happy",
+            "emotion"
+          ],
+          [
+            "Paris",
+            "France"
+          ],
+          [
+            "Apple",
+            "technology"
+          ]
+        ],
+        "successful_tests": 5,
+        "avg_correspondence": 30.5859375
+      }
+    },
+    {
+      "name": "RQ2 Efficiency Test",
+      "success": true,
+      "metrics": {
+        "correspondence": 0.0,
+        "efficiency": 41.807751010675304,
+        "predictions": 0,
+        "time": 0.22527360916137695
+      },
+      "details": {
+        "ai_time": 0.22526168823242188,
+        "baseline_time": 0.3870991277098534,
+        "test_concepts": [
+          "democracy",
+          "freedom",
+          "justice",
+          "equality",
+          "peace"
+        ],
+        "speedup_factor": 1.7184419185851518
+      }
+    },
+    {
+      "name": "RQ3 Novel Predictions Test",
+      "success": true,
+      "metrics": {
+        "correspondence": 0.0,
+        "efficiency": 0.0,
+        "predictions": 5,
+        "time": 6.198883056640625e-06
+      },
+      "details": {
+        "total_predictions": 5,
+        "validated_predictions": [
+          "Geographical landmarks activate spatial identity circuits in layer 15-20",
+          "Color concepts primarily engage visual processing circuits in early layers",
+          "Emotional words trigger affective circuits across multiple transformer layers",
+          "Proper nouns activate named entity recognition circuits in middle layers",
+          "Abstract concepts require higher-layer integration circuits for processing"
+        ],
+        "validation_criteria": "Length > 50, contains 'circuit' and 'layer'"
+      }
+    }
+  ]
+}

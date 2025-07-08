@@ -1,0 +1,15 @@
+2025-07-08 11:07:46,348 - src.visualization.visualizer - INFO - Enhanced CircuitVisualizer initialized: visualizations
+2025-07-08 11:07:46,348 - __main__ - INFO - Initialized ComprehensiveExperimentRunner: comprehensive_exp_20250708_110746
+2025-07-08 11:07:46,348 - __main__ - INFO - Model: google/gemma-2-2b, Transcoders: gemma
+2025-07-08 11:07:46,348 - __main__ - INFO - Output directory: comprehensive_experiment_results
+2025-07-08 11:07:46,348 - __main__ - INFO - 🚀 Starting comprehensive experiment: comprehensive_exp_20250708_110746
+2025-07-08 11:07:46,348 - __main__ - INFO - 🕐 Start time: 2025-07-08 11:07:46.348388
+2025-07-08 11:07:46,348 - __main__ - INFO - ============================================================
+2025-07-08 11:07:46,348 - __main__ - INFO - PHASE 1: MODEL INITIALIZATION AND VALIDATION
+2025-07-08 11:07:46,348 - __main__ - INFO - ============================================================
+2025-07-08 11:07:46,348 - __main__ - INFO - 🔧 Initializing models and components...
+2025-07-08 11:07:47,290 - circuit_tracer.utils.hf_utils - INFO - Performing pre-flight metadata check...
+2025-07-08 11:07:47,379 - circuit_tracer.utils.hf_utils - INFO - Pre-flight check complete. Starting downloads...
+2025-07-08 11:08:20,682 - __main__ - INFO - ✅ Circuit-tracer ReplacementModel initialized
+2025-07-08 11:08:20,683 - __main__ - ERROR - ❌ Experiment failed: HookedTransformer.forward() got an unexpected keyword argument 'return_dict'
+2025-07-08 11:08:20,684 - __main__ - ERROR - Experiment failed: HookedTransformer.forward() got an unexpected keyword argument 'return_dict'
