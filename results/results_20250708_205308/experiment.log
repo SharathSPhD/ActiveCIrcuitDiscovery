@@ -1,0 +1,129 @@
+2025-07-08 20:53:08,748 - src.visualization.visualizer - INFO - Enhanced CircuitVisualizer initialized: visualizations
+2025-07-08 20:53:08,748 - __main__ - INFO - Initialized ComprehensiveExperimentRunner: comprehensive_exp_20250708_205308
+2025-07-08 20:53:08,748 - __main__ - INFO - Model: google/gemma-2-2b, Transcoders: gemma
+2025-07-08 20:53:08,748 - __main__ - INFO - Output directory: results/results_20250708_205308
+2025-07-08 20:53:08,748 - __main__ - INFO - 🚀 Starting comprehensive experiment: comprehensive_exp_20250708_205308
+2025-07-08 20:53:08,748 - __main__ - INFO - 🕐 Start time: 2025-07-08 20:53:08.748529
+2025-07-08 20:53:08,748 - __main__ - INFO - ============================================================
+2025-07-08 20:53:08,748 - __main__ - INFO - PHASE 1: MODEL INITIALIZATION AND VALIDATION
+2025-07-08 20:53:08,748 - __main__ - INFO - ============================================================
+2025-07-08 20:53:08,748 - __main__ - INFO - 🔧 Initializing models and components...
+2025-07-08 20:53:09,567 - circuit_tracer.utils.hf_utils - INFO - Performing pre-flight metadata check...
+2025-07-08 20:53:09,636 - circuit_tracer.utils.hf_utils - INFO - Pre-flight check complete. Starting downloads...
+2025-07-08 20:53:29,123 - __main__ - INFO - ✅ Model inference test passed: logits shape torch.Size([1, 3, 256000]), activations shape torch.Size([26, 3, 16384])
+2025-07-08 20:53:29,123 - src.active_inference.proper_agent - INFO - State space: [64, 4, 3], Observation space: [5, 3]
+2025-07-08 20:53:29,135 - src.active_inference.proper_agent - INFO - Generative model created with proper A, B, C, D matrices
+2025-07-08 20:53:29,135 - src.active_inference.proper_agent - INFO - Real pymdp Agent initialized with 9 policies
+2025-07-08 20:53:29,135 - src.active_inference.proper_agent - INFO - ProperActiveInferenceAgent initialized with 9 policies
+2025-07-08 20:53:29,135 - __main__ - INFO - ✅ ProperActiveInferenceAgent initialized with real pymdp
+2025-07-08 20:53:29,135 - __main__ - INFO - 🎯 All components initialized successfully
+2025-07-08 20:53:29,135 - __main__ - INFO - ============================================================
+2025-07-08 20:53:29,135 - __main__ - INFO - PHASE 2: GOLDEN GATE BRIDGE SEMANTIC DISCOVERY
+2025-07-08 20:53:29,135 - __main__ - INFO - ============================================================
+2025-07-08 20:53:29,135 - __main__ - INFO - 🌉 Testing Golden Gate Bridge → San Francisco semantic discovery...
+2025-07-08 20:53:29,135 - __main__ - INFO - Testing prompt 1/5: 'The Golden Gate Bridge is located in'
+2025-07-08 20:53:29,232 - __main__ - INFO - ✅ Semantic discovery successful: San
+2025-07-08 20:53:29,232 - __main__ - INFO - Testing prompt 2/5: 'San Francisco's most famous landmark is the'
+2025-07-08 20:53:29,322 - __main__ - INFO - ❌ Semantic discovery failed
+2025-07-08 20:53:29,322 - __main__ - INFO - Testing prompt 3/5: 'The iconic red bridge connecting San Francisco to Marin County is the'
+2025-07-08 20:53:29,396 - __main__ - INFO - ❌ Semantic discovery failed
+2025-07-08 20:53:29,397 - __main__ - INFO - Testing prompt 4/5: 'Visitors to the Golden Gate Bridge are in'
+2025-07-08 20:53:29,469 - __main__ - INFO - ❌ Semantic discovery failed
+2025-07-08 20:53:29,469 - __main__ - INFO - Testing prompt 5/5: 'The city famous for the Golden Gate Bridge is'
+2025-07-08 20:53:29,543 - __main__ - INFO - ❌ Semantic discovery failed
+2025-07-08 20:53:29,543 - __main__ - INFO - 🌉 Golden Gate results: 1/5 successful
+2025-07-08 20:53:29,543 - __main__ - INFO - 🌉 Success rate: 20.0%
+2025-07-08 20:53:29,543 - __main__ - INFO - 🌉 Average confidence: 0.128
+2025-07-08 20:53:29,543 - __main__ - INFO - ============================================================
+2025-07-08 20:53:29,543 - __main__ - INFO - PHASE 3: COMPREHENSIVE CIRCUIT DISCOVERY
+2025-07-08 20:53:29,543 - __main__ - INFO - ============================================================
+2025-07-08 20:53:29,543 - __main__ - INFO - 🔍 Running comprehensive circuit discovery...
+2025-07-08 20:53:30,216 - circuit_tracer.utils.hf_utils - INFO - Performing pre-flight metadata check...
+2025-07-08 20:53:30,307 - circuit_tracer.utils.hf_utils - INFO - Pre-flight check complete. Starting downloads...
+2025-07-08 20:53:49,875 - src.active_inference.proper_agent - INFO - State space: [64, 4, 3], Observation space: [5, 3]
+2025-07-08 20:53:49,885 - src.active_inference.proper_agent - INFO - Generative model created with proper A, B, C, D matrices
+2025-07-08 20:53:49,886 - src.active_inference.proper_agent - INFO - Real pymdp Agent initialized with 9 policies
+2025-07-08 20:53:49,886 - src.active_inference.proper_agent - INFO - ProperActiveInferenceAgent initialized with 9 policies
+2025-07-08 20:53:49,886 - src.active_inference.proper_agent - INFO - Initializing AI agent from 4949 circuit features
+2025-07-08 20:53:49,987 - src.active_inference.proper_agent - INFO - Selected intervention: InterventionType.ABLATION on feature 2
+2025-07-08 20:53:50,237 - src.active_inference.proper_agent - INFO - Updating beliefs from intervention on feature 2
+2025-07-08 20:53:50,341 - src.active_inference.proper_agent - WARNING - Belief update failed: 'ProperActiveInferenceAgent' object has no attribute '_update_feature_beliefs'
+2025-07-08 20:53:50,443 - src.active_inference.proper_agent - INFO - Selected intervention: InterventionType.ABLATION on feature 2
+2025-07-08 20:53:50,676 - src.active_inference.proper_agent - INFO - Updating beliefs from intervention on feature 2
+2025-07-08 20:53:50,780 - src.active_inference.proper_agent - WARNING - Belief update failed: 'ProperActiveInferenceAgent' object has no attribute '_update_feature_beliefs'
+2025-07-08 20:53:50,883 - src.active_inference.proper_agent - INFO - Selected intervention: InterventionType.ABLATION on feature 2
+2025-07-08 20:53:51,120 - src.active_inference.proper_agent - INFO - Updating beliefs from intervention on feature 2
+2025-07-08 20:53:51,224 - src.active_inference.proper_agent - WARNING - Belief update failed: 'ProperActiveInferenceAgent' object has no attribute '_update_feature_beliefs'
+2025-07-08 20:53:51,327 - src.active_inference.proper_agent - INFO - Selected intervention: InterventionType.ABLATION on feature 2
+2025-07-08 20:53:51,558 - src.active_inference.proper_agent - INFO - Updating beliefs from intervention on feature 2
+2025-07-08 20:53:51,661 - src.active_inference.proper_agent - WARNING - Belief update failed: 'ProperActiveInferenceAgent' object has no attribute '_update_feature_beliefs'
+2025-07-08 20:53:51,764 - src.active_inference.proper_agent - INFO - Selected intervention: InterventionType.ABLATION on feature 2
+2025-07-08 20:53:51,998 - src.active_inference.proper_agent - INFO - Updating beliefs from intervention on feature 2
+2025-07-08 20:53:52,100 - src.active_inference.proper_agent - WARNING - Belief update failed: 'ProperActiveInferenceAgent' object has no attribute '_update_feature_beliefs'
+2025-07-08 20:53:52,207 - src.active_inference.proper_agent - INFO - Selected intervention: InterventionType.ABLATION on feature 2
+2025-07-08 20:53:52,440 - src.active_inference.proper_agent - INFO - Updating beliefs from intervention on feature 2
+2025-07-08 20:53:52,541 - src.active_inference.proper_agent - WARNING - Belief update failed: 'ProperActiveInferenceAgent' object has no attribute '_update_feature_beliefs'
+2025-07-08 20:53:52,643 - src.active_inference.proper_agent - INFO - Selected intervention: InterventionType.ABLATION on feature 2
+2025-07-08 20:53:52,876 - src.active_inference.proper_agent - INFO - Updating beliefs from intervention on feature 2
+2025-07-08 20:53:52,979 - src.active_inference.proper_agent - WARNING - Belief update failed: 'ProperActiveInferenceAgent' object has no attribute '_update_feature_beliefs'
+2025-07-08 20:53:53,080 - src.active_inference.proper_agent - INFO - Selected intervention: InterventionType.ABLATION on feature 2
+2025-07-08 20:53:53,318 - src.active_inference.proper_agent - INFO - Updating beliefs from intervention on feature 2
+2025-07-08 20:53:53,420 - src.active_inference.proper_agent - WARNING - Belief update failed: 'ProperActiveInferenceAgent' object has no attribute '_update_feature_beliefs'
+2025-07-08 20:53:53,522 - src.active_inference.proper_agent - INFO - Selected intervention: InterventionType.ABLATION on feature 2
+2025-07-08 20:53:53,766 - src.active_inference.proper_agent - INFO - Updating beliefs from intervention on feature 2
+2025-07-08 20:53:53,868 - src.active_inference.proper_agent - WARNING - Belief update failed: 'ProperActiveInferenceAgent' object has no attribute '_update_feature_beliefs'
+2025-07-08 20:53:53,969 - src.active_inference.proper_agent - INFO - Selected intervention: InterventionType.ABLATION on feature 2
+2025-07-08 20:53:54,216 - src.active_inference.proper_agent - INFO - Updating beliefs from intervention on feature 2
+2025-07-08 20:53:54,318 - src.active_inference.proper_agent - WARNING - Belief update failed: 'ProperActiveInferenceAgent' object has no attribute '_update_feature_beliefs'
+2025-07-08 20:53:54,419 - src.active_inference.proper_agent - INFO - Selected intervention: InterventionType.ABLATION on feature 2
+2025-07-08 20:53:54,657 - src.active_inference.proper_agent - INFO - Updating beliefs from intervention on feature 2
+2025-07-08 20:53:54,761 - src.active_inference.proper_agent - WARNING - Belief update failed: 'ProperActiveInferenceAgent' object has no attribute '_update_feature_beliefs'
+2025-07-08 20:53:54,761 - src.core.metrics - INFO - Calculating correspondence metrics with proper bounds
+2025-07-08 20:53:54,775 - src.core.metrics - WARNING - Empty data for belief_updating correspondence
+2025-07-08 20:53:54,776 - src.core.metrics - WARNING - Zero variance in precision_weighting data
+2025-07-08 20:53:54,776 - src.core.metrics - WARNING - Empty data for prediction_error correspondence
+2025-07-08 20:53:54,776 - __main__ - INFO - 🔍 Circuit discovery completed:
+2025-07-08 20:53:54,776 - __main__ - INFO -    Features discovered: 4949
+2025-07-08 20:53:54,776 - __main__ - INFO -    Interventions performed: 11
+2025-07-08 20:53:54,776 - __main__ - INFO -    Convergence achieved: True
+2025-07-08 20:53:54,776 - __main__ - INFO - ============================================================
+2025-07-08 20:53:54,776 - __main__ - INFO - PHASE 4: ACTIVE INFERENCE ANALYSIS
+2025-07-08 20:53:54,776 - __main__ - INFO - ============================================================
+2025-07-08 20:53:54,776 - __main__ - INFO - 🧠 Analyzing Active Inference behavior...
+2025-07-08 20:53:54,776 - __main__ - INFO - 🧠 Active Inference analysis completed
+2025-07-08 20:53:54,776 - __main__ - INFO - ============================================================
+2025-07-08 20:53:54,776 - __main__ - INFO - PHASE 5: RESEARCH QUESTION VALIDATION
+2025-07-08 20:53:54,776 - __main__ - INFO - ============================================================
+2025-07-08 20:53:54,776 - __main__ - INFO - 📊 Validating RQ1: AI-Circuit correspondence...
+2025-07-08 20:53:54,776 - src.core.metrics - WARNING - Zero variance in belief_updating data
+2025-07-08 20:53:54,776 - src.core.metrics - WARNING - Zero variance in precision_weighting data
+2025-07-08 20:53:54,788 - src.core.metrics - WARNING - Zero variance in prediction_error data
+2025-07-08 20:53:54,788 - src.core.statistical_validation - INFO - Testing correspondence significance against 70.0% threshold
+2025-07-08 20:53:54,790 - src.core.statistical_validation - INFO - Correspondence test: Correspondence (0.0%) does not significantly exceed 70.0% threshold (p=nan, d=nan)
+2025-07-08 20:53:54,790 - __main__ - INFO - 📊 RQ1 Results: 0.0% (FAILED)
+2025-07-08 20:53:54,790 - __main__ - INFO - ⚡ Validating RQ2: Intervention efficiency...
+2025-07-08 20:53:54,790 - __main__ - INFO - ⚡ RQ2 Results: 20.0% improvement (FAILED)
+2025-07-08 20:53:54,790 - __main__ - INFO - 🔮 Validating RQ3: Novel prediction generation...
+2025-07-08 20:53:54,790 - src.active_inference.proper_agent - INFO - Generating predictions from learned model
+2025-07-08 20:53:54,791 - src.active_inference.proper_agent - INFO - Generated 0 predictions
+2025-07-08 20:53:54,791 - src.core.prediction_system - INFO - Generating enhanced circuit predictions for RQ3 validation
+2025-07-08 20:53:54,791 - src.core.prediction_system - WARNING - Error in AttentionPatternPredictor: name 'attention_pattern' is not defined
+2025-07-08 20:53:54,791 - src.core.prediction_system - WARNING - Error in FeatureInteractionPredictor: name 'feature_interaction' is not defined
+2025-07-08 20:53:54,791 - src.core.prediction_system - INFO - Generated 2 total predictions with average confidence 0.590
+2025-07-08 20:53:54,791 - __main__ - INFO - 🔮 RQ3 Results: 2 predictions (FAILED)
+2025-07-08 20:53:54,791 - __main__ - INFO - ============================================================
+2025-07-08 20:53:54,791 - __main__ - INFO - PHASE 6: STATISTICAL VALIDATION
+2025-07-08 20:53:54,791 - __main__ - INFO - ============================================================
+2025-07-08 20:53:54,791 - __main__ - INFO - 📈 Running statistical validation...
+2025-07-08 20:53:54,792 - __main__ - INFO - 📈 Statistical validation completed
+2025-07-08 20:53:54,792 - __main__ - INFO - ============================================================
+2025-07-08 20:53:54,792 - __main__ - INFO - PHASE 7: CIRCUIT ANALYSIS AND VISUALIZATION
+2025-07-08 20:53:54,792 - __main__ - INFO - ============================================================
+2025-07-08 20:53:54,792 - __main__ - INFO - 🔗 Analyzing circuit structure...
+2025-07-08 21:08:45,723 - __main__ - INFO - 🔗 Circuit analysis completed: 4949 nodes, 1362941 edges
+2025-07-08 21:08:45,723 - __main__ - INFO - 📊 Generating comprehensive visualizations...
+2025-07-08 21:08:45,724 - __main__ - ERROR - Error generating visualizations: 'CircuitFeature' object has no attribute 'feature_idx'
+2025-07-08 21:08:45,724 - __main__ - INFO - 📊 Generated 0 visualization files
+2025-07-08 21:08:45,724 - __main__ - INFO - 💾 Saving comprehensive results...
+2025-07-08 21:09:00,733 - __main__ - ERROR - ❌ Experiment failed: keys must be str, int, float, bool or None, not InterventionType
+2025-07-08 21:09:00,734 - __main__ - ERROR - Experiment failed: keys must be str, int, float, bool or None, not InterventionType

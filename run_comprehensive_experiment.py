@@ -60,14 +60,6 @@ from src.visualization.visualizer import CircuitVisualizer
 from src.config.experiment_config import CompleteConfig, ModelConfig, CircuitDiscoveryConfig, ActiveInferenceConfig
 
 # Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.FileHandler('experiment.log'),
-        logging.StreamHandler()
-    ]
-)
 logger = logging.getLogger(__name__)
 
 @dataclass
@@ -133,8 +125,23 @@ class ComprehensiveExperimentRunner:
         # Create timestamped results directory
         results_base = Path('results')
         results_base.mkdir(exist_ok=True)
-        self.output_dir = results_base / f"results_{datetime.now().strftime("%Y%m%d_%H%M%S")}"
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        self.output_dir = results_base / f"results_{timestamp}"
         self.output_dir.mkdir(exist_ok=True)
+        # Setup logging to save in results folder
+        log_file = self.output_dir / "experiment.log"
+        # Remove existing handlers
+        for handler in logging.root.handlers[:]:
+            logging.root.removeHandler(handler)
+        # Setup new logging configuration
+        logging.basicConfig(
+            level=logging.INFO,
+            format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+            handlers=[
+                logging.FileHandler(log_file),
+                logging.StreamHandler()
+            ]
+        )
         
         # Initialize experiment ID and timing
         self.experiment_id = f"comprehensive_exp_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
