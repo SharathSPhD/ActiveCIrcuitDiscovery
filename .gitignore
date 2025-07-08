@@ -70,3 +70,13 @@ IMPLEMENT*.md
 ENHANCEMENTS*.md
 # Virtual environment (outside project)
 ../project_venv/
+
+# Temporary fixing files
+fix_*.py
+enhance_*.py
+add_robust_*.py
+temp_*.py
+
+# Alternative experiment runners
+run_full_experiment*.py
+
