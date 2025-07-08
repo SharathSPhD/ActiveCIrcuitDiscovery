@@ -299,6 +299,16 @@ class StatisticalValidator:
         """Calculate bootstrap confidence interval for mean."""
         data_array = np.array(data)
         
+        # Handle single data point case
+        if len(data_array) < 2:
+            mean_val = np.mean(data_array) if len(data_array) > 0 else 0.0
+            return BootstrapResult(
+                mean=mean_val,
+                std=0.0,
+                confidence_interval=(mean_val, mean_val),
+                distribution=np.array([mean_val] * 1000)
+            )
+        
         def mean_func(x, axis):
             return np.mean(x, axis=axis)
         

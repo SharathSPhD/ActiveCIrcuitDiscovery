@@ -409,25 +409,13 @@ class ComprehensiveExperimentRunner:
         
         # Store results for further analysis
         self.discovered_features = discovery_result.discovered_features
-        
-        # Create dummy tensors for required InterventionResult parameters
-        import torch
-        dummy_logits = torch.zeros((1, 256000))  # Gemma vocab size
-        
         self.intervention_results = [
             InterventionResult(
+                target_feature=self.discovered_features[int(step['feature']['layer'])],
                 intervention_type=step['intervention_type'],
-                target_feature=self.discovered_features[min(int(step['feature']['idx']), len(self.discovered_features)-1)],
-                original_logits=dummy_logits,
-                intervened_logits=dummy_logits,
-                effect_size=step['effect_magnitude'],
-                target_token_change=step['effect_magnitude'],
-                intervention_layer=step['feature']['layer'],
+                baseline_prediction="",
+                intervention_prediction="",
                 effect_magnitude=step['effect_magnitude'],
-                baseline_prediction=step.get('baseline_prediction', ''),
-                intervention_prediction=step.get('intervention_prediction', ''),
-                semantic_change=step['effect_magnitude'] > 0.1,
-                statistical_significance=step['effect_magnitude'] > 0.5
             )
             for step in discovery_result.ai_intervention_sequence
             if step['feature']['layer'] < len(self.discovered_features)
@@ -503,83 +491,36 @@ class ComprehensiveExperimentRunner:
         # Calculate different types of correspondence
         if self.integration and self.integration.ai_agent and self.intervention_results:
             
-            # Extract belief changes as floats
-            ai_belief_changes = []
-            if hasattr(self.integration.ai_agent, 'belief_history') and self.integration.ai_agent.belief_history:
-                for bs in self.integration.ai_agent.belief_history:
-                    if hasattr(bs, 'get_total_belief_change'):
-                        ai_belief_changes.append(bs.get_total_belief_change())
-                    else:
-                        ai_belief_changes.append(0.5)
-            else:
-                ai_belief_changes = [0.5] * len(self.intervention_results)
-            
-            # Extract circuit activation changes as floats
-            circuit_changes = [min(1.0, abs(r.effect_size)) for r in self.intervention_results]
-            
             # Belief updating correspondence
-            belief_updating = calc._calculate_belief_updating_correspondence(
-                ai_belief_changes,
-                circuit_changes
+            belief_updating = calc.calculate_belief_updating_correspondence(
+                self.integration.ai_agent.belief_history if hasattr(self.integration.ai_agent, 'belief_history') else [],
+                self.intervention_results
             )
             
             # Precision weighting correspondence  
-            # Extract AI precision (confidence) as floats
-            current_beliefs = self.integration.ai_agent.get_current_beliefs()
-            if hasattr(current_beliefs, "confidence"):
-                ai_precision = [current_beliefs.confidence] * len(self.intervention_results)
-            else:
-                ai_precision = [0.5] * len(self.intervention_results)
-            
-            # Extract circuit attention patterns as floats
-            circuit_attention = [1.0 if r.statistical_significance else 0.5 for r in self.intervention_results]
-            
-            precision_weighting = calc._calculate_precision_weighting_correspondence(
-                ai_precision,
-                circuit_attention
+            precision_weighting = calc.calculate_precision_weighting_correspondence(
+                self.integration.ai_agent.get_current_beliefs(),
+                self.intervention_results
             )
-            
-            # Extract prediction errors as floats
-            ai_errors = []
-            if hasattr(self.integration.ai_agent, 'belief_history') and self.integration.ai_agent.belief_history:
-                for bs in self.integration.ai_agent.belief_history:
-                    if hasattr(bs, 'get_entropy'):
-                        ai_errors.append(min(1.0, bs.get_entropy() / 5.0))
-                    else:
-                        ai_errors.append(0.5)
-            else:
-                ai_errors = [0.5] * len(self.intervention_results)
-            
-            # Extract circuit effects as floats
-            circuit_effects = [min(1.0, r.kl_divergence / 5.0) if hasattr(r, 'kl_divergence') else 0.5 for r in self.intervention_results]
             
             # Prediction error correspondence
-            prediction_error = calc._calculate_prediction_error_correspondence(
-                ai_errors,
-                circuit_effects
+            prediction_error = calc.calculate_prediction_error_correspondence(
+                predicted_effects=[0.5] * len(self.intervention_results),  # Placeholder
+                actual_effects=[r.effect_magnitude for r in self.intervention_results]
             )
             
-            # Overall correspondence (weighted average) - extract correlation from StatisticalResult
+            # Overall correspondence (weighted average)
             overall_correspondence = (
-                0.4 * belief_updating.correlation +
-                0.3 * precision_weighting.correlation + 
-                0.3 * prediction_error.correlation
+                0.4 * belief_updating +
+                0.3 * precision_weighting + 
+                0.3 * prediction_error
             )
-            
-            # Create CorrespondenceMetrics objects for statistical validation
-            from src.core.data_structures import CorrespondenceMetrics
-            correspondence_metrics = [
-                CorrespondenceMetrics(
-                    belief_updating_correspondence=belief_updating.correlation / 100.0,
-                    precision_weighting_correspondence=precision_weighting.correlation / 100.0,
-                    prediction_error_correspondence=prediction_error.correlation / 100.0,
-                    overall_correspondence=overall_correspondence / 100.0
-                )
-            ]
             
             # Statistical validation
-            statistical_test = self.statistical_validator.validate_correspondence_significance(
-                correspondence_metrics, 70.0
+            p_value = self.statistical_validator.test_correspondence_significance(
+                correspondence_scores=[belief_updating, precision_weighting, prediction_error],
+                null_hypothesis=50.0,  # Random chance
+                alpha=0.05
             )
             
             rq1_passed = overall_correspondence >= 70.0
@@ -594,16 +535,15 @@ class ComprehensiveExperimentRunner:
             rq1_passed = False
         
         result = {
-            'belief_updating_correspondence': belief_updating.correlation,
-            'precision_weighting_correspondence': precision_weighting.correlation,
-            'prediction_error_correspondence': prediction_error.correlation,
+            'belief_updating_correspondence': belief_updating,
+            'precision_weighting_correspondence': precision_weighting,
+            'prediction_error_correspondence': prediction_error,
             'overall_correspondence': overall_correspondence,
             'threshold': 70.0,
             'passed': rq1_passed,
-            'statistical_test': statistical_test,
-            'p_value': statistical_test.p_value,
-            'statistically_significant': statistical_test.significant,
-            'confidence_interval': statistical_test.confidence_interval
+            'p_value': p_value,
+            'statistically_significant': p_value < 0.05,
+            'confidence_interval': self._calculate_confidence_interval(overall_correspondence)
         }
         
         logger.info(f"📊 RQ1 Results: {overall_correspondence:.1f}% ({'PASSED' if rq1_passed else 'FAILED'})")
@@ -624,8 +564,8 @@ class ComprehensiveExperimentRunner:
             # Calculate efficiency metrics
             time_efficiency = max(0, (random_baseline_time - ai_guided_time) / random_baseline_time * 100)
             
-            # Success rate efficiency based on effect magnitude
-            ai_success_rate = sum(1 for r in self.intervention_results if r.effect_magnitude > 0.1) / len(self.intervention_results)
+            # Success rate efficiency
+            ai_success_rate = sum(1 for r in self.intervention_results if r.success) / len(self.intervention_results)
             random_success_rate = 0.3  # Assume 30% random success rate
             success_efficiency = max(0, (ai_success_rate - random_success_rate) / random_success_rate * 100)
             
@@ -676,16 +616,10 @@ class ComprehensiveExperimentRunner:
             novel_predictions = []
         
         # Add enhanced predictions from prediction generator
-        if self.discovered_features and self.integration and self.integration.ai_agent:
-            current_beliefs = self.integration.ai_agent.get_current_beliefs()
-            # Create a simple circuit graph for prediction generation
-            from src.core.data_structures import AttributionGraph, GraphNode, GraphEdge
-            nodes = [GraphNode(f'feature_{i}', 0, i, 0.5, f'Feature {i}') for i in range(min(5, len(self.discovered_features)))]
-            edges = []
-            circuit_graph = AttributionGraph('test', nodes, edges, 'prediction', 0.5)
-            
-            enhanced_predictions = self.prediction_generator.generate_circuit_predictions(
-                current_beliefs, circuit_graph
+        if self.discovered_features:
+            enhanced_predictions = self.prediction_generator.generate_enhanced_predictions(
+                features=self.discovered_features,
+                intervention_history=self.intervention_results
             )
             novel_predictions.extend(enhanced_predictions)
         
@@ -711,10 +645,10 @@ class ComprehensiveExperimentRunner:
             'passed': rq3_passed,
             'predictions': [
                 {
-                    'type': pred.prediction_type,
+                    'id': pred.prediction_id,
                     'description': pred.description,
-                    'hypothesis': pred.testable_hypothesis,
                     'confidence': pred.confidence,
+                    'test_case': pred.test_case,
                     'validation_status': pred.validation_status
                 }
                 for pred in validated_predictions
@@ -754,7 +688,7 @@ class ComprehensiveExperimentRunner:
             # Confidence intervals
             statistical_results['confidence_intervals'] = {
                 'effect_magnitude_95ci': self._calculate_confidence_interval(np.mean(effect_magnitudes)),
-                'success_rate_95ci': self._calculate_confidence_interval(sum(1 for r in self.intervention_results if r.effect_magnitude > 0.1) / len(self.intervention_results) * 100)
+                'success_rate_95ci': self._calculate_confidence_interval(sum(r.success for r in self.intervention_results) / len(self.intervention_results) * 100)
             }
             
             # Hypothesis tests
@@ -1202,7 +1136,7 @@ class ComprehensiveExperimentRunner:
         if not self.intervention_results:
             return {}
         
-        success_rate = sum(1 for r in self.intervention_results if r.effect_magnitude > 0.1) / len(self.intervention_results)
+        success_rate = sum(r.success for r in self.intervention_results) / len(self.intervention_results)
         avg_effect = np.mean([r.effect_magnitude for r in self.intervention_results])
         
         return {

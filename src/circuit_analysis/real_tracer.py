@@ -97,9 +97,10 @@ class RealCircuitTracer(ICircuitTracer):
                             feature = CircuitFeature.from_transcoder_data(
                                 layer=layer_idx,
                                 feature_id=int(feat_idx),
-                                activation_strength=activation_strength,
+                                activation=activation_strength,
                                 semantic_description=f"GemmaScope feature L{layer_idx}F{feat_idx}",
-                                component_type="mlp_transcoder"
+                                component_type="mlp_transcoder",
+                                intervention_sites=[f"blocks.{layer_idx}.mlp.transcoder.{feat_idx}"]
                             )
                             discovered_features.append(feature)
                 
@@ -149,15 +150,21 @@ class RealCircuitTracer(ICircuitTracer):
                 result = InterventionResult(
                     target_feature=feature,
                     intervention_type=intervention_type,
-                    baseline_prediction=baseline_pred,
-                    modified_prediction=modified_pred,
+                    original_logits=baseline_logits,
+                    intervened_logits=modified_logits,
+                    effect_size=effect_magnitude,
+                    target_token_change=effect_magnitude,
+                    intervention_layer=feature.layer,
                     effect_magnitude=effect_magnitude,
-                    success=baseline_pred != modified_pred and effect_magnitude > 0.01
+                    baseline_prediction=baseline_pred,
+                    intervention_prediction=modified_pred,
+                    semantic_change=baseline_pred != modified_pred,
+                    statistical_significance=effect_magnitude > 0.01
                 )
                 
                 print(f"📊 Baseline: '{baseline_pred}' → Modified: '{modified_pred}'")
                 print(f"📊 Effect magnitude: {effect_magnitude:.4f}")
-                print(f"✅ Intervention {'successful' if result.success else 'minimal effect'}")
+                print(f"✅ Intervention {'successful' if result.statistical_significance else 'minimal effect'}")
                 
                 return result
                 
@@ -166,10 +173,16 @@ class RealCircuitTracer(ICircuitTracer):
             return InterventionResult(
                 target_feature=feature,
                 intervention_type=intervention_type,
-                baseline_prediction="ERROR",
-                modified_prediction="ERROR",
+                original_logits=torch.zeros(1, 1, 256000),
+                intervened_logits=torch.zeros(1, 1, 256000),
+                effect_size=0.0,
+                target_token_change=0.0,
+                intervention_layer=feature.layer,
                 effect_magnitude=0.0,
-                success=False
+                baseline_prediction="ERROR",
+                intervention_prediction="ERROR",
+                semantic_change=False,
+                statistical_significance=False
             )
     
     def _decode_top_token(self, logits: torch.Tensor) -> str:
@@ -263,7 +276,7 @@ class RealCircuitTracer(ICircuitTracer):
             
             # Check if the intervention affects prediction toward target concept
             contains_target = target_concept.lower() in result.baseline_prediction.lower()
-            has_effect = result.success
+            has_effect = result.statistical_significance
             
             print(f"📊 Completion: '{completion_prompt}' → '{result.baseline_prediction}'")
             print(f"📊 Contains '{target_concept}': {contains_target}")
@@ -292,7 +305,12 @@ class RealCircuitTracer(ICircuitTracer):
         
         return by_layer
     
-    def perform_intervention(self, text: str, feature, intervention_type) -> InterventionResult:
+    def perform_intervention(
+        self,
+        text: str,
+        feature: CircuitFeature,
+        intervention_type: str = "ablation"
+    ) -> InterventionResult:
         """Perform intervention on specified feature."""
         return self.intervene_on_feature(feature, text, str(intervention_type))
     

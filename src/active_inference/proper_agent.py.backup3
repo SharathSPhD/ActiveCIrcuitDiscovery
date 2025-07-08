@@ -16,7 +16,7 @@ from pathlib import Path
 # Real pymdp imports - no fallbacks
 import pymdp
 from pymdp.agent import Agent
-from pymdp.utils import obj_array, random_A_matrix, random_B_matrix, norm_dist, norm_dist_obj_arr
+from pymdp.utils import obj_array, random_A_matrix, random_B_matrix, norm_dist
 from pymdp.maths import softmax, kl_div, entropy, spm_dot
 from pymdp import control, inference, learning
 
@@ -95,10 +95,10 @@ class ProperActiveInferenceAgent(IActiveInferenceAgent):
         # A[0]: P(effect_magnitude | component, importance, intervention)
         # A[1]: P(confidence | component, importance, intervention)
         
-        # Create obj_array with correct size first, then assign arrays
-        self.A = obj_array(2)
-        self.A[0] = np.zeros((self.num_obs[0], self.num_states[0], self.num_states[1], self.num_states[2]))
-        self.A[1] = np.zeros((self.num_obs[1], self.num_states[0], self.num_states[1], self.num_states[2]))
+        self.A = obj_array([
+            np.zeros((self.num_obs[0], self.num_states[0], self.num_states[1], self.num_states[2])),
+            np.zeros((self.num_obs[1], self.num_states[0], self.num_states[1], self.num_states[2]))
+        ])
         
         # Initialize A[0]: Effect magnitude depends on importance and intervention type
         for component in range(self.num_states[0]):
@@ -126,11 +126,11 @@ class ProperActiveInferenceAgent(IActiveInferenceAgent):
         
         # B matrices: P(next_state | current_state, action)
         # For circuit discovery, state transitions depend on interventions
-        # Create B obj_array with correct size first, then assign arrays
-        self.B = obj_array(3)
-        self.B[0] = np.zeros((self.num_states[0], self.num_states[0], self.intervention_types))  # Component transitions
-        self.B[1] = np.zeros((self.num_states[1], self.num_states[1], self.intervention_types))  # Importance transitions
-        self.B[2] = np.zeros((self.num_states[2], self.num_states[2], self.intervention_types))  # Intervention transitions
+        self.B = obj_array([
+            np.zeros((self.num_states[0], self.num_states[0], self.intervention_types)),  # Component transitions
+            np.zeros((self.num_states[1], self.num_states[1], self.intervention_types)),  # Importance transitions
+            np.zeros((self.num_states[2], self.num_states[2], self.intervention_types))   # Intervention transitions
+        ])
         
         # Component ID transitions (mostly identity - components don't change)
         for action in range(self.intervention_types):
@@ -144,37 +144,26 @@ class ProperActiveInferenceAgent(IActiveInferenceAgent):
                     self.B[1][:, s, action] = softmax(np.ones(self.num_states[1]) + 0.1 * np.random.randn(self.num_states[1]))
                 else:  # Other interventions maintain importance
                     self.B[1][s, s, action] = 0.9
-                    self.B[1][:, s, action] = norm_dist(self.B[1][:, s, action])
+                    self.B[1][:, s, action] = norm_dist_obj_arr(self.B[1][:, s, action:action+1]).flatten()
         
         # Intervention type transitions (controlled by agent actions)
         for action in range(self.intervention_types):
             self.B[2][action, :, action] = 1.0  # Deterministic transition to chosen intervention
         
-        # Ensure all B matrices are properly normalized
-        for f in range(len(self.B)):
-            for action in range(self.B[f].shape[-1]):
-                for state in range(self.B[f].shape[1]):
-                    if self.B[f][:, state, action].sum() == 0:
-                        # If all zeros, make uniform distribution
-                        self.B[f][:, state, action] = 1.0 / self.B[f].shape[0]
-                    else:
-                        # Normalize to sum to 1
-                        self.B[f][:, state, action] = norm_dist(self.B[f][:, state, action])
-        
         # C vectors: Preferences over observations
         # Prefer informative observations (high effect magnitudes and high confidence)
-        # Create C obj_array with correct size first, then assign arrays
-        self.C = obj_array(2)
-        self.C[0] = np.array([0.0, 0.2, 0.4, 0.6, 0.8])  # Prefer higher effect magnitudes
-        self.C[1] = np.array([0.0, 0.3, 0.7])             # Prefer higher confidence
+        self.C = obj_array([
+            np.array([0.0, 0.2, 0.4, 0.6, 0.8]),  # Prefer higher effect magnitudes
+            np.array([0.0, 0.3, 0.7])              # Prefer higher confidence
+        ])
         
         # D vectors: Prior beliefs over initial states
         # Uniform priors over components and importance, prior over starting with ablation
-        # Create D obj_array with correct size first, then assign arrays
-        self.D = obj_array(3)
-        self.D[0] = np.ones(self.num_states[0]) / self.num_states[0]  # Uniform over components
-        self.D[1] = np.ones(self.num_states[1]) / self.num_states[1]  # Uniform over importance
-        self.D[2] = np.array([0.6, 0.3, 0.1])                        # Prefer starting with ablation
+        self.D = obj_array([
+            np.ones(self.num_states[0]) / self.num_states[0],  # Uniform over components
+            np.ones(self.num_states[1]) / self.num_states[1],  # Uniform over importance
+            np.array([0.6, 0.3, 0.1])                         # Prefer starting with ablation
+        ])
         
         logger.info("Generative model created with proper A, B, C, D matrices")
     
@@ -451,13 +440,14 @@ class ProperActiveInferenceAgent(IActiveInferenceAgent):
         # Generate predictions using learned B matrices
         for intervention_type in range(self.intervention_types):
             # Predict state transitions under this intervention
-            predicted_qs = obj_array(len(current_qs))
-            for f in range(len(current_qs)):
-                predicted_qs[f] = spm_dot(self.agent.B[f][:, :, intervention_type], current_qs[f])
+            predicted_qs = [
+                spm_dot(self.agent.B[f][:, :, intervention_type], current_qs[f]) 
+                for f in range(len(current_qs))
+            ]
             
             # Predict observations under predicted states
             predicted_obs = [
-                spm_dot(self.agent.A[m], predicted_qs) 
+                smp_dot(self.agent.A[m], predicted_qs) 
                 for m in range(len(self.agent.A))
             ]
             
@@ -514,15 +504,7 @@ class ProperActiveInferenceAgent(IActiveInferenceAgent):
         current_qs = self.agent.qs.copy()
         
         # Calculate confidence from belief entropy
-        entropies = []
-        for qs in current_qs:
-            if hasattr(qs, "shape") and qs.shape and qs.size > 0:
-                try:
-                    entropies.append(entropy(qs))
-                except (ValueError, TypeError):
-                    entropies.append(1.0)  # Default entropy for invalid states
-            else:
-                entropies.append(1.0)  # Default for empty/invalid states
+        entropies = [entropy(qs) for qs in current_qs]
         avg_entropy = np.mean(entropies)
         max_entropy = np.log(max([len(qs) for qs in current_qs]))
         confidence = 1.0 - (avg_entropy / max_entropy)
@@ -573,123 +555,3 @@ class ProperActiveInferenceAgent(IActiveInferenceAgent):
         else:
             # Fallback: select first feature and ablation
             return available_features[0], InterventionType.ABLATION
-    def initialize_from_circuit_features(self, features: List[CircuitFeature]) -> None:
-        """Initialize Active Inference agent from discovered circuit features."""
-        logger.info(f"Initializing AI agent from {len(features)} discovered circuit features")
-        
-        # Convert list of features to dictionary grouped by layer for initialize_beliefs
-        features_by_layer = {}
-        for feature in features:
-            layer = feature.layer
-            if layer not in features_by_layer:
-                features_by_layer[layer] = []
-            features_by_layer[layer].append(feature)
-        
-        # Initialize beliefs using existing method
-        belief_state = self.initialize_beliefs(features_by_layer)
-        
-        logger.info(f"AI agent initialized with beliefs over {len(features_by_layer)} layers")
-        return belief_state
-
-
-    def update_beliefs_from_intervention(self, feature_idx: int, intervention_type: InterventionType, observation: np.ndarray) -> None:
-        """Update beliefs from intervention results using real pymdp inference."""
-        logger.info(f"Updating beliefs from intervention on feature {feature_idx}")
-        
-        # Convert intervention results to pymdp observation format
-        obs = [
-            int(observation[0]) if len(observation) > 0 else 0,  # Effect magnitude observation
-            int(observation[1]) if len(observation) > 1 else 1   # Confidence observation  
-        ]
-        
-        # Update beliefs using pymdp Agent
-        try:
-            # Step the agent with the observation
-            self.agent.infer_states(obs)
-            q_pi, G = self.agent.infer_policies()
-            action = self.agent.sample_action()
-            logger.info(f"AI agent updated beliefs and selected action: {action}")
-        except Exception as e:
-            logger.warning(f"Belief update failed: {e}")
-            
-    def check_convergence(self) -> bool:
-        """Check if Active Inference has converged."""
-        # Simple convergence check - could be enhanced
-        try:
-            return hasattr(self.agent, 'qs') and len(self.agent.qs) > 0
-        except:
-            return True  # Assume converged if can't check
-
-    def get_feature_confidence(self, feature_idx: int) -> float:
-        """Get confidence score for a specific feature."""
-        if not hasattr(self.agent, 'qs') or feature_idx >= len(self.agent.qs[0]):
-            return 0.5  # Default confidence
-        
-        # Get confidence from component beliefs (factor 1 is component importance)
-        if feature_idx < len(self.agent.qs[1]):
-            importance = self.agent.qs[1][feature_idx] if feature_idx < len(self.agent.qs[1]) else 0.0
-            return float(importance)
-        return 0.5
-
-    def get_belief_summary(self) -> Dict[str, float]:
-        """Get summary of current beliefs."""
-        if not hasattr(self.agent, 'qs'):
-            return {}
-        
-        summary = {}
-        for i in range(min(10, len(self.agent.qs[1]))):  # Top 10 components
-            summary[f'component_{i}'] = float(self.agent.qs[1][i])
-        
-        return summary
-
-    def generate_novel_predictions(self) -> List[NovelPrediction]:
-        """Generate novel predictions using learned model."""
-        predictions = []
-        
-        if not hasattr(self.agent, 'qs'):
-            return predictions
-        
-        # Use importance beliefs to generate predictions
-        importance_beliefs = self.agent.qs[1]
-        top_indices = np.argsort(importance_beliefs)[-3:]  # Top 3 most important
-        
-        for i, feature_idx in enumerate(top_indices):
-            prediction = NovelPrediction(
-                prediction_type="feature_interaction",
-                description=f"Component {feature_idx} shows high importance and likely participates in key circuits",
-                testable_hypothesis=f"Ablating component {feature_idx} will significantly affect model behavior",
-                expected_outcome=f"Effect magnitude > 0.5 for component {feature_idx}",
-                test_method="ablation_intervention",
-                confidence=float(importance_beliefs[feature_idx])
-            )
-            predictions.append(prediction)
-        
-        return predictions
-
-    def initialize_from_circuit_features(self, features: List[CircuitFeature]) -> None:
-        """Initialize agent beliefs from discovered circuit features."""
-        logger.info(f"Initializing AI agent from {len(features)} circuit features")
-        
-        # Map circuit features to belief initialization
-        feature_importance = {}
-        for i, feature in enumerate(features[:self.max_components]):
-            feature_importance[feature.feature_id] = feature.activation_strength
-        
-        # Update prior beliefs based on features
-        if len(features) > 0:
-            # Update component importance prior (factor 1)
-            importance_prior = np.zeros(self.max_components)
-            for i, feature in enumerate(features[:self.max_components]):
-                importance_prior[i] = min(feature.activation_strength, 1.0)
-            
-            # Normalize and set as prior
-            if importance_prior.sum() > 0:
-                importance_prior = importance_prior / importance_prior.sum()
-                self.agent.D[0][:len(features)] = importance_prior[:len(features)]
-
-    def get_belief_states(self) -> List[np.ndarray]:
-        """Get current belief states for analysis."""
-        if hasattr(self.agent, 'qs'):
-            return self.agent.qs
-        else:
-            return [d.copy() for d in self.agent.D]
