@@ -133,7 +133,7 @@ class ComprehensiveExperimentRunner:
         # Create timestamped results directory
         results_base = Path('results')
         results_base.mkdir(exist_ok=True)
-        self.output_dir = results_base / 'results_20250708_160752'
+        self.output_dir = results_base / f"results_{datetime.now().strftime("%Y%m%d_%H%M%S")}"
         self.output_dir.mkdir(exist_ok=True)
         
         # Initialize experiment ID and timing
