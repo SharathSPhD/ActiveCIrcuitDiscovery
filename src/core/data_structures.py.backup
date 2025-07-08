@@ -68,7 +68,7 @@ feature_cache = FeatureCache()
 class CircuitFeature:
     """Unified circuit feature representation supporting both SAE and Transcoder features."""
     feature_id: int
-    layer_idx: int  
+    layer: int  
     activation_strength: float
     description: str
     max_activation: float
@@ -83,30 +83,30 @@ class CircuitFeature:
     def __post_init__(self):
         if self.max_activation < 0:
             raise ValueError(f"max_activation must be non-negative, got {self.max_activation}")
-        if self.layer_idx < 0:
-            raise ValueError(f"layer must be non-negative, got {self.layer_idx}")
+        if self.layer < 0:
+            raise ValueError(f"layer must be non-negative, got {self.layer}")
         if self.activation_strength < 0:
             raise ValueError(f"activation_strength must be non-negative")
         
         # Set semantic description if not provided
         if not self.semantic_description:
             if self.feature_source == "transcoder":
-                self.semantic_description = f"Transcoder L{self.layer_idx}F{self.feature_id} ({self.component_type})"
+                self.semantic_description = f"Transcoder L{self.layer}F{self.feature_id} ({self.component_type})"
             else:
-                self.semantic_description = f"SAE L{self.layer_idx}F{self.feature_id}"
+                self.semantic_description = f"SAE L{self.layer}F{self.feature_id}"
     
     @property
     def unique_id(self) -> str:
         """Unique identifier for the feature."""
         source_prefix = "T" if self.feature_source == "transcoder" else "S"
-        return f"L{self.layer_idx}{source_prefix}{self.feature_id}"
+        return f"L{self.layer}{source_prefix}{self.feature_id}"
     
     def is_active(self, threshold: float = 0.1) -> bool:
         """Check if feature is active above threshold."""
         return self.activation_strength >= threshold
     
     @classmethod
-    def from_sae_data(cls, feature_id: int, layer_idx: int, data: Dict[str, Any]) -> 'CircuitFeature':
+    def from_sae_data(cls, feature_id: int, layer: int, data: Dict[str, Any]) -> 'CircuitFeature':
         """Create CircuitFeature from SAE/Neuronpedia data."""
         return cls(
             feature_id=feature_id,
@@ -124,7 +124,7 @@ class CircuitFeature:
     def from_transcoder_data(
         cls, 
         feature_id: int,
-        layer_idx: int, 
+        layer: int, 
         activation: float,
         component_type: str,
         semantic_description: str,
@@ -133,7 +133,7 @@ class CircuitFeature:
         """Create CircuitFeature from circuit-tracer transcoder data."""
         return cls(
             feature_id=feature_id,
-            layer_idx=layer_idx,
+            layer=layer,
             activation_strength=activation,
             description=semantic_description,
             max_activation=activation,
@@ -156,7 +156,7 @@ class InterventionResult:
     intervened_logits: torch.Tensor
     effect_size: float
     target_token_change: float
-    intervention_layer_idx: int
+    intervention_layer: int
     effect_magnitude: float = 0.0
     baseline_prediction: str = ""
     intervention_prediction: str = ""
@@ -208,7 +208,7 @@ class CircuitNode:
 class GraphNode:
     """Node in the attribution graph with enhanced metadata."""
     node_id: str
-    layer_idx: int
+    layer: int
     feature_id: int
     importance: float
     description: str
@@ -567,39 +567,13 @@ class BeliefState:
     belief_changes: Dict[int, float] = field(default_factory=dict)
     
     def get_entropy(self) -> float:
-        """Calculate entropy of current belief state using pymdp approach."""
-        import numpy as np
-        
-        def is_obj_array(arr):
-            return hasattr(arr, 'dtype') and arr.dtype == 'object'
-        
-        def entropy_single(dist):
-            """Entropy of a single distribution"""
-            from scipy.stats import entropy
-            dist_flat = np.asarray(dist).flatten()
-            if np.sum(dist_flat) > 0:
-                dist_norm = dist_flat / np.sum(dist_flat)
-                return entropy(dist_norm + 1e-16)
-            return 0.0
-        
+        """Calculate entropy of current belief state."""
         try:
-            # Use pymdp-style object array detection
-            if is_obj_array(self.qs):
-                # Multiple factors - sum entropies
-                total_entropy = 0.0
-                for factor in self.qs:
-                    total_entropy += entropy_single(factor)
-                return total_entropy
-            else:
-                # Single factor
-                return entropy_single(self.qs)
-        except Exception:
-            # Fallback
-            return 0.0
-            
-        except Exception:
-            # Ultimate fallback
-            return 0.0
+            from scipy.stats import entropy
+            return entropy(self.qs + 1e-10)
+        except ImportError:
+            # Fallback calculation
+            return -np.sum(self.qs * np.log(self.qs + 1e-10))
     
     def get_average_uncertainty(self) -> float:
         """Get average uncertainty across all features."""
@@ -607,6 +581,8 @@ class BeliefState:
             return 1.0
         return sum(self.uncertainty.values()) / len(self.uncertainty)
     
+    def update_feature_belief(self, feature_id: int, new_importance: float, 
+                            prediction_error: float = 0.0) -> float:
         """Update belief about a specific feature and track changes."""
         old_importance = self.feature_importances.get(feature_id, 0.5)
         

@@ -592,13 +592,7 @@ class ProperActiveInferenceAgent(IActiveInferenceAgent):
         return belief_state
 
 
-    def update_beliefs_from_intervention(
-        self, 
-        feature_idx: int, 
-        intervention_type: InterventionType, 
-        observation: np.ndarray,
-        intervention_result: InterventionResult = None  # NEW: Pass full result
-    ) -> None:
+    def update_beliefs_from_intervention(self, feature_idx: int, intervention_type: InterventionType, observation: np.ndarray) -> None:
         """Update beliefs from intervention results using real pymdp inference."""
         logger.info(f"Updating beliefs from intervention on feature {feature_idx}")
         
@@ -608,18 +602,12 @@ class ProperActiveInferenceAgent(IActiveInferenceAgent):
             int(observation[1]) if len(observation) > 1 else 1   # Confidence observation  
         ]
         
-        # Enhanced belief updating with intervention context
+        # Update beliefs using pymdp Agent
         try:
             # Step the agent with the observation
             self.agent.infer_states(obs)
             q_pi, G = self.agent.infer_policies()
             action = self.agent.sample_action()
-            
-            # ENHANCED: Additional belief updates from intervention results
-            if intervention_result is not None:
-                self._update_feature_beliefs(feature_idx, intervention_result)
-                self._update_connection_beliefs(feature_idx, intervention_result)
-                self._update_precision_weights(feature_idx, intervention_result)
             logger.info(f"AI agent updated beliefs and selected action: {action}")
         except Exception as e:
             logger.warning(f"Belief update failed: {e}")

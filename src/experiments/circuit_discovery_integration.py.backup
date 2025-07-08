@@ -79,9 +79,7 @@ class CircuitDiscoveryIntegration:
     def run_integrated_discovery(
         self, 
         test_prompts: List[str],
-        max_interventions: int = 50,
-        min_interventions: int = 10,  # NEW: Minimum intervention requirement
-        exploration_bonus: float = 0.3  # NEW: Prevent early convergence
+        max_interventions: int = 50
     ) -> CircuitDiscoveryResult:
         """
         Run integrated circuit discovery with Active Inference guidance.
@@ -99,14 +97,6 @@ class CircuitDiscoveryIntegration:
         intervention_sequence = []
         
         for intervention_step in range(max_interventions):
-            # Check minimum intervention requirement
-            if intervention_step < min_interventions:
-                # Force exploration regardless of convergence
-                converged = False
-            else:
-                # Check convergence only after minimum interventions
-                converged = self.ai_agent.check_convergence()
-            
             # Active Inference selects next intervention using EFE
             selected_feature, intervention_type = self.ai_agent.select_intervention(self.discovered_features)
             
@@ -127,15 +117,14 @@ class CircuitDiscoveryIntegration:
             self.ai_agent.update_beliefs_from_intervention(
                 feature_idx=selected_feature.feature_id,
                 intervention_type=intervention_type.value.lower(),
-                observation=observation,
-                intervention_result=intervention_result
+                observation=observation
             )
             
             # Record intervention
             intervention_record = {
                 'step': intervention_step,
                 'feature': {
-                    'layer': selected_feature.layer_idx,
+                    'layer': selected_feature.layer,
                     'idx': selected_feature.feature_id,
                     'description': selected_feature.semantic_description
                 },
@@ -147,8 +136,8 @@ class CircuitDiscoveryIntegration:
             intervention_sequence.append(intervention_record)
             self.intervention_history.append(intervention_result)
             
-            # Check for convergence (only after minimum interventions)
-            if converged and intervention_step >= min_interventions:
+            # Check for convergence
+            if self.ai_agent.check_convergence():
                 break
         
         # Calculate Research Question metrics
@@ -192,10 +181,11 @@ class CircuitDiscoveryIntegration:
         
         # RQ1: AI-Circuit Correspondence ≥70%
         # Measure how well AI beliefs correspond to actual circuit behavior
-        correspondence_score = self.correspondence_calc.calculate_correspondence(
-            ai_beliefs=self.ai_agent.get_current_beliefs(),
-            circuit_behavior=self.intervention_history
-        ).overall_correspondence
+        correspondence_score = self._calculate_simple_correspondence(
+            ai_beliefs=self.ai_agent.get_belief_states(),
+            intervention_results=self.intervention_history,
+            discovered_features=self.discovered_features
+        )
         
         # RQ2: Intervention Efficiency ≥30%
         # Compare AI-guided interventions vs baseline methods
@@ -231,7 +221,7 @@ class CircuitDiscoveryIntegration:
             if any(term in description for term in ['golden gate', 'bridge', 'san francisco']):
                 validation_results['golden_gate_feature_found'] = True
                 validation_results['semantic_features_found'].append({
-                    'layer': feature.layer_idx,
+                    'layer': feature.layer,
                     'feature': feature.feature_id,
                     'description': feature.semantic_description,
                     'activation': feature.activation_strength,
@@ -241,7 +231,7 @@ class CircuitDiscoveryIntegration:
             # Look for other landmark features
             elif any(term in description for term in ['location', 'place', 'city', 'country']):
                 validation_results['semantic_features_found'].append({
-                    'layer': feature.layer_idx,
+                    'layer': feature.layer,
                     'feature': feature.feature_id, 
                     'description': feature.semantic_description,
                     'activation': feature.activation_strength,
@@ -323,7 +313,7 @@ class CircuitDiscoveryIntegration:
         for feature_idx, importance in sorted_features:
             feature = self.discovered_features[feature_idx]
             important_features.append({
-                'layer': feature.layer_idx,
+                'layer': feature.layer,
                 'feature_idx': feature.feature_id,
                 'description': feature.semantic_description,
                 'importance_score': importance,

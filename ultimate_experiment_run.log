@@ -1,119 +1,0 @@
-/home/ubuntu/project_venv/lib/python3.10/site-packages/torchvision/io/image.py:13: UserWarning: Failed to load image Python extension: '/home/ubuntu/project_venv/lib/python3.10/site-packages/torchvision/image.so: undefined symbol: _ZN3c1017RegisterOperatorsD1Ev'If you don't plan on using image functionality from `torchvision.io`, you can ignore this warning. Otherwise, there might be something wrong with your environment. Did you have `libjpeg` or `libpng` installed before building `torchvision` from source?
-  warn(
-2025-07-08 12:59:25,210 - src.visualization.visualizer - INFO - Enhanced CircuitVisualizer initialized: visualizations
-2025-07-08 12:59:25,210 - __main__ - INFO - Initialized ComprehensiveExperimentRunner: comprehensive_exp_20250708_125925
-2025-07-08 12:59:25,210 - __main__ - INFO - Model: google/gemma-2-2b, Transcoders: gemma
-2025-07-08 12:59:25,210 - __main__ - INFO - Output directory: comprehensive_experiment_results
-2025-07-08 12:59:25,210 - __main__ - INFO - 🚀 Starting comprehensive experiment: comprehensive_exp_20250708_125925
-2025-07-08 12:59:25,210 - __main__ - INFO - 🕐 Start time: 2025-07-08 12:59:25.210269
-2025-07-08 12:59:25,210 - __main__ - INFO - ============================================================
-2025-07-08 12:59:25,210 - __main__ - INFO - PHASE 1: MODEL INITIALIZATION AND VALIDATION
-2025-07-08 12:59:25,210 - __main__ - INFO - ============================================================
-2025-07-08 12:59:25,210 - __main__ - INFO - 🔧 Initializing models and components...
-2025-07-08 12:59:25,980 - circuit_tracer.utils.hf_utils - INFO - Performing pre-flight metadata check...
-2025-07-08 12:59:26,072 - circuit_tracer.utils.hf_utils - INFO - Pre-flight check complete. Starting downloads...
-🚀 Starting Comprehensive Active Circuit Discovery Experiment
-============================================================
-🔧 Initializing RealCircuitTracer with google/gemma-2-2b + gemma
-🔧 Initializing RealCircuitTracer with google/gemma-2-2b + gemma
-📥 Loading google/gemma-2-2b with circuit-tracer and gemma transcoders...
-Fetching 26 files:   0%|          | 0/26 [00:00<?, ?it/s]Fetching 26 files:  19%|█▉        | 5/26 [00:00<00:00, 39.27it/s]Fetching 26 files:  65%|██████▌   | 17/26 [00:00<00:00, 81.71it/s]Fetching 26 files: 100%|██████████| 26/26 [00:00<00:00, 87.02it/s]
-Loading checkpoint shards:   0%|          | 0/3 [00:00<?, ?it/s]Loading checkpoint shards:  33%|███▎      | 1/3 [00:00<00:00,  3.46it/s]Loading checkpoint shards:  67%|██████▋   | 2/3 [00:00<00:00,  3.45it/s]Loading checkpoint shards: 100%|██████████| 3/3 [00:00<00:00,  4.94it/s]
-2025-07-08 12:59:45,260 - __main__ - INFO - ✅ Model inference test passed: logits shape torch.Size([1, 3, 256000]), activations shape torch.Size([26, 3, 16384])
-2025-07-08 12:59:45,261 - src.active_inference.proper_agent - INFO - State space: [64, 4, 3], Observation space: [5, 3]
-2025-07-08 12:59:45,270 - src.active_inference.proper_agent - INFO - Generative model created with proper A, B, C, D matrices
-2025-07-08 12:59:45,271 - src.active_inference.proper_agent - INFO - Real pymdp Agent initialized with 9 policies
-2025-07-08 12:59:45,271 - src.active_inference.proper_agent - INFO - ProperActiveInferenceAgent initialized with 9 policies
-2025-07-08 12:59:45,271 - __main__ - INFO - ✅ ProperActiveInferenceAgent initialized with real pymdp
-2025-07-08 12:59:45,271 - __main__ - INFO - 🎯 All components initialized successfully
-2025-07-08 12:59:45,271 - __main__ - INFO - ============================================================
-2025-07-08 12:59:45,271 - __main__ - INFO - PHASE 2: GOLDEN GATE BRIDGE SEMANTIC DISCOVERY
-2025-07-08 12:59:45,271 - __main__ - INFO - ============================================================
-2025-07-08 12:59:45,271 - __main__ - INFO - 🌉 Testing Golden Gate Bridge → San Francisco semantic discovery...
-2025-07-08 12:59:45,271 - __main__ - INFO - Testing prompt 1/5: 'The Golden Gate Bridge is located in'
-2025-07-08 12:59:45,364 - __main__ - INFO - ✅ Semantic discovery successful: San
-2025-07-08 12:59:45,364 - __main__ - INFO - Testing prompt 2/5: 'San Francisco's most famous landmark is the'
-2025-07-08 12:59:45,445 - __main__ - INFO - ❌ Semantic discovery failed
-2025-07-08 12:59:45,445 - __main__ - INFO - Testing prompt 3/5: 'The iconic red bridge connecting San Francisco to Marin County is the'
-2025-07-08 12:59:45,519 - __main__ - INFO - ❌ Semantic discovery failed
-2025-07-08 12:59:45,519 - __main__ - INFO - Testing prompt 4/5: 'Visitors to the Golden Gate Bridge are in'
-2025-07-08 12:59:45,591 - __main__ - INFO - ❌ Semantic discovery failed
-2025-07-08 12:59:45,592 - __main__ - INFO - Testing prompt 5/5: 'The city famous for the Golden Gate Bridge is'
-2025-07-08 12:59:45,662 - __main__ - INFO - ❌ Semantic discovery failed
-2025-07-08 12:59:45,662 - __main__ - INFO - 🌉 Golden Gate results: 1/5 successful
-2025-07-08 12:59:45,662 - __main__ - INFO - 🌉 Success rate: 20.0%
-2025-07-08 12:59:45,662 - __main__ - INFO - 🌉 Average confidence: 0.128
-2025-07-08 12:59:45,662 - __main__ - INFO - ============================================================
-2025-07-08 12:59:45,662 - __main__ - INFO - PHASE 3: COMPREHENSIVE CIRCUIT DISCOVERY
-2025-07-08 12:59:45,663 - __main__ - INFO - ============================================================
-2025-07-08 12:59:45,663 - __main__ - INFO - 🔍 Running comprehensive circuit discovery...
-2025-07-08 12:59:46,386 - circuit_tracer.utils.hf_utils - INFO - Performing pre-flight metadata check...
-2025-07-08 12:59:46,468 - circuit_tracer.utils.hf_utils - INFO - Pre-flight check complete. Starting downloads...
-Loaded pretrained model google/gemma-2-2b into HookedTransformer
-✅ RealCircuitTracer initialized successfully!
-   Model: google/gemma-2-2b
-   Transcoders: gemma
-   Layers: 26
-   Features per layer: 16384
-📥 Loading google/gemma-2-2b with circuit-tracer and gemma transcoders...
-Fetching 26 files:   0%|          | 0/26 [00:00<?, ?it/s]Fetching 26 files:   4%|▍         | 1/26 [00:00<00:02,  9.74it/s]Fetching 26 files:  65%|██████▌   | 17/26 [00:00<00:00, 79.40it/s]Fetching 26 files: 100%|██████████| 26/26 [00:00<00:00, 80.74it/s]
-Loading checkpoint shards:   0%|          | 0/3 [00:00<?, ?it/s]Loading checkpoint shards:  33%|███▎      | 1/3 [00:00<00:00,  3.54it/s]Loading checkpoint shards:  67%|██████▋   | 2/3 [00:00<00:00,  3.39it/s]Loading checkpoint shards: 100%|██████████| 3/3 [00:00<00:00,  4.88it/s]
-2025-07-08 13:00:05,781 - src.active_inference.proper_agent - INFO - State space: [64, 4, 3], Observation space: [5, 3]
-2025-07-08 13:00:05,790 - src.active_inference.proper_agent - INFO - Generative model created with proper A, B, C, D matrices
-2025-07-08 13:00:05,791 - src.active_inference.proper_agent - INFO - Real pymdp Agent initialized with 9 policies
-2025-07-08 13:00:05,791 - src.active_inference.proper_agent - INFO - ProperActiveInferenceAgent initialized with 9 policies
-2025-07-08 13:00:05,791 - src.active_inference.proper_agent - INFO - Initializing AI agent from 4949 discovered circuit features
-2025-07-08 13:00:05,791 - src.active_inference.proper_agent - INFO - Initializing beliefs from circuit features
-/home/ubuntu/ActiveCIrcuitDiscovery/src/active_inference/proper_agent.py:241: RuntimeWarning: invalid value encountered in scalar divide
-  new_D_components[feature_idx:] = (1.0 - importance_dist.sum()) / (self.max_components - feature_idx)
-2025-07-08 13:00:05,792 - src.active_inference.proper_agent - INFO - Initialized beliefs for 64 components
-2025-07-08 13:00:05,792 - src.active_inference.proper_agent - INFO - AI agent initialized with beliefs over 26 layers
-2025-07-08 13:00:05,889 - src.active_inference.proper_agent - INFO - Selected intervention: InterventionType.ABLATION on feature 2
-2025-07-08 13:00:05,889 - __main__ - ERROR - ❌ Experiment failed: RealCircuitTracer.perform_intervention() missing 1 required positional argument: 'text'
-Traceback (most recent call last):
-  File "/home/ubuntu/ActiveCIrcuitDiscovery/run_comprehensive_experiment.py", line 218, in run_comprehensive_experiment
-    circuit_discovery_result = await self.run_circuit_discovery()
-  File "/home/ubuntu/ActiveCIrcuitDiscovery/run_comprehensive_experiment.py", line 405, in run_circuit_discovery
-    discovery_result = self.integration.run_integrated_discovery(
-  File "/home/ubuntu/ActiveCIrcuitDiscovery/src/experiments/circuit_discovery_integration.py", line 107, in run_integrated_discovery
-    intervention_result = self.circuit_tracer.perform_intervention(
-TypeError: RealCircuitTracer.perform_intervention() missing 1 required positional argument: 'text'
-2025-07-08 13:00:05,890 - __main__ - ERROR - Experiment failed: RealCircuitTracer.perform_intervention() missing 1 required positional argument: 'text'
-Traceback (most recent call last):
-  File "/home/ubuntu/ActiveCIrcuitDiscovery/run_comprehensive_experiment.py", line 1265, in main
-    result = await runner.run_comprehensive_experiment()
-  File "/home/ubuntu/ActiveCIrcuitDiscovery/run_comprehensive_experiment.py", line 296, in run_comprehensive_experiment
-    raise e
-  File "/home/ubuntu/ActiveCIrcuitDiscovery/run_comprehensive_experiment.py", line 218, in run_comprehensive_experiment
-    circuit_discovery_result = await self.run_circuit_discovery()
-  File "/home/ubuntu/ActiveCIrcuitDiscovery/run_comprehensive_experiment.py", line 405, in run_circuit_discovery
-    discovery_result = self.integration.run_integrated_discovery(
-  File "/home/ubuntu/ActiveCIrcuitDiscovery/src/experiments/circuit_discovery_integration.py", line 107, in run_integrated_discovery
-    intervention_result = self.circuit_tracer.perform_intervention(
-TypeError: RealCircuitTracer.perform_intervention() missing 1 required positional argument: 'text'
-Loaded pretrained model google/gemma-2-2b into HookedTransformer
-✅ RealCircuitTracer initialized successfully!
-   Model: google/gemma-2-2b
-   Transcoders: gemma
-   Layers: 26
-   Features per layer: 16384
-🔍 Discovering transcoder features across 26 layers for: 'The Golden Gate Bridge is located in...'
-✅ Discovered 4949 active transcoder features
-Traceback (most recent call last):
-  File "/home/ubuntu/ActiveCIrcuitDiscovery/run_comprehensive_experiment.py", line 1275, in <module>
-    result = asyncio.run(main())
-  File "/usr/lib/python3.10/asyncio/runners.py", line 44, in run
-    return loop.run_until_complete(main)
-  File "/usr/lib/python3.10/asyncio/base_events.py", line 649, in run_until_complete
-    return future.result()
-  File "/home/ubuntu/ActiveCIrcuitDiscovery/run_comprehensive_experiment.py", line 1265, in main
-    result = await runner.run_comprehensive_experiment()
-  File "/home/ubuntu/ActiveCIrcuitDiscovery/run_comprehensive_experiment.py", line 296, in run_comprehensive_experiment
-    raise e
-  File "/home/ubuntu/ActiveCIrcuitDiscovery/run_comprehensive_experiment.py", line 218, in run_comprehensive_experiment
-    circuit_discovery_result = await self.run_circuit_discovery()
-  File "/home/ubuntu/ActiveCIrcuitDiscovery/run_comprehensive_experiment.py", line 405, in run_circuit_discovery
-    discovery_result = self.integration.run_integrated_discovery(
-  File "/home/ubuntu/ActiveCIrcuitDiscovery/src/experiments/circuit_discovery_integration.py", line 107, in run_integrated_discovery
-    intervention_result = self.circuit_tracer.perform_intervention(
-TypeError: RealCircuitTracer.perform_intervention() missing 1 required positional argument: 'text'

@@ -130,7 +130,10 @@ class ComprehensiveExperimentRunner:
         self.model_name = model_name
         self.transcoder_set = transcoder_set
         self.device = device
-        self.output_dir = Path(output_dir)
+        # Create timestamped results directory
+        results_base = Path('results')
+        results_base.mkdir(exist_ok=True)
+        self.output_dir = results_base / 'results_20250708_160752'
         self.output_dir.mkdir(exist_ok=True)
         
         # Initialize experiment ID and timing
@@ -422,7 +425,7 @@ class ComprehensiveExperimentRunner:
                 intervened_logits=dummy_logits,
                 effect_size=step['effect_magnitude'],
                 target_token_change=step['effect_magnitude'],
-                intervention_layer=step['feature']['layer'],
+                intervention_layer_idx=step['feature']['layer'],
                 effect_magnitude=step['effect_magnitude'],
                 baseline_prediction=step.get('baseline_prediction', ''),
                 intervention_prediction=step.get('intervention_prediction', ''),

@@ -13,6 +13,7 @@ from transformers import AutoTokenizer
 from circuit_tracer import ReplacementModel
 
 from ..core.interfaces import ICircuitTracer
+from ..config.experiment_config import InterventionType
 from ..core.data_structures import CircuitFeature, InterventionResult
 
 
@@ -95,7 +96,7 @@ class RealCircuitTracer(ICircuitTracer):
                             activation_strength = float(max_activations[feat_idx])
                             
                             feature = CircuitFeature.from_transcoder_data(
-                                layer=layer_idx,
+                                layer_idx=layer_idx,
                                 feature_id=int(feat_idx),
                                 activation=activation_strength,
                                 semantic_description=f"GemmaScope feature L{layer_idx}F{feat_idx}",
@@ -119,7 +120,7 @@ class RealCircuitTracer(ICircuitTracer):
         """Perform intervention using circuit-tracer ReplacementModel."""
         self.initialize_model()
         
-        print(f"🎯 Intervening on Layer {feature.layer} Feature {feature.feature_id} ({intervention_type})")
+        print(f"🎯 Intervening on Layer {feature.layer_idx} Feature {feature.feature_id} ({intervention_type})")
         
         try:
             with torch.no_grad():
@@ -130,7 +131,7 @@ class RealCircuitTracer(ICircuitTracer):
                 # Prepare intervention: (layer, position, feature_idx, value)
                 # Intervene at the last token position
                 seq_len = baseline_logits.shape[1]
-                interventions = [(feature.layer, seq_len - 1, feature.feature_id, intervention_value)]
+                interventions = [(feature.layer_idx, seq_len - 1, feature.feature_id, intervention_value)]
                 
                 # Perform feature intervention
                 modified_logits, modified_activations = self.model.feature_intervention(
@@ -149,12 +150,12 @@ class RealCircuitTracer(ICircuitTracer):
                 
                 result = InterventionResult(
                     target_feature=feature,
-                    intervention_type=intervention_type,
+                    intervention_type=InterventionType(intervention_type),
                     original_logits=baseline_logits,
                     intervened_logits=modified_logits,
                     effect_size=effect_magnitude,
                     target_token_change=effect_magnitude,
-                    intervention_layer=feature.layer,
+                    intervention_layer_idx=feature.layer_idx,
                     effect_magnitude=effect_magnitude,
                     baseline_prediction=baseline_pred,
                     intervention_prediction=modified_pred,
@@ -172,12 +173,12 @@ class RealCircuitTracer(ICircuitTracer):
             print(f"❌ Intervention failed: {e}")
             return InterventionResult(
                 target_feature=feature,
-                intervention_type=intervention_type,
+                intervention_type=InterventionType(intervention_type),
                 original_logits=torch.zeros(1, 1, 256000),
                 intervened_logits=torch.zeros(1, 1, 256000),
                 effect_size=0.0,
                 target_token_change=0.0,
-                intervention_layer=feature.layer,
+                intervention_layer_idx=feature.layer_idx,
                 effect_magnitude=0.0,
                 baseline_prediction="ERROR",
                 intervention_prediction="ERROR",
@@ -211,25 +212,25 @@ class RealCircuitTracer(ICircuitTracer):
         
         for feature in features:
             graph_data["nodes"].append({
-                "id": f"L{feature.layer}F{feature.feature_id}",
-                "layer": feature.layer,
+                "id": f"L{feature.layer_idx}F{feature.feature_id}",
+                "layer": feature.layer_idx,
                 "feature_id": feature.feature_id,
                 "activation_strength": feature.activation_strength,
                 "description": feature.semantic_description,
                 "component_type": feature.component_type
             })
-            graph_data["layers"].add(feature.layer)
+            graph_data["layers"].add(feature.layer_idx)
         
         # Add simple connectivity based on layer proximity
         for i, feat1 in enumerate(features):
             for j, feat2 in enumerate(features):
-                if i != j and abs(feat1.layer - feat2.layer) == 1:
+                if i != j and abs(feat1.layer_idx - feat2.layer_idx) == 1:
                     # Features in adjacent layers may be connected
                     interaction_strength = min(feat1.activation_strength, feat2.activation_strength)
                     if interaction_strength > 0.1:
                         graph_data["edges"].append({
-                            "source": f"L{feat1.layer}F{feat1.feature_id}",
-                            "target": f"L{feat2.layer}F{feat2.feature_id}",
+                            "source": f"L{feat1.layer_idx}F{feat1.feature_id}",
+                            "target": f"L{feat2.layer_idx}F{feat2.feature_id}",
                             "weight": float(interaction_strength),
                             "type": "layer_adjacency"
                         })
@@ -299,9 +300,9 @@ class RealCircuitTracer(ICircuitTracer):
         # Group by layer
         by_layer = {}
         for feature in features:
-            if feature.layer not in by_layer:
-                by_layer[feature.layer] = []
-            by_layer[feature.layer].append(feature)
+            if feature.layer_idx not in by_layer:
+                by_layer[feature.layer_idx] = []
+            by_layer[feature.layer_idx].append(feature)
         
         return by_layer
     

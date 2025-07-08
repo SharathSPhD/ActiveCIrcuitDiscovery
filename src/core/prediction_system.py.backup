@@ -68,45 +68,24 @@ class AttentionPatternPredictor(PredictionGenerator):
         return predictions
     
     def _predict_uncertainty_attention_correlation(self, belief_state: BeliefState,
-                                                circuit_graph: AttributionGraph) -> NovelPrediction:
-        """FIXED: Predict correlation between uncertainty and attention weights with proper shape handling."""
+                                                 circuit_graph: AttributionGraph) -> NovelPrediction:
+        """Predict correlation between uncertainty and attention weights."""
         
-        try:
-            # FIXED: Proper shape handling for uncertainty values
-            if hasattr(belief_state, 'uncertainty') and belief_state.uncertainty:
-                uncertainty_values = list(belief_state.uncertainty.values())
-                # Ensure consistent shape
-                if len(uncertainty_values) > 0:
-                    uncertainty_array = np.array(uncertainty_values)
-                    # Handle different shapes appropriately
-                    if uncertainty_array.ndim > 1:
-                        uncertainty_array = uncertainty_array.flatten()
-                    avg_uncertainty = np.mean(uncertainty_array)
-                    uncertainty_variance = np.var(uncertainty_array)
-                else:
-                    avg_uncertainty = 0.5
-                    uncertainty_variance = 0.1
-            else:
-                avg_uncertainty = 0.5
-                uncertainty_variance = 0.1
-                
-            # FIXED: Robust confidence calculation
-            confidence = min(0.9, 0.6 + 0.3 * min(1.0, uncertainty_variance))
-            
-        except Exception as e:
-            logger.warning(f"Error in uncertainty calculation: {e}")
-            # Fallback values
-            avg_uncertainty = 0.5
-            confidence = 0.7
+        # Calculate average uncertainty across features
+        avg_uncertainty = belief_state.get_average_uncertainty()
+        
+        # Generate confidence based on uncertainty distribution
+        uncertainty_variance = np.var(list(belief_state.uncertainty.values())) if belief_state.uncertainty else 0.0
+        confidence = min(0.9, 0.6 + 0.3 * uncertainty_variance)
         
         return NovelPrediction(
-            prediction_type=attention_pattern,
-            description="High uncertainty features should receive increased attention weights",
+            prediction_type="attention_pattern",
+            description="High uncertainty features should receive increased attention weights according to Active Inference precision weighting",
             testable_hypothesis="Features with uncertainty > 0.7 will show attention weights > 0.6 compared to baseline",
-            expected_outcome="Pearson correlation r > 0.7 between feature uncertainty and attention weights",
+            expected_outcome=f"Pearson correlation r > 0.7 between feature uncertainty and attention weights",
             test_method="Measure attention-uncertainty correlation across interventions using attention head analysis",
             confidence=confidence,
-            validation_status=untested
+            validation_status="untested"
         )
     
     def _predict_dynamic_attention_reweighting(self, belief_state: BeliefState,
@@ -156,45 +135,27 @@ class FeatureInteractionPredictor(PredictionGenerator):
     
     def _predict_causal_connection_strength(self, belief_state: BeliefState,
                                           circuit_graph: AttributionGraph) -> NovelPrediction:
-        """FIXED: Predict causal connection strength with proper data structure handling."""
+        """Predict causal connection strength based on connection beliefs."""
         
-        try:
-            # FIXED: Proper handling of connection_beliefs data structure
-            if hasattr(belief_state, 'connection_beliefs') and belief_state.connection_beliefs:
-                if isinstance(belief_state.connection_beliefs, dict):
-                    # Handle dictionary case
-                    connection_values = list(belief_state.connection_beliefs.values())
-                elif isinstance(belief_state.connection_beliefs, list):
-                    # Handle list case
-                    connection_values = belief_state.connection_beliefs
-                else:
-                    # Handle other iterable types
-                    connection_values = [float(x) for x in belief_state.connection_beliefs]
-                
-                if len(connection_values) > 0:
-                    strong_connections = sum(1 for belief in connection_values if belief > 0.7)
-                    total_connections = len(connection_values)
-                    strong_ratio = strong_connections / total_connections
-                else:
-                    strong_ratio = 0.5
-            else:
-                strong_ratio = 0.5
-                
-            confidence = min(0.8, 0.6 + 0.3 * strong_ratio)
-            
-        except Exception as e:
-            logger.warning(f"Error in connection beliefs calculation: {e}")
-            # Fallback values
+        # Analyze connection beliefs strength
+        if belief_state.connection_beliefs:
+            strong_connections = sum(1 for belief in belief_state.connection_beliefs.values() 
+                                   if belief > 0.7)
+            total_connections = len(belief_state.connection_beliefs)
+            strong_ratio = strong_connections / total_connections if total_connections > 0 else 0
+        else:
             strong_ratio = 0.5
-            confidence = 0.7
+        
+        confidence = min(0.8, 0.6 + 0.3 * strong_ratio)
         
         return NovelPrediction(
-            prediction_type=feature_interaction,
-            description="Features with high connection beliefs should show strong causal dependence",
+            prediction_type="feature_interaction",
+            description="Features with high connection beliefs should show strong causal dependence when ablated",
             testable_hypothesis="Ablating features with connection belief > 0.7 reduces downstream activation by > 0.4",
+            expected_outcome=f"Mean intervention effect size > 0.4 for high-belief connections",
             test_method="Systematic ablation of predicted high-strength connections with effect size measurement",
             confidence=confidence,
-            validation_status=untested
+            validation_status="untested"
         )
     
     def _predict_hierarchical_information_flow(self, belief_state: BeliefState,

@@ -2,7 +2,6 @@
 # Fixes the >100% correspondence issue identified in status analysis
 
 import numpy as np
-from scipy.stats import entropy
 from typing import Dict, List, Tuple, Any, Optional
 from scipy.stats import pearsonr, spearmanr
 from scipy import stats

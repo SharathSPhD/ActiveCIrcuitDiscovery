@@ -90,7 +90,7 @@ class CircuitVisualizer(IVisualizationGenerator):
         
         for node in graph.nodes:
             G.add_node(node.node_id, 
-                      layer=node.layer,
+                      layer_idx=node.layer,
                       importance=node.importance,
                       description=node.description[:20] + "..." if len(node.description) > 20 else node.description)
             
