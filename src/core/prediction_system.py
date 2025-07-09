@@ -192,6 +192,7 @@ class FeatureInteractionPredictor(PredictionGenerator):
             prediction_type="feature_interaction",
             description="Features with high connection beliefs should show strong causal dependence",
             testable_hypothesis="Ablating features with connection belief > 0.7 reduces downstream activation by > 0.4",
+            expected_outcome=f"Activation reduction > 0.4 for {int(strong_ratio * 100)}% of high-belief connections",
             test_method="Systematic ablation of predicted high-strength connections with effect size measurement",
             confidence=confidence,
             validation_status="untested"

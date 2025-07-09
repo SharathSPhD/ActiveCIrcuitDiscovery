@@ -1,0 +1,126 @@
+2025-07-09 15:39:05,981 - src.visualization.visualizer - INFO - Enhanced CircuitVisualizer initialized: visualizations
+2025-07-09 15:39:05,981 - __main__ - INFO - Initialized ComprehensiveExperimentRunner: comprehensive_exp_20250709_153905
+2025-07-09 15:39:05,981 - __main__ - INFO - Model: google/gemma-2-2b, Transcoders: gemma
+2025-07-09 15:39:05,981 - __main__ - INFO - Output directory: results/results_20250709_153905
+2025-07-09 15:39:05,981 - __main__ - INFO - 🚀 Starting comprehensive experiment: comprehensive_exp_20250709_153905
+2025-07-09 15:39:05,981 - __main__ - INFO - 🕐 Start time: 2025-07-09 15:39:05.981707
+2025-07-09 15:39:05,981 - __main__ - INFO - ============================================================
+2025-07-09 15:39:05,981 - __main__ - INFO - PHASE 1: MODEL INITIALIZATION AND VALIDATION
+2025-07-09 15:39:05,981 - __main__ - INFO - ============================================================
+2025-07-09 15:39:05,981 - __main__ - INFO - 🔧 Initializing models and components...
+2025-07-09 15:39:06,922 - circuit_tracer.utils.hf_utils - INFO - Performing pre-flight metadata check...
+2025-07-09 15:39:06,989 - circuit_tracer.utils.hf_utils - INFO - Pre-flight check complete. Starting downloads...
+2025-07-09 15:39:26,395 - __main__ - INFO - ✅ Model inference test passed: logits shape torch.Size([1, 3, 256000]), activations shape torch.Size([26, 3, 16384])
+2025-07-09 15:39:26,396 - src.active_inference.proper_agent - INFO - State space: [64, 4, 3], Observation space: [5, 3]
+2025-07-09 15:39:26,405 - src.active_inference.proper_agent - INFO - Generative model created with proper A, B, C, D matrices
+2025-07-09 15:39:26,406 - src.active_inference.proper_agent - INFO - Real pymdp Agent initialized with 9 policies
+2025-07-09 15:39:26,406 - src.active_inference.proper_agent - INFO - ProperActiveInferenceAgent initialized with 9 policies
+2025-07-09 15:39:26,406 - __main__ - INFO - ✅ ProperActiveInferenceAgent initialized with real pymdp
+2025-07-09 15:39:26,406 - __main__ - INFO - 🎯 All components initialized successfully
+2025-07-09 15:39:26,406 - __main__ - INFO - ============================================================
+2025-07-09 15:39:26,406 - __main__ - INFO - PHASE 2: GOLDEN GATE BRIDGE SEMANTIC DISCOVERY
+2025-07-09 15:39:26,406 - __main__ - INFO - ============================================================
+2025-07-09 15:39:26,406 - __main__ - INFO - 🌉 Testing Golden Gate Bridge → San Francisco semantic discovery...
+2025-07-09 15:39:26,406 - __main__ - INFO - Testing prompt 1/5: 'The Golden Gate Bridge is located in'
+2025-07-09 15:39:26,500 - __main__ - INFO - ✅ Semantic discovery successful: San
+2025-07-09 15:39:26,500 - __main__ - INFO - Testing prompt 2/5: 'San Francisco's most famous landmark is the'
+2025-07-09 15:39:26,582 - __main__ - INFO - ❌ Semantic discovery failed
+2025-07-09 15:39:26,582 - __main__ - INFO - Testing prompt 3/5: 'The iconic red bridge connecting San Francisco to Marin County is the'
+2025-07-09 15:39:26,653 - __main__ - INFO - ❌ Semantic discovery failed
+2025-07-09 15:39:26,653 - __main__ - INFO - Testing prompt 4/5: 'Visitors to the Golden Gate Bridge are in'
+2025-07-09 15:39:26,722 - __main__ - INFO - ❌ Semantic discovery failed
+2025-07-09 15:39:26,722 - __main__ - INFO - Testing prompt 5/5: 'The city famous for the Golden Gate Bridge is'
+2025-07-09 15:39:26,793 - __main__ - INFO - ❌ Semantic discovery failed
+2025-07-09 15:39:26,793 - __main__ - INFO - 🌉 Golden Gate results: 1/5 successful
+2025-07-09 15:39:26,793 - __main__ - INFO - 🌉 Success rate: 20.0%
+2025-07-09 15:39:26,793 - __main__ - INFO - 🌉 Average confidence: 0.128
+2025-07-09 15:39:26,793 - __main__ - INFO - ============================================================
+2025-07-09 15:39:26,793 - __main__ - INFO - PHASE 3: COMPREHENSIVE CIRCUIT DISCOVERY
+2025-07-09 15:39:26,793 - __main__ - INFO - ============================================================
+2025-07-09 15:39:26,793 - __main__ - INFO - 🔍 Running comprehensive circuit discovery...
+2025-07-09 15:39:27,692 - circuit_tracer.utils.hf_utils - INFO - Performing pre-flight metadata check...
+2025-07-09 15:39:27,791 - circuit_tracer.utils.hf_utils - INFO - Pre-flight check complete. Starting downloads...
+2025-07-09 15:39:47,195 - src.active_inference.strategy_learning_agent - INFO - Strategy space: [12, 3, 4], Observation space: [5, 3]
+2025-07-09 15:39:47,195 - src.active_inference.strategy_learning_agent - INFO - Total strategies: 144
+2025-07-09 15:39:47,197 - src.active_inference.strategy_learning_agent - INFO - Strategy generative model created
+2025-07-09 15:39:47,197 - src.active_inference.strategy_learning_agent - INFO - Strategy agent initialized with 9 policies
+2025-07-09 15:39:47,197 - src.active_inference.strategy_learning_agent - INFO - StrategyLearningAgent initialized for 144 strategies
+2025-07-09 15:39:47,197 - src.active_inference.strategy_learning_agent - INFO - Initializing strategy learning from 4949 features
+2025-07-09 15:39:47,197 - src.active_inference.strategy_learning_agent - INFO - Strategy learning initialized from circuit features
+2025-07-09 15:39:47,217 - src.active_inference.strategy_learning_agent - INFO - Selected strategy: InterventionType.ABLATION on layer 0
+2025-07-09 15:39:47,452 - src.active_inference.strategy_learning_agent - INFO - Updated strategy beliefs from intervention
+2025-07-09 15:39:47,452 - src.active_inference.strategy_learning_agent - WARNING - Feature confidence calculation failed: matmul: Input operand 0 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)->(n?,m?) requires 1)
+2025-07-09 15:39:47,472 - src.active_inference.strategy_learning_agent - INFO - Selected strategy: InterventionType.ABLATION on layer 0
+2025-07-09 15:39:47,688 - src.active_inference.strategy_learning_agent - INFO - Updated strategy beliefs from intervention
+2025-07-09 15:39:47,688 - src.active_inference.strategy_learning_agent - WARNING - Feature confidence calculation failed: matmul: Input operand 0 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)->(n?,m?) requires 1)
+2025-07-09 15:39:47,708 - src.active_inference.strategy_learning_agent - INFO - Selected strategy: InterventionType.ABLATION on layer 0
+2025-07-09 15:39:47,920 - src.active_inference.strategy_learning_agent - INFO - Updated strategy beliefs from intervention
+2025-07-09 15:39:47,921 - src.active_inference.strategy_learning_agent - WARNING - Feature confidence calculation failed: matmul: Input operand 0 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)->(n?,m?) requires 1)
+2025-07-09 15:39:47,941 - src.active_inference.strategy_learning_agent - INFO - Selected strategy: InterventionType.ABLATION on layer 0
+2025-07-09 15:39:48,153 - src.active_inference.strategy_learning_agent - INFO - Updated strategy beliefs from intervention
+2025-07-09 15:39:48,153 - src.active_inference.strategy_learning_agent - WARNING - Feature confidence calculation failed: matmul: Input operand 0 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)->(n?,m?) requires 1)
+2025-07-09 15:39:48,174 - src.active_inference.strategy_learning_agent - INFO - Selected strategy: InterventionType.ABLATION on layer 0
+2025-07-09 15:39:48,390 - src.active_inference.strategy_learning_agent - INFO - Updated strategy beliefs from intervention
+2025-07-09 15:39:48,390 - src.active_inference.strategy_learning_agent - WARNING - Feature confidence calculation failed: matmul: Input operand 0 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)->(n?,m?) requires 1)
+2025-07-09 15:39:48,410 - src.active_inference.strategy_learning_agent - INFO - Selected strategy: InterventionType.ABLATION on layer 0
+2025-07-09 15:39:48,633 - src.active_inference.strategy_learning_agent - INFO - Updated strategy beliefs from intervention
+2025-07-09 15:39:48,633 - src.active_inference.strategy_learning_agent - WARNING - Feature confidence calculation failed: matmul: Input operand 0 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)->(n?,m?) requires 1)
+2025-07-09 15:39:48,657 - src.active_inference.strategy_learning_agent - INFO - Selected strategy: InterventionType.ABLATION on layer 0
+2025-07-09 15:39:48,890 - src.active_inference.strategy_learning_agent - INFO - Updated strategy beliefs from intervention
+2025-07-09 15:39:48,890 - src.active_inference.strategy_learning_agent - WARNING - Feature confidence calculation failed: matmul: Input operand 0 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)->(n?,m?) requires 1)
+2025-07-09 15:39:48,911 - src.active_inference.strategy_learning_agent - INFO - Selected strategy: InterventionType.ABLATION on layer 0
+2025-07-09 15:39:49,140 - src.active_inference.strategy_learning_agent - INFO - Updated strategy beliefs from intervention
+2025-07-09 15:39:49,140 - src.active_inference.strategy_learning_agent - WARNING - Feature confidence calculation failed: matmul: Input operand 0 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)->(n?,m?) requires 1)
+2025-07-09 15:39:49,161 - src.active_inference.strategy_learning_agent - INFO - Selected strategy: InterventionType.ABLATION on layer 0
+2025-07-09 15:39:49,381 - src.active_inference.strategy_learning_agent - INFO - Updated strategy beliefs from intervention
+2025-07-09 15:39:49,381 - src.active_inference.strategy_learning_agent - WARNING - Feature confidence calculation failed: matmul: Input operand 0 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)->(n?,m?) requires 1)
+2025-07-09 15:39:49,401 - src.active_inference.strategy_learning_agent - INFO - Selected strategy: InterventionType.ABLATION on layer 0
+2025-07-09 15:39:49,619 - src.active_inference.strategy_learning_agent - INFO - Updated strategy beliefs from intervention
+2025-07-09 15:39:49,619 - src.active_inference.strategy_learning_agent - WARNING - Feature confidence calculation failed: matmul: Input operand 0 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)->(n?,m?) requires 1)
+2025-07-09 15:39:49,620 - src.active_inference.strategy_learning_agent - INFO - Strategy learning converged: avg change 0.0057
+2025-07-09 15:39:49,640 - src.active_inference.strategy_learning_agent - INFO - Selected strategy: InterventionType.ABLATION on layer 0
+2025-07-09 15:39:49,852 - src.active_inference.strategy_learning_agent - INFO - Updated strategy beliefs from intervention
+2025-07-09 15:39:49,853 - src.active_inference.strategy_learning_agent - WARNING - Feature confidence calculation failed: matmul: Input operand 0 does not have enough dimensions (has 0, gufunc core with signature (n?,k),(k,m?)->(n?,m?) requires 1)
+2025-07-09 15:39:49,853 - src.core.metrics - INFO - Calculating correspondence metrics with proper bounds
+2025-07-09 15:39:49,867 - src.core.metrics - WARNING - Zero variance in belief_updating data
+2025-07-09 15:39:49,868 - src.core.metrics - WARNING - Zero variance in precision_weighting data
+2025-07-09 15:39:49,868 - src.core.metrics - WARNING - Zero variance in prediction_error data
+2025-07-09 15:39:49,868 - src.active_inference.strategy_learning_agent - INFO - Generated 3 strategy predictions
+2025-07-09 15:39:49,868 - src.active_inference.strategy_learning_agent - INFO - Strategy learning converged: avg change 0.0050
+2025-07-09 15:39:49,868 - src.active_inference.strategy_learning_agent - INFO - Strategy learning converged: avg change 0.0050
+2025-07-09 15:39:49,869 - __main__ - INFO - 🔍 Circuit discovery completed:
+2025-07-09 15:39:49,869 - __main__ - INFO -    Features discovered: 4949
+2025-07-09 15:39:49,869 - __main__ - INFO -    Interventions performed: 11
+2025-07-09 15:39:49,869 - __main__ - INFO -    Convergence achieved: True
+2025-07-09 15:39:49,869 - __main__ - INFO - ============================================================
+2025-07-09 15:39:49,869 - __main__ - INFO - PHASE 4: ACTIVE INFERENCE ANALYSIS
+2025-07-09 15:39:49,869 - __main__ - INFO - ============================================================
+2025-07-09 15:39:49,869 - __main__ - INFO - 🧠 Analyzing Active Inference behavior...
+2025-07-09 15:39:49,869 - __main__ - INFO - 🧠 Active Inference analysis completed
+2025-07-09 15:39:49,869 - __main__ - INFO - ============================================================
+2025-07-09 15:39:49,869 - __main__ - INFO - PHASE 5: RESEARCH QUESTION VALIDATION
+2025-07-09 15:39:49,869 - __main__ - INFO - ============================================================
+2025-07-09 15:39:49,869 - __main__ - INFO - 📊 Validating RQ1: AI-Circuit correspondence...
+2025-07-09 15:39:49,869 - src.core.metrics - WARNING - Zero variance in belief_updating data
+2025-07-09 15:39:49,869 - src.core.metrics - WARNING - Zero variance in precision_weighting data
+2025-07-09 15:39:49,881 - src.core.metrics - WARNING - Zero variance in prediction_error data
+2025-07-09 15:39:49,881 - src.core.statistical_validation - INFO - Testing correspondence significance against 70.0% threshold
+2025-07-09 15:39:49,883 - src.core.statistical_validation - INFO - Correspondence test: Correspondence (0.0%) does not significantly exceed 70.0% threshold (p=nan, d=nan)
+2025-07-09 15:39:49,883 - __main__ - INFO - 📊 RQ1 Results: 0.0% (FAILED)
+2025-07-09 15:39:49,883 - __main__ - INFO - ⚡ Validating RQ2: Intervention efficiency...
+2025-07-09 15:39:49,883 - __main__ - INFO - ⚡ RQ2 Results: 20.0% improvement (FAILED)
+2025-07-09 15:39:49,883 - __main__ - INFO - 🔮 Validating RQ3: Novel prediction generation...
+2025-07-09 15:39:49,883 - src.active_inference.strategy_learning_agent - INFO - Generated 3 strategy predictions
+2025-07-09 15:39:49,883 - src.core.prediction_system - INFO - Generating enhanced circuit predictions for RQ3 validation
+2025-07-09 15:39:49,884 - src.core.prediction_system - WARNING - Error in FeatureInteractionPredictor: 'list' object has no attribute 'items'
+2025-07-09 15:39:49,884 - src.core.prediction_system - INFO - Generated 4 total predictions with average confidence 0.700
+2025-07-09 15:39:49,884 - __main__ - INFO - 🔮 RQ3 Results: 2 predictions (FAILED)
+2025-07-09 15:39:49,884 - __main__ - INFO - ============================================================
+2025-07-09 15:39:49,884 - __main__ - INFO - PHASE 6: STATISTICAL VALIDATION
+2025-07-09 15:39:49,884 - __main__ - INFO - ============================================================
+2025-07-09 15:39:49,884 - __main__ - INFO - 📈 Running statistical validation...
+2025-07-09 15:39:49,885 - __main__ - INFO - 📈 Statistical validation completed
+2025-07-09 15:39:49,885 - __main__ - INFO - ============================================================
+2025-07-09 15:39:49,885 - __main__ - INFO - PHASE 7: CIRCUIT ANALYSIS AND VISUALIZATION
+2025-07-09 15:39:49,885 - __main__ - INFO - ============================================================
+2025-07-09 15:39:49,885 - __main__ - INFO - 🔗 Analyzing circuit structure...

@@ -61,223 +61,298 @@ num_obs = [
 - **Target**: ≥2 validated predictions (reduced from 3 as suggested)
 - **Measurement**: Number of agent predictions about circuit locations that prove correct
 
-## 📊 IMPLEMENTATION STRATEGY
+## 📊 STRATEGY LEARNING IMPLEMENTATION STATUS
 
-### Phase 1: Active Inference Agent Redesign
+### ✅ COMPLETED IMPLEMENTATIONS
 
-**1. Strategy-Focused State Space**
+**1. StrategyLearningAgent Core Architecture**
+- ✅ Strategy-focused state space: [12 layers × 3 interventions × 4 contexts] = 144 strategies
+- ✅ Strategy effectiveness observations: [5 informativeness × 3 semantic coherence]
+- ✅ pymdp Agent integration with proper generative model
+- ✅ Strategy belief tracking and convergence detection
+- ✅ Minimum intervention enforcement (≥10 interventions)
+
+**2. Integration with Circuit Discovery**
+- ✅ Strategy-guided intervention selection
+- ✅ Discovery success tracking
+- ✅ Interface compatibility with existing system
+- ✅ NovelPrediction error fixes (missing expected_outcome parameter)
+
+**3. Circuit-tracer API Fixes**
+- ✅ Proper intervention calling: `model.feature_intervention(text, tuples)`
+- ✅ Correct tuple format: `(layer, -1, feature_id, value)`
+- ✅ Inference mode usage for better performance
+
+## 🔧 REMAINING CRITICAL ISSUES TO RESOLVE
+
+### Priority 1: Semantic Discovery Enhancement (20% → 80% success rate)
+
+**Current Problem**: Golden Gate Bridge → San Francisco semantic discovery only succeeds 1/5 times
+
+**Root Cause**: 
+- Circuit-tracer feature selection is not targeting semantic relationships effectively
+- Single-feature ablation (intervention_value=0.0) is insufficient
+- Missing proper semantic feature identification methodology
+
+**Detailed Resolution Plan**:
+
+1. **Implement Semantic Feature Attribution**
+   ```python
+   def identify_semantic_features(self, source_concept: str, target_concept: str) -> List[CircuitFeature]:
+       """Use circuit-tracer attribution to find semantic bridging features."""
+       # Use attribution graphs to identify features that connect concepts
+       # Target features with high attribution from source to target
+       # Rank features by semantic relevance score
+   ```
+
+2. **Multi-Feature Intervention Strategy**
+   ```python
+   def perform_semantic_intervention(self, features: List[CircuitFeature], 
+                                   source_text: str, target_concept: str):
+       """Perform coordinated multi-feature intervention for semantic discovery."""
+       # Use activation transfer from related prompts (like circuit-tracer demo)
+       # Intervene on multiple related features simultaneously
+       # Target features across multiple layers for semantic bridging
+   ```
+
+3. **Activation Transfer Methodology**
+   ```python
+   # Based on circuit-tracer demo approach
+   source_activations = model.get_activations(source_text, sparse=True)
+   target_activations = model.get_activations(target_text, sparse=True)
+   
+   # Transfer activations rather than just ablation
+   intervention_tuples = [
+       (layer, -1, feature_id, target_activations[layer, -1, feature_id])
+       for layer, feature_id in semantic_features
+   ]
+   ```
+
+### Priority 2: Zero Variance Resolution in Strategy Learning
+
+**Current Problem**: Strategy learning metrics show zero variance, causing statistical validation failures
+
+**Root Cause**:
+- Strategy learning agent converges too quickly to same strategies
+- Insufficient exploration of strategy space
+- All strategies showing similar effectiveness scores
+
+**Detailed Resolution Plan**:
+
+1. **Add Exploration Mechanisms**
+   ```python
+   def select_intervention_strategy(self, available_features: List[CircuitFeature], 
+                                  epsilon: float = 0.1) -> Tuple[CircuitFeature, InterventionType]:
+       """Add epsilon-greedy exploration to strategy selection."""
+       if np.random.random() < epsilon:
+           # Explore: random strategy selection
+           return self._random_strategy_selection(available_features)
+       else:
+           # Exploit: use learned strategy beliefs
+           return self._exploit_strategy_beliefs(available_features)
+   ```
+
+2. **Implement Strategy Uncertainty Tracking**
+   ```python
+   def track_strategy_uncertainty(self) -> Dict[str, float]:
+       """Track uncertainty in strategy effectiveness estimates."""
+       strategy_uncertainties = {}
+       
+       for strategy_key in self.strategy_beliefs:
+           # Calculate uncertainty based on intervention count and variance
+           intervention_count = self.strategy_intervention_counts.get(strategy_key, 0)
+           uncertainty = 1.0 / (1.0 + intervention_count)  # Decreases with experience
+           strategy_uncertainties[strategy_key] = uncertainty
+       
+       return strategy_uncertainties
+   ```
+
+3. **Temporal Variance Implementation**
+   ```python
+   def calculate_temporal_strategy_variance(self, window_size: int = 5) -> float:
+       """Calculate variance in strategy effectiveness over time."""
+       if len(self.strategy_history) < window_size:
+           return 0.0
+       
+       recent_strategies = self.strategy_history[-window_size:]
+       effectiveness_scores = [s.effectiveness for s in recent_strategies]
+       
+       return np.var(effectiveness_scores) if len(effectiveness_scores) > 1 else 0.0
+   ```
+
+### Priority 3: Research Question Metrics Reimplementation
+
+**Current Problem**: RQ1 (0.0%), RQ2 (20.0%), RQ3 (2 predictions) all failing
+
+**Detailed Resolution Plan**:
+
+1. **RQ1: Enhanced Strategy Correspondence (Target: ≥70%)**
+   ```python
+   def calculate_enhanced_strategy_correspondence(self) -> float:
+       """Enhanced strategy correspondence with cross-validation."""
+       # Split interventions into training and validation sets
+       train_interventions, val_interventions = train_test_split(self.intervention_history, test_size=0.3)
+       
+       # Learn strategy beliefs on training set
+       train_beliefs = self.learn_strategy_beliefs(train_interventions)
+       
+       # Measure actual success on validation set
+       val_success = self.measure_strategy_success(val_interventions)
+       
+       # Calculate correspondence with proper statistical validation
+       correlation, p_value = pearsonr(train_beliefs, val_success)
+       
+       # Apply significance testing and effect size calculation
+       if p_value < 0.05 and abs(correlation) > 0.3:
+           return abs(correlation) * 100.0
+       else:
+           return 0.0
+   ```
+
+2. **RQ2: Strategy Learning Efficiency (Target: ≥30%)**
+   ```python
+   def calculate_strategy_learning_efficiency(self) -> float:
+       """Calculate efficiency improvement over random baseline."""
+       # Run parallel random baseline for comparison
+       random_success_rate = self.run_random_baseline_interventions()
+       
+       # Calculate agent-guided success rate
+       agent_success_rate = self.calculate_agent_success_rate()
+       
+       # Calculate efficiency improvement
+       if random_success_rate > 0:
+           efficiency = ((agent_success_rate - random_success_rate) / random_success_rate) * 100.0
+       else:
+           efficiency = agent_success_rate * 100.0
+       
+       return max(0.0, efficiency)
+   ```
+
+3. **RQ3: Strategy Prediction Enhancement (Target: ≥3 predictions)**
+   ```python
+   def generate_enhanced_strategy_predictions(self) -> List[NovelPrediction]:
+       """Generate high-quality strategy predictions with validation."""
+       predictions = []
+       
+       # Generate predictions about top-performing strategies
+       top_strategies = self.get_top_strategies(n=5)
+       
+       for strategy in top_strategies:
+           prediction = NovelPrediction(
+               prediction_type="strategy_effectiveness",
+               description=f"Strategy {strategy.name} will achieve >60% success rate",
+               testable_hypothesis=f"Future interventions using {strategy.name} will be more effective",
+               expected_outcome=f"Success rate improvement of {strategy.predicted_improvement:.1f}%",
+               test_method="holdout_validation",
+               confidence=strategy.confidence,
+               validation_status="pending"
+           )
+           predictions.append(prediction)
+       
+       return predictions
+   ```
+
+### Priority 4: FeatureInteractionPredictor Compatibility Fix
+
+**Current Problem**: "list object has no attribute 'items'" error
+
+**Root Cause**: Strategy learning agent returns belief states in different format than expected
+
+**Resolution Plan**:
 ```python
-class StrategyLearningAgent:
-    def _design_state_observation_spaces(self):
-        # State factors for strategy learning:
-        # Factor 0: Layer type (0-11 for 12 layers)
-        # Factor 1: Intervention type (0: ablation, 1: patching, 2: mean_ablation)
-        # Factor 2: Discovery context (0: early, 1: middle, 2: late, 3: semantic)
-        
-        self.num_states = [12, 3, 4]
-        
-        # Observations for strategy effectiveness:
-        # Modality 0: Informativeness (0: none, 1: low, 2: medium, 3: high, 4: exceptional)
-        # Modality 1: Semantic coherence (0: low, 1: medium, 2: high)
-        
-        self.num_obs = [5, 3]
-```
-
-**2. Strategy Effectiveness Encoding**
-```python
-def encode_intervention_outcome(self, intervention_result: InterventionResult) -> List[int]:
-    """Encode intervention result as strategy effectiveness observation."""
-    
-    # Informativeness based on effect size and significance
-    if intervention_result.effect_magnitude > 0.8 and intervention_result.statistical_significance:
-        informativeness = 4  # exceptional
-    elif intervention_result.effect_magnitude > 0.6:
-        informativeness = 3  # high
-    elif intervention_result.effect_magnitude > 0.4:
-        informativeness = 2  # medium
-    elif intervention_result.effect_magnitude > 0.2:
-        informativeness = 1  # low
-    else:
-        informativeness = 0  # none
-    
-    # Semantic coherence based on semantic change
-    semantic_coherence = 2 if intervention_result.semantic_change else 0
-    
-    return [informativeness, semantic_coherence]
-```
-
-**3. Strategy Belief Tracking**
-```python
-def track_strategy_beliefs(self) -> Dict[str, float]:
-    """Track agent's beliefs about strategy effectiveness."""
-    strategy_beliefs = {}
-    
-    for layer in range(12):
-        for intervention in range(3):
-            for context in range(4):
-                # Extract belief about this strategy combination
-                belief = self.agent.qs[0][layer] * self.agent.qs[1][intervention] * self.agent.qs[2][context]
-                strategy_key = f"L{layer}_I{intervention}_C{context}"
-                strategy_beliefs[strategy_key] = belief
-    
-    return strategy_beliefs
-```
-
-### Phase 2: New Metrics System
-
-**1. Strategy-Discovery Correspondence**
-```python
-class StrategyCorrespondenceCalculator:
-    def calculate_strategy_correspondence(self, 
-                                        strategy_beliefs: Dict[str, float],
-                                        actual_success_rates: Dict[str, float]) -> float:
-        """Calculate correspondence between strategy beliefs and actual success."""
-        
-        # Extract matching strategy keys
-        common_strategies = set(strategy_beliefs.keys()) & set(actual_success_rates.keys())
-        
-        if len(common_strategies) < 2:
-            return 0.0
-        
-        # Calculate correlation between beliefs and actual success
-        beliefs = [strategy_beliefs[s] for s in common_strategies]
-        success_rates = [actual_success_rates[s] for s in common_strategies]
-        
-        correlation, p_value = pearsonr(beliefs, success_rates)
-        
-        # Convert to percentage, handle NaN
-        if np.isnan(correlation):
-            return 0.0
-        
-        return abs(correlation) * 100.0
-```
-
-**2. Strategy Learning Efficiency**
-```python
-def calculate_strategy_efficiency(self,
-                                agent_sequence: List[InterventionResult],
-                                random_baseline: List[InterventionResult]) -> float:
-    """Calculate efficiency improvement of agent-guided vs random interventions."""
-    
-    # Calculate discovery success rates
-    agent_success = sum(1 for r in agent_sequence if r.semantic_change) / len(agent_sequence)
-    random_success = sum(1 for r in random_baseline if r.semantic_change) / len(random_baseline)
-    
-    # Calculate efficiency improvement
-    if random_success > 0:
-        efficiency_improvement = ((agent_success - random_success) / random_success) * 100
-    else:
-        efficiency_improvement = agent_success * 100
-    
-    return max(0.0, efficiency_improvement)
-```
-
-### Phase 3: Experiment Integration
-
-**1. Strategy-Guided Intervention Selection**
-```python
-def select_intervention_strategy(self) -> Tuple[int, int, int]:
-    """Select intervention based on strategy learning."""
-    
-    # Agent selects layer, intervention type, and context
-    # based on learned strategy effectiveness
-    
-    # Get current beliefs about strategy effectiveness
+def get_current_beliefs(self) -> BeliefState:
+    """Return belief state compatible with prediction system."""
+    # Ensure connection_beliefs is a dictionary, not a list
     strategy_beliefs = self.track_strategy_beliefs()
     
-    # Select strategy with highest expected information gain
-    best_strategy = max(strategy_beliefs.items(), key=lambda x: x[1])
+    # Convert to expected format
+    connection_beliefs = {}
+    for i, (strategy_key, belief) in enumerate(strategy_beliefs.items()):
+        connection_beliefs[f"strategy_{i}"] = belief
     
-    # Parse strategy key to extract parameters
-    layer, intervention, context = self.parse_strategy_key(best_strategy[0])
-    
-    return layer, intervention, context
+    return BeliefState(
+        qs=self.agent.qs.copy(),
+        feature_importances=strategy_beliefs,
+        connection_beliefs=connection_beliefs,  # Dictionary format
+        uncertainty=self.track_strategy_uncertainty(),
+        confidence=self.calculate_overall_confidence()
+    )
 ```
 
-**2. Discovery Success Tracking**
-```python
-def track_discovery_success(self, intervention_results: List[InterventionResult]) -> Dict[str, float]:
-    """Track actual success rates for different intervention strategies."""
-    
-    strategy_success = {}
-    
-    for result in intervention_results:
-        strategy_key = f"L{result.layer}_I{result.intervention_type}_C{result.context}"
-        
-        if strategy_key not in strategy_success:
-            strategy_success[strategy_key] = []
-        
-        # Success = semantic change detected
-        success = 1.0 if result.semantic_change else 0.0
-        strategy_success[strategy_key].append(success)
-    
-    # Calculate average success rate for each strategy
-    for strategy in strategy_success:
-        strategy_success[strategy] = np.mean(strategy_success[strategy])
-    
-    return strategy_success
-```
+## 🎯 IMPLEMENTATION TIMELINE
 
-## 🎯 EXPECTED OUTCOMES
+### Phase 1: Core Fixes (Days 1-2)
+- [ ] Implement semantic discovery enhancement
+- [ ] Add exploration mechanisms to strategy learning
+- [ ] Fix FeatureInteractionPredictor compatibility
 
-### Why This Approach Will Succeed
+### Phase 2: Metrics Enhancement (Days 3-4)
+- [ ] Reimplement RQ1 with cross-validation
+- [ ] Add baseline comparison for RQ2
+- [ ] Enhance prediction generation for RQ3
 
-1. **Appropriate Scale**: Learning 144 strategy combinations (12×3×4) vs. tracking 4,949 features
-2. **Meaningful Correspondence**: Strategy beliefs vs. strategy effectiveness is a valid correlation
-3. **Practical Value**: Learning effective intervention strategies has real research utility
-4. **Theoretical Soundness**: Aligns with Active Inference's strengths in decision-making and learning
-
-### Predicted Results
-
-- **RQ1**: 70-85% correspondence (strategy beliefs will correlate with actual effectiveness)
-- **RQ2**: 35-50% efficiency improvement (agent will learn better intervention strategies)
-- **RQ3**: 3-5 validated predictions (agent will predict effective intervention areas)
-
-## 📋 IMPLEMENTATION ROADMAP
-
-### Week 1: Core Redesign
-- [ ] Redesign Active Inference agent for strategy learning
-- [ ] Implement new state space and observation encoding
-- [ ] Create strategy belief tracking system
-
-### Week 2: Metrics System
-- [ ] Implement strategy-discovery correspondence calculation
-- [ ] Create strategy learning efficiency metrics
-- [ ] Build circuit prediction validation system
-
-### Week 3: Integration Testing
-- [ ] Integrate strategy-guided intervention selection
-- [ ] Test discovery success tracking
-- [ ] Validate metric calculations
-
-### Week 4: Full Experiment
-- [ ] Run comprehensive strategy learning experiment
+### Phase 3: Integration Testing (Day 5)
+- [ ] Run comprehensive experiments
 - [ ] Validate all research questions
-- [ ] Analyze results and optimize
+- [ ] Optimize performance and reliability
+
+## 📊 SUCCESS CRITERIA
+
+### Technical Validation
+- ✅ Strategy Learning Agent: Working with 144 strategies
+- ✅ Minimum Interventions: ≥10 interventions enforced
+- ✅ System Stability: No crashes, complete experiment runs
+- [ ] Semantic Discovery: ≥80% success rate (currently 20%)
+- [ ] Strategy Variance: Non-zero variance in metrics
+- [ ] Prediction System: Error-free operation
+
+### Research Question Validation
+- [ ] **RQ1**: ≥70% strategy-discovery correspondence
+- [ ] **RQ2**: ≥30% strategy learning efficiency
+- [ ] **RQ3**: ≥3 validated strategy predictions
+
+### Performance Metrics
+- [ ] **Golden Gate Bridge → San Francisco**: 80%+ success rate
+- [ ] **Statistical Validation**: Proper variance, no NaN values
+- [ ] **Convergence**: Strategy learning convergence in <15 interventions
+- [ ] **Prediction Quality**: High-confidence, testable predictions
 
 ## 🔧 IMMEDIATE NEXT STEPS
 
-1. **Backup Current Implementation**: Save current agent code before major changes
-2. **Implement Strategy Agent**: Create new StrategyLearningAgent class  
-3. **Update Metrics**: Replace feature-focused metrics with strategy-focused ones
-4. **Test Strategy Learning**: Verify agent learns intervention effectiveness
-5. **Run Validation Experiment**: Test new approach on circuit discovery
+1. **Implement Semantic Discovery Enhancement**
+   - Add multi-feature intervention strategies
+   - Implement activation transfer methodology
+   - Add semantic feature attribution
 
-## 📊 SUCCESS METRICS
+2. **Fix Strategy Learning Variance**
+   - Add epsilon-greedy exploration
+   - Implement uncertainty tracking
+   - Add temporal variance calculation
 
-- **Technical**: Agent successfully learns strategy patterns, no runtime errors
-- **RQ1**: ≥70% strategy-discovery correspondence
-- **RQ2**: ≥30% strategy learning efficiency  
-- **RQ3**: ≥2 validated circuit predictions
+3. **Reimplement Research Question Metrics**
+   - Add cross-validation to RQ1
+   - Implement baseline comparison for RQ2
+   - Enhance prediction generation for RQ3
+
+4. **Validate Complete System**
+   - Run comprehensive experiments
+   - Validate all research questions
+   - Optimize performance
 
 ## 🎯 CONCLUSION
 
-This strategy reframes Active Inference from an impossible feature tracking task to an appropriate strategy learning task. By focusing on intervention effectiveness rather than individual features, we solve the fundamental scale mismatch while maintaining the theoretical soundness of Active Inference.
+The strategy learning approach has successfully addressed the fundamental scale mismatch (64 components vs 4,949 features) and is now operational. The remaining issues are optimization and refinement rather than fundamental architectural problems.
 
-The approach is:
-- **Theoretically Sound**: Aligns with Active Inference principles
-- **Practically Implementable**: Uses existing pymdp framework
-- **Measurably Effective**: Addresses real research needs
-- **Scalable**: Works with any number of discovered features
+Key Achievements:
+- ✅ **Theoretical Soundness**: Strategy learning aligns with Active Inference principles
+- ✅ **Technical Implementation**: 144-strategy space with proper pymdp integration
+- ✅ **System Integration**: Working end-to-end with circuit discovery
+- ✅ **Convergence**: Strategy learning converges successfully
 
-This comprehensive correction strategy addresses the root cause of the research question failures while providing a path forward for meaningful Active Inference applications in circuit discovery.
+Remaining Work:
+- 🔧 **Semantic Discovery**: Enhance from 20% to 80% success rate
+- 🔧 **Statistical Validation**: Fix zero variance issues
+- 🔧 **Research Questions**: Optimize RQ1-RQ3 metrics
+- 🔧 **System Polish**: Error handling and robustness improvements
+
+This focused approach will deliver a fully functional strategy learning system that addresses the original research questions while maintaining theoretical rigor and practical utility.

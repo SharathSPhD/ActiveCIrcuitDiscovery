@@ -75,7 +75,7 @@ class RealCircuitTracer(ICircuitTracer):
         discovered_features = []
         
         try:
-            with torch.no_grad():
+            with torch.inference_mode():
                 # Get transcoder activations using circuit-tracer
                 logits, activations = self.model.get_activations(
                     input_text,
@@ -123,22 +123,19 @@ class RealCircuitTracer(ICircuitTracer):
         print(f"🎯 Intervening on Layer {feature.layer_idx} Feature {feature.feature_id} ({intervention_type})")
         
         try:
-            with torch.no_grad():
+            with torch.inference_mode():
                 # Get baseline prediction
-                baseline_logits, baseline_activations = self.model.get_activations(input_text)
+                baseline_logits = self.model(input_text)
                 baseline_pred = self._decode_top_token(baseline_logits)
                 
                 # Prepare intervention: (layer, position, feature_idx, value)
                 # Intervene at the last token position
                 seq_len = baseline_logits.shape[1]
-                interventions = [(feature.layer_idx, seq_len - 1, feature.feature_id, intervention_value)]
+                intervention_tuples = [(feature.layer_idx, -1, feature.feature_id, intervention_value)]
                 
                 # Perform feature intervention
                 modified_logits, modified_activations = self.model.feature_intervention(
-                    inputs=input_text,
-                    interventions=interventions,
-                    direct_effects=False,
-                    freeze_attention=True
+                    input_text, intervention_tuples
                 )
                 
                 modified_pred = self._decode_top_token(modified_logits)
@@ -320,7 +317,7 @@ class RealCircuitTracer(ICircuitTracer):
         self.initialize_model()
         
         try:
-            with torch.no_grad():
+            with torch.inference_mode():
                 logits, activations = self.model.get_activations(text)
                 if layer < activations.shape[0]:
                     return activations[layer]  # [seq_len, d_transcoder]

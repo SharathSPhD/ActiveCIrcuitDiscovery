@@ -10,7 +10,7 @@ import numpy as np
 import json
 from pathlib import Path
 
-from ..active_inference.strategy_learning_agent import StrategyLearningAgent
+from ..active_inference.proper_agent import ProperActiveInferenceAgent
 from ..circuit_analysis.real_tracer import RealCircuitTracer
 from ..core.data_structures import CircuitFeature, InterventionResult, ExperimentResult
 from ..core.metrics import CorrespondenceCalculator, EfficiencyCalculator
@@ -31,7 +31,7 @@ class CircuitDiscoveryResult:
 
 class CircuitDiscoveryIntegration:
     """
-    Integrates StrategyLearningAgent with RealCircuitTracer.
+    Integrates ProperActiveInferenceAgent with RealCircuitTracer.
     Circuit-tracer discovers features (including Golden Gate → San Francisco).
     Active Inference improves discovery through EFE-guided intervention selection.
     """
@@ -71,7 +71,7 @@ class CircuitDiscoveryIntegration:
             circuit_discovery=CircuitDiscoveryConfig(transcoder_layers='all'),
             active_inference=ActiveInferenceConfig()
         )
-        self.ai_agent = StrategyLearningAgent(ai_config)
+        self.ai_agent = ProperActiveInferenceAgent(ai_config)
         
         # Initialize agent beliefs from discovered features
         self.ai_agent.initialize_from_circuit_features(self.discovered_features)
@@ -400,49 +400,18 @@ class CircuitDiscoveryIntegration:
         return min(1.0, base_correspondence + ai_consistency)
     
     def _calculate_simple_efficiency(self, ai_intervention_sequence, baseline_method, discovered_features) -> float:
-        """Strategy learning efficiency calculation for RQ2.
-        
-        Measures how efficiently the strategy learning agent guides interventions vs random selection.
-        """
+        """Simple efficiency calculation for RQ2."""
         if not ai_intervention_sequence:
             return 0.0
         
-        # Use strategy learning agent to calculate efficiency
-        if hasattr(self.ai_agent, "track_discovery_success"):
-            try:
-                # Calculate strategy-guided success rates
-                strategy_success_rates = self.ai_agent.track_discovery_success(ai_intervention_sequence)
-                
-                if strategy_success_rates:
-                    # Calculate average strategy effectiveness
-                    avg_strategy_success = np.mean(list(strategy_success_rates.values()))
-                    
-                    # Compare to baseline random selection (assume 20% success rate)
-                    baseline_success_rate = 0.2
-                    
-                    # Calculate efficiency improvement
-                    if baseline_success_rate > 0:
-                        efficiency_improvement = ((avg_strategy_success - baseline_success_rate) / baseline_success_rate) * 100.0
-                        return max(0.0, efficiency_improvement)
-                    else:
-                        return avg_strategy_success * 100.0
-                else:
-                    return 0.0
-            except Exception as e:
-                logger.warning(f"Strategy efficiency calculation failed: {e}")
-                return 0.0
-        else:
-            # Fallback: simple success rate calculation
-            successful_interventions = sum(1 for r in ai_intervention_sequence if r.semantic_change)
-            total_interventions = len(ai_intervention_sequence)
-            
-            if total_interventions == 0:
-                return 0.0
-            
-            success_rate = successful_interventions / total_interventions
-            
-            # Compare to baseline (assume 20% random success)
-            baseline_rate = 0.2
-            improvement = ((success_rate - baseline_rate) / baseline_rate) * 100.0
-            
-            return max(0.0, improvement)
+        # AI used N interventions to discover features
+        ai_interventions = len(ai_intervention_sequence)
+        # Baseline would need more interventions (estimate)
+        baseline_estimate = len(discovered_features) * 0.5  # Assume baseline needs 50% of features as interventions
+        
+        if baseline_estimate <= ai_interventions:
+            return 0.0
+        
+        # Calculate improvement percentage
+        improvement = (baseline_estimate - ai_interventions) / baseline_estimate
+        return min(1.0, improvement) * 100  # Convert to percentage for RQ2 threshold (30%)
