@@ -100,13 +100,13 @@ class AttentionPatternPredictor(PredictionGenerator):
             confidence = 0.7
         
         return NovelPrediction(
-            prediction_type=attention_pattern,
+            prediction_type="attention_pattern",
             description="High uncertainty features should receive increased attention weights",
             testable_hypothesis="Features with uncertainty > 0.7 will show attention weights > 0.6 compared to baseline",
             expected_outcome="Pearson correlation r > 0.7 between feature uncertainty and attention weights",
             test_method="Measure attention-uncertainty correlation across interventions using attention head analysis",
             confidence=confidence,
-            validation_status=untested
+            validation_status="untested"
         )
     
     def _predict_dynamic_attention_reweighting(self, belief_state: BeliefState,
@@ -189,12 +189,12 @@ class FeatureInteractionPredictor(PredictionGenerator):
             confidence = 0.7
         
         return NovelPrediction(
-            prediction_type=feature_interaction,
+            prediction_type="feature_interaction",
             description="Features with high connection beliefs should show strong causal dependence",
             testable_hypothesis="Ablating features with connection belief > 0.7 reduces downstream activation by > 0.4",
             test_method="Systematic ablation of predicted high-strength connections with effect size measurement",
             confidence=confidence,
-            validation_status=untested
+            validation_status="untested"
         )
     
     def _predict_hierarchical_information_flow(self, belief_state: BeliefState,

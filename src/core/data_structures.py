@@ -101,6 +101,10 @@ class CircuitFeature:
         source_prefix = "T" if self.feature_source == "transcoder" else "S"
         return f"L{self.layer_idx}{source_prefix}{self.feature_id}"
     
+    @property
+    def feature_idx(self) -> int:
+        """Alias for feature_id for backward compatibility."""
+        return self.feature_id
     def is_active(self, threshold: float = 0.1) -> bool:
         """Check if feature is active above threshold."""
         return self.activation_strength >= threshold

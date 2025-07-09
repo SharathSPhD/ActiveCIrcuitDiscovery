@@ -1,0 +1,15 @@
+Comprehensive Active Circuit Discovery Experiment
+==================================================
+
+Experiment ID: comprehensive_exp_20250709_140329
+Model: google/gemma-2-2b
+Transcoders: gemma
+Duration: 1106.0 seconds
+
+Research Questions Results:
+RQ1 Correspondence: 0.0% (FAILED)
+RQ2 Efficiency: 20.0% (FAILED)
+RQ3 Predictions: 2 predictions (FAILED)
+
+Overall Success: NO
+Overall Score: 26.0%

@@ -1183,11 +1183,11 @@ class ComprehensiveExperimentRunner:
             return {}
         
         intervention_types = [r.intervention_type for r in self.intervention_results]
-        type_counts = {typ: intervention_types.count(typ) for typ in set(intervention_types)}
+        type_counts = {str(typ): intervention_types.count(typ) for typ in set(intervention_types)}
         
         return {
             'intervention_distribution': type_counts,
-            'most_used_intervention': max(type_counts, key=type_counts.get) if type_counts else None,
+            "most_used_intervention": max(type_counts, key=type_counts.get) if type_counts else None,
             'strategy_diversity': len(type_counts) / len(intervention_types) if intervention_types else 0
         }
     

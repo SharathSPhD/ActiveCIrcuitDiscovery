@@ -80,3 +80,7 @@ temp_*.py
 # Alternative experiment runners
 run_full_experiment*.py
 
+*.html
+*.json
+results/**/*.html
+results/**/*.json
