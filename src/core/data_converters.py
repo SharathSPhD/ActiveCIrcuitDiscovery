@@ -54,4 +54,23 @@ class DataConverter:
 
 
 # Global converter instance
+
+    @staticmethod
+    def normalize_beliefs_input(beliefs_data):
+        """Normalize belief data to consistent dictionary format."""
+        if isinstance(beliefs_data, dict):
+            return beliefs_data.get("strategy_beliefs", beliefs_data)
+        elif isinstance(beliefs_data, np.ndarray):
+            # Convert numpy array to strategy beliefs dict
+            strategy_beliefs = {}
+            if len(beliefs_data) >= 144:  # 12*3*4 strategies
+                for i in range(min(144, len(beliefs_data))):
+                    strategy_beliefs[f"strategy_{i}"] = float(beliefs_data[i])
+            return strategy_beliefs
+        elif hasattr(beliefs_data, 'strategy_beliefs'):
+            return beliefs_data.strategy_beliefs
+        else:
+            return {}
+
+# Global converter instance
 data_converter = DataConverter()

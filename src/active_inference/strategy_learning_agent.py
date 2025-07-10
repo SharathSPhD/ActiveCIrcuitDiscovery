@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import time
 from ..core.data_converters import data_converter
 """
 Strategy Learning Active Inference Agent
@@ -261,6 +262,11 @@ class StrategyLearningAgent(IActiveInferenceAgent):
         
         return strategy_beliefs
     
+    def get_belief_summary(self) -> Dict[str, float]:
+        """Get summary of current beliefs for reporting."""
+        return self.track_strategy_beliefs()
+        """Get summary of current beliefs for reporting."""
+        return self.track_strategy_beliefs()
     def track_discovery_success(self, intervention_results: List[InterventionResult]) -> Dict[str, float]:
         """Track actual success rates for different intervention strategies."""
         
@@ -355,7 +361,7 @@ class StrategyLearningAgent(IActiveInferenceAgent):
             self.agent.infer_states(obs)
             
             # Store beliefs for tracking
-            self.belief_history.append(self.agent.qs.copy())
+            self.belief_history.append({"strategy_beliefs": self.track_strategy_beliefs(), "timestamp": time.time()})
             self.intervention_history.append(intervention_result)
             
             # Update strategy tracking
@@ -423,7 +429,7 @@ class StrategyLearningAgent(IActiveInferenceAgent):
         for i in range(1, min(4, len(self.belief_history))):
             if hasattr(self, "strategy_beliefs"):
                 current_beliefs = list(list(self.strategy_beliefs.values()) if isinstance(self.strategy_beliefs, dict) and self.strategy_beliefs else [0.5])
-                prev_beliefs = list(self.belief_history[-i].get("strategy_beliefs", {}).values())
+                prev_beliefs = list(data_converter.normalize_beliefs_input(self.belief_history[-i]).values() if data_converter.normalize_beliefs_input(self.belief_history[-i]) else [0.5])
                 
                 if current_beliefs and prev_beliefs and len(current_beliefs) == len(prev_beliefs):
                     change = np.mean([abs(c - p) for c, p in zip(current_beliefs, prev_beliefs)])
@@ -630,6 +636,11 @@ class StrategyLearningAgent(IActiveInferenceAgent):
             # Simple fallback
             selected_feature = available_features[0] if available_features else None
             return selected_feature, InterventionType.ABLATION
+    def generate_novel_predictions(self) -> List:
+        """Generate novel predictions about strategy effectiveness."""
+        return self.generate_predictions(None, None)
+        """Generate novel predictions about strategy effectiveness."""
+        return self.generate_predictions(None, None)
     def generate_predictions(self, belief_state, circuit_graph) -> List:
         """Generate high-quality strategy-based predictions for RQ3."""
         from src.core.data_structures import NovelPrediction
@@ -649,7 +660,7 @@ class StrategyLearningAgent(IActiveInferenceAgent):
                 layer, intervention, context = self._parse_strategy_key(best_strategy)
                 
                 prediction_1 = NovelPrediction(
-                    prediction_type="strategy_consistency",
+                    prediction_type="feature_interaction",
                     description="Layer {} {} interventions in {} context will maintain >70% success rate".format(
                         layer, ['ablation','patching','mean_ablation'][intervention], ['early','middle','late','semantic'][context]
                     ),
@@ -657,7 +668,7 @@ class StrategyLearningAgent(IActiveInferenceAgent):
                     expected_outcome="Success rate of {:.1f}% ± 10% across next 5 interventions".format(best_effectiveness*100),
                     test_method="holdout_validation_sequence",
                     confidence=min(0.9, best_effectiveness + 0.15),
-                    validation_status="pending"
+                    validation_status="untested"
                 )
                 predictions.append(prediction_1)
                 
@@ -668,7 +679,7 @@ class StrategyLearningAgent(IActiveInferenceAgent):
                         avg_layer_effectiveness = np.mean([s[1] for s in similar_strategies])
                         
                         prediction_2 = NovelPrediction(
-                            prediction_type="strategy_transfer",
+                            prediction_type="attention_pattern",
                             description="Layer {} strategy patterns will transfer to similar contexts with >50% effectiveness retention".format(layer),
                             testable_hypothesis="Strategies learned for layer {} will generalize to new intervention types".format(layer),
                             expected_outcome="Transfer learning effectiveness of {:.1f}% for untested layer {} strategies".format(
@@ -676,7 +687,7 @@ class StrategyLearningAgent(IActiveInferenceAgent):
                             ),
                             test_method="cross_validation_transfer",
                             confidence=min(0.85, avg_layer_effectiveness * 0.8),
-                            validation_status="pending"
+                            validation_status="untested"
                         )
                         predictions.append(prediction_2)
                 
@@ -685,13 +696,13 @@ class StrategyLearningAgent(IActiveInferenceAgent):
                     sequence_effectiveness = np.mean([s[1] for s in top_strategies[:3]])
                     
                     prediction_3 = NovelPrediction(
-                        prediction_type="sequence_optimization",
+                        prediction_type="failure_mode",
                         description="Combining top 3 learned strategies in sequence will achieve >80% cumulative discovery success",
                         testable_hypothesis="Sequential application of learned high-effectiveness strategies will compound discovery success",
                         expected_outcome="Cumulative sequence effectiveness of {:.1f}% across 3-strategy sequence".format(sequence_effectiveness*1.2*100),
                         test_method="sequential_validation",
                         confidence=min(0.8, sequence_effectiveness + 0.1),
-                        validation_status="pending"
+                        validation_status="untested"
                     )
                     predictions.append(prediction_3)
         
