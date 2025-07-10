@@ -3,6 +3,7 @@ Integration of Active Inference with real circuit discovery using circuit-tracer
 Golden Gate Bridge → San Francisco features emerge naturally from transcoders.
 """
 
+from ..core.data_converters import data_converter
 import torch
 from typing import Dict, List, Tuple, Optional, Any
 from dataclasses import dataclass
@@ -58,10 +59,9 @@ class CircuitDiscoveryIntegration:
         features_by_layer = self.circuit_tracer.find_active_features(
             text=initial_prompt,
             threshold=0.1)
-        # Flatten the dictionary to a list of features for AI agent
-        self.discovered_features = []
-        for layer, layer_features in features_by_layer.items():
-            self.discovered_features.extend(layer_features)
+        # Store features in both dict and list formats for different components
+        self.discovered_features_dict = features_by_layer  # Dict format for AI agent
+        self.discovered_features = data_converter.features_dict_to_list(features_by_layer)  # List format for compatibility
         
         # Initialize Active Inference agent with discovered features
         # Create config for AI agent

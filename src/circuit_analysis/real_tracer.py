@@ -1,4 +1,5 @@
 """
+from .model_manager import model_manager
 Real Circuit Tracer using circuit_tracer library with Gemma-2-2B transcoder support.
 No SAE fallbacks, mocks, or approximations - pure circuit-tracer integration.
 """
@@ -326,3 +327,9 @@ class RealCircuitTracer(ICircuitTracer):
         except Exception as e:
             print(f"❌ Failed to get activations for layer {layer}: {e}")
             return torch.zeros(1, 1024)
+    def enhanced_semantic_discovery(self, source_concept: str, target_concept: str) -> bool:
+        """Enhanced semantic discovery using multi-feature interventions."""
+        from .semantic_enhancement import SemanticDiscoveryEnhancer
+        
+        enhancer = SemanticDiscoveryEnhancer(self)
+        return enhancer.enhanced_semantic_test(source_concept, target_concept)

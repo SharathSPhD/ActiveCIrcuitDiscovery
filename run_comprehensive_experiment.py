@@ -6,6 +6,12 @@ This script implements exhaustive testing of the Enhanced Active Inference frame
 with real circuit-tracer integration on Gemma-2-2B + GemmaScope transcoders.
 
 NO FALLBACKS, NO MOCKS, NO SHORTCUTS
+
+# Fix broken pipe issues with HuggingFace downloads
+import signal
+signal.signal(signal.SIGPIPE, signal.SIG_IGN)
+import os
+os.environ["HF_HUB_ENABLE_HF_TRANSFER"] = "true"
 - Uses actual circuit-tracer.ReplacementModel with "gemma" preset
 - Uses real pymdp.Agent for Active Inference
 - Produces comprehensive visualizations and analysis

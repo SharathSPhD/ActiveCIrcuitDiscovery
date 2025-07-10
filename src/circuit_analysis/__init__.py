@@ -6,3 +6,4 @@ from .real_tracer import RealCircuitTracer
 __all__ = [
     'RealCircuitTracer'
 ]
+from .model_manager import ModelManager, model_manager
