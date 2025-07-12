@@ -24,7 +24,7 @@ class RealCircuitTracer(ICircuitTracer):
     No fallbacks or approximations - uses actual mechanistic interpretability tools.
     """
     
-    def __init__(self, model_name: str = "google/gemma-2-2b", transcoder_set: str = "gemmascope-l0-0"):
+    def __init__(self, model_name: str = "google/gemma-2-2b", transcoder_set: str = "gemma"):
         self.model_name = model_name
         self.transcoder_set = transcoder_set
         self.model = None
@@ -111,23 +111,78 @@ class RealCircuitTracer(ICircuitTracer):
         
         return discovered_features
     
+    def get_active_features_for_input(self, input_text: str, layer_idx: int, top_k: int = 10) -> List[Tuple[int, float]]:
+        """Get the most active features for a specific input text and layer."""
+        self.initialize_model()
+        
+        with torch.inference_mode():
+            # Get activations for this specific input
+            _, activations = self.model.feature_intervention(input_text, [])
+            
+            # Get features active at the last token position for the specified layer
+            layer_activations = activations[layer_idx, -1, :]  # [d_transcoder]
+            top_features = torch.topk(layer_activations, min(top_k, len(layer_activations)))
+            
+            # Return list of (feature_idx, activation_value) tuples
+            active_features = []
+            for activation_val, feature_idx in zip(top_features.values, top_features.indices):
+                if float(activation_val) > 0.1:  # Only include meaningfully active features
+                    active_features.append((int(feature_idx), float(activation_val)))
+            
+            return active_features
+    
     def intervene_on_feature(self, feature: CircuitFeature, input_text: str, 
                            intervention_type: str = "ablation", 
-                           intervention_value: float = 0.0) -> InterventionResult:
-        """Perform intervention using circuit-tracer ReplacementModel."""
+                           intervention_value: float = 0.0,
+                           check_if_active: bool = True) -> InterventionResult:
+        """Perform intervention using circuit-tracer ReplacementModel.
+        
+        Args:
+            feature: The circuit feature to intervene on
+            input_text: The input text to test intervention on
+            intervention_type: Type of intervention ("ablation", "amplification")
+            intervention_value: Value to set the feature to (0.0 for ablation)
+            check_if_active: If True, check if feature is actually active for this input
+        """
         self.initialize_model()
+        
+        # Check if this feature is actually active for the given input
+        if check_if_active:
+            active_features = self.get_active_features_for_input(input_text, feature.layer_idx, top_k=20)
+            feature_activations = {feat_idx: activation for feat_idx, activation in active_features}
+            
+            if feature.feature_id not in feature_activations:
+                print(f"⚠️  Feature {feature.feature_id} is not active for input '{input_text[:50]}...'")
+                print(f"📊 Active features in Layer {feature.layer_idx}: {list(feature_activations.keys())[:10]}")
+                
+                # Instead of intervening on inactive feature, pick the most active one
+                if active_features:
+                    original_feature_id = feature.feature_id
+                    feature.feature_id = active_features[0][0]  # Use most active feature
+                    print(f"🔄 Switching to most active feature: {original_feature_id} → {feature.feature_id}")
+                    print(f"📈 Target feature activation: {active_features[0][1]:.3f}")
+                else:
+                    print(f"❌ No active features found in Layer {feature.layer_idx}")
+            else:
+                actual_activation = feature_activations[feature.feature_id]
+                print(f"✅ Target feature {feature.feature_id} is active (activation: {actual_activation:.3f})")
         
         print(f"🎯 Intervening on Layer {feature.layer_idx} Feature {feature.feature_id} ({intervention_type})")
         
         try:
             with torch.inference_mode():
-                # Get baseline prediction
-                baseline_logits = self.model(input_text)
+                # Get baseline prediction and activations
+                baseline_logits, baseline_activations = self.model.feature_intervention(input_text, [])
                 baseline_pred = self._decode_top_token(baseline_logits)
                 
+                # For ablation, use 0.0. For amplification, use current activation * multiplier
+                if intervention_type == "amplification" and intervention_value == 0.0:
+                    # Get current activation and amplify it
+                    current_activation = float(baseline_activations[feature.layer_idx, -1, feature.feature_id])
+                    intervention_value = current_activation * 2.0  # Double the activation
+                    print(f"📈 Amplifying feature from {current_activation:.3f} to {intervention_value:.3f}")
+                
                 # Prepare intervention: (layer, position, feature_idx, value)
-                # Intervene at the last token position
-                seq_len = baseline_logits.shape[1]
                 intervention_tuples = [(feature.layer_idx, -1, feature.feature_id, intervention_value)]
                 
                 # Perform feature intervention
@@ -159,12 +214,23 @@ class RealCircuitTracer(ICircuitTracer):
                 
                 print(f"📊 Baseline: '{baseline_pred}' → Modified: '{modified_pred}'")
                 print(f"📊 Effect magnitude: {effect_magnitude:.4f}")
+                print(f"🎯 Token change: {baseline_pred != modified_pred}")
                 print(f"✅ Intervention {'successful' if result.statistical_significance else 'minimal effect'}")
+                
+                # Log detailed results for debugging
+                if effect_magnitude > 0.001:
+                    print(f"🎉 MEANINGFUL INTERVENTION DETECTED!")
+                    print(f"   Layer: {feature.layer_idx}, Feature: {feature.feature_id}")
+                    print(f"   Input: '{input_text}'")
+                    print(f"   Baseline → Modified: '{baseline_pred}' → '{modified_pred}'")
+                    print(f"   Effect magnitude: {effect_magnitude:.6f}")
                 
                 return result
                 
         except Exception as e:
             print(f"❌ Intervention failed: {e}")
+            import traceback
+            traceback.print_exc()
             return InterventionResult(
                 target_feature=feature,
                 intervention_type=InterventionType(intervention_type),

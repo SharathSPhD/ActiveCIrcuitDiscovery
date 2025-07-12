@@ -213,8 +213,93 @@ class SemanticCircuitAgent(IActiveInferenceAgent):
         
         logger.info(f"Initialized {len(self.candidate_hypotheses)} semantic circuit hypotheses")
     
+    def select_intervention_with_active_features(self, features: List[CircuitFeature], 
+                                               test_input: str = "The Golden Gate Bridge is located in") -> Tuple[CircuitFeature, InterventionType]:
+        """Select intervention target using EFE + actual feature activity for the test input."""
+        from ..circuit_analysis.real_tracer import RealCircuitTracer
+        
+        # Initialize if needed
+        if not self.filtered_candidates:
+            self.initialize_from_circuit_features(features)
+        
+        # Get a circuit tracer to check active features
+        tracer = RealCircuitTracer()
+        
+        # For each layer with candidates, get actually active features
+        layer_active_features = {}
+        candidate_layers = set(c.feature.layer_idx for c in self.filtered_candidates)
+        
+        logger.info(f"Checking active features for input: '{test_input}'")
+        for layer_idx in candidate_layers:
+            active_features = tracer.get_active_features_for_input(test_input, layer_idx, top_k=20)
+            layer_active_features[layer_idx] = {feat_idx: activation for feat_idx, activation in active_features}
+            logger.info(f"Layer {layer_idx}: {len(active_features)} active features")
+        
+        # Score candidates by EFE + activity bonus
+        enhanced_scores = []
+        
+        for candidate in self.filtered_candidates:
+            feature_id = f"L{candidate.feature.layer_idx}F{candidate.feature.feature_id}"
+            hypothesis = self.candidate_hypotheses.get(feature_id, {})
+            
+            # Base EFE score
+            base_efe = self._calculate_circuit_efe(candidate, hypothesis)
+            
+            # Activity bonus: prioritize features that are actually active
+            activity_bonus = 0.0
+            layer_actives = layer_active_features.get(candidate.feature.layer_idx, {})
+            if candidate.feature.feature_id in layer_actives:
+                activation_strength = layer_actives[candidate.feature.feature_id]
+                activity_bonus = -activation_strength * 0.1  # Negative because lower EFE is better
+                logger.debug(f"{feature_id}: active (strength {activation_strength:.3f}), bonus {activity_bonus:.3f}")
+            else:
+                activity_bonus = +1.0  # Penalty for inactive features
+                logger.debug(f"{feature_id}: inactive, penalty +1.0")
+            
+            # Combined score (lower is better)
+            enhanced_efe = base_efe + activity_bonus
+            enhanced_scores.append((feature_id, enhanced_efe, candidate, activity_bonus != 1.0))
+        
+        # Sort by enhanced EFE (lower is better)
+        enhanced_scores.sort(key=lambda x: x[1])
+        
+        # Log top candidates with activity information
+        logger.info("Enhanced EFE ranking (EFE + activity):")
+        for i, (fid, enhanced_efe, candidate, is_active) in enumerate(enhanced_scores[:5]):
+            status = "🟢 ACTIVE" if is_active else "🔴 INACTIVE"
+            logger.info(f"  {i+1}. {fid}: {enhanced_efe:.3f} {status}")
+        
+        # Select the best candidate
+        if enhanced_scores:
+            best_feature_id, best_enhanced_efe, best_candidate, is_active = enhanced_scores[0]
+            
+            # If the best candidate is inactive, try to find an active one in the top 5
+            if not is_active and len(enhanced_scores) > 1:
+                for fid, enhanced_efe, candidate, is_active in enhanced_scores[:5]:
+                    if is_active:
+                        logger.info(f"Switching to active candidate: {fid} (EFE: {enhanced_efe:.3f})")
+                        best_candidate = candidate
+                        break
+        else:
+            best_candidate = self.filtered_candidates[0] if self.filtered_candidates else None
+        
+        if best_candidate is None:
+            logger.warning("No suitable candidates found, using fallback")
+            return features[0], InterventionType.ABLATION
+        
+        # Log selection with reasoning
+        feature_id = f"L{best_candidate.feature.layer_idx}F{best_candidate.feature.feature_id}"
+        logger.info(f"🎯 Selected {feature_id} for intervention (enhanced EFE-guided + activity-aware)")
+        
+        return best_candidate.feature, InterventionType.ABLATION
+    
     def select_intervention(self, features: List[CircuitFeature]) -> Tuple[CircuitFeature, InterventionType]:
-        """Select which circuit to investigate using Expected Free Energy."""
+        """Select which circuit to investigate using Enhanced EFE (includes activity check)."""
+        # Use the new activity-aware selection method
+        return self.select_intervention_with_active_features(features)
+    
+    def select_intervention_legacy(self, features: List[CircuitFeature]) -> Tuple[CircuitFeature, InterventionType]:
+        """Legacy method: Select using Expected Free Energy only (no activity check)."""
         if not self.filtered_candidates:
             self.initialize_from_circuit_features(features)
         
@@ -305,14 +390,18 @@ class SemanticCircuitAgent(IActiveInferenceAgent):
         semantic_success = self._evaluate_semantic_success(intervention_result)
         activation_strength = self._categorize_activation_strength(feature.activation_strength)
         
-        # Create observation
-        obs_idx = semantic_success * self.num_activation_strength + activation_strength
+        # Create observation (simplified single-factor observation space)
+        obs_idx = semantic_success  # Just use semantic success directly
+        if obs_idx >= self.obs_space_size:
+            obs_idx = self.obs_space_size - 1  # Clamp to valid range
         observation = np.zeros(self.obs_space_size)
         observation[obs_idx] = 1.0
         
         # Update agent beliefs
         try:
-            self.agent.infer_states([observation])
+            # Pass observation as list of indices (one per modality)
+            obs_list = [obs_idx]  # Single modality observation
+            self.agent.infer_states(obs_list)
             
             # Update our semantic hypotheses
             old_confidence = 0.5
@@ -330,12 +419,12 @@ class SemanticCircuitAgent(IActiveInferenceAgent):
             new_confidence = self.candidate_hypotheses.get(feature_id, {}).get("confidence", 0.5)
             belief_correspondence = abs(new_confidence - old_confidence)  # How much beliefs changed
             
-            # Create correspondence metrics
+            # Create correspondence metrics (ensure all values are in [0,1] range)
             correspondence = CorrespondenceMetrics(
-                belief_updating_correspondence=belief_correspondence * 100,  # Convert to percentage
-                precision_weighting_correspondence=semantic_success * 25.0,  # Scale success to percentage
-                prediction_error_correspondence=max(0, 100 - abs(intervention_result.effect_magnitude or 0) * 100),
-                overall_correspondence=(belief_correspondence + semantic_success / 4.0) * 50,  # Combined score
+                belief_updating_correspondence=min(1.0, belief_correspondence),  # Keep in [0,1]
+                precision_weighting_correspondence=min(1.0, semantic_success / 3.0),  # Normalize to [0,1]
+                prediction_error_correspondence=min(1.0, max(0, 1.0 - abs(intervention_result.effect_magnitude or 0))),  # Prediction error in [0,1]
+                overall_correspondence=min(1.0, (belief_correspondence + semantic_success / 4.0) / 2.0),  # Combined score in [0,1]
                 circuit_attention_patterns=[activation_strength, semantic_success],
                 ai_precision_patterns=[new_confidence, belief_correspondence],
                 circuit_prediction_errors=[intervention_result.effect_magnitude or 0]
