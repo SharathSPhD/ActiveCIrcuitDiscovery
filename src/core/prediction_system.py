@@ -206,8 +206,9 @@ class FeatureInteractionPredictor(PredictionGenerator):
         if circuit_graph.nodes:
             # Calculate average node connectivity as proxy for hierarchy
             connectivity_scores = []
-            for node_id, node in circuit_graph.nodes.items():
-                in_degree, out_degree = circuit_graph.get_node_degree(node_id)
+            # FIXED: nodes is a List[GraphNode], not a dict
+            for node in circuit_graph.nodes:
+                in_degree, out_degree = circuit_graph.get_node_degree(node.node_id)
                 connectivity_scores.append(in_degree + out_degree)
             
             avg_connectivity = np.mean(connectivity_scores) if connectivity_scores else 1.0

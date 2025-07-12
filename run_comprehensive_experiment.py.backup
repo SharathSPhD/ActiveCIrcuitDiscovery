@@ -1,24 +1,17 @@
 #!/usr/bin/env python3
-
 """
-
-import signal
-signal.signal(signal.SIGPIPE, signal.SIG_IGN)
-import os
-os.environ["HF_HUB_ENABLE_HF_TRANSFER"] = "true"
 Comprehensive Active Circuit Discovery Experiment Suite
 
 This script implements exhaustive testing of the Enhanced Active Inference framework
 with real circuit-tracer integration on Gemma-2-2B + GemmaScope transcoders.
 
 NO FALLBACKS, NO MOCKS, NO SHORTCUTS
-"""
 
+# Fix broken pipe issues with HuggingFace downloads
 import signal
 signal.signal(signal.SIGPIPE, signal.SIG_IGN)
 import os
 os.environ["HF_HUB_ENABLE_HF_TRANSFER"] = "true"
-
 - Uses actual circuit-tracer.ReplacementModel with "gemma" preset
 - Uses real pymdp.Agent for Active Inference
 - Produces comprehensive visualizations and analysis
@@ -37,11 +30,6 @@ Key Features:
 - Statistical significance testing with confidence intervals
 - Comprehensive intervention analysis and effectiveness measurement
 """
-
-import signal
-signal.signal(signal.SIGPIPE, signal.SIG_IGN)
-import os
-os.environ["HF_HUB_ENABLE_HF_TRANSFER"] = "true"
 
 import asyncio
 import json
@@ -83,11 +71,6 @@ logger = logging.getLogger(__name__)
 @dataclass
 class ComprehensiveExperimentResult:
     """Complete results from exhaustive experiment suite."""
-
-import signal
-signal.signal(signal.SIGPIPE, signal.SIG_IGN)
-import os
-os.environ["HF_HUB_ENABLE_HF_TRANSFER"] = "true"
     # Metadata
     experiment_id: str
     start_time: str
@@ -125,11 +108,6 @@ os.environ["HF_HUB_ENABLE_HF_TRANSFER"] = "true"
 
 class ComprehensiveExperimentRunner:
     """
-
-import signal
-signal.signal(signal.SIGPIPE, signal.SIG_IGN)
-import os
-os.environ["HF_HUB_ENABLE_HF_TRANSFER"] = "true"
     Exhaustive experiment runner testing all aspects of Active Circuit Discovery.
     
     This runner performs:
@@ -140,11 +118,6 @@ os.environ["HF_HUB_ENABLE_HF_TRANSFER"] = "true"
     5. Comprehensive visualization generation
     6. Research Question validation with confidence intervals
     """
-
-import signal
-signal.signal(signal.SIGPIPE, signal.SIG_IGN)
-import os
-os.environ["HF_HUB_ENABLE_HF_TRANSFER"] = "true"
     
     def __init__(self, 
                  model_name: str = "google/gemma-2-2b",
@@ -202,11 +175,6 @@ os.environ["HF_HUB_ENABLE_HF_TRANSFER"] = "true"
     
     def initialize_models(self) -> None:
         """Initialize all models and components with real implementations."""
-
-import signal
-signal.signal(signal.SIGPIPE, signal.SIG_IGN)
-import os
-os.environ["HF_HUB_ENABLE_HF_TRANSFER"] = "true"
         logger.info("🔧 Initializing models and components...")
         
         # Initialize circuit discovery integration
@@ -240,11 +208,6 @@ os.environ["HF_HUB_ENABLE_HF_TRANSFER"] = "true"
     
     async def run_comprehensive_experiment(self) -> ComprehensiveExperimentResult:
         """Run complete experiment suite with all validations."""
-
-import signal
-signal.signal(signal.SIGPIPE, signal.SIG_IGN)
-import os
-os.environ["HF_HUB_ENABLE_HF_TRANSFER"] = "true"
         self.start_time = datetime.now()
         start_timestamp = time.time()
         
@@ -350,11 +313,6 @@ os.environ["HF_HUB_ENABLE_HF_TRANSFER"] = "true"
     
     async def run_golden_gate_experiment(self) -> Dict[str, Any]:
         """Test Golden Gate Bridge → San Francisco semantic discovery."""
-
-import signal
-signal.signal(signal.SIGPIPE, signal.SIG_IGN)
-import os
-os.environ["HF_HUB_ENABLE_HF_TRANSFER"] = "true"
         logger.info("🌉 Testing Golden Gate Bridge → San Francisco semantic discovery...")
         
         test_prompts = [
@@ -442,11 +400,6 @@ os.environ["HF_HUB_ENABLE_HF_TRANSFER"] = "true"
     
     async def run_circuit_discovery(self) -> CircuitDiscoveryResult:
         """Run comprehensive circuit discovery with Active Inference guidance."""
-
-import signal
-signal.signal(signal.SIGPIPE, signal.SIG_IGN)
-import os
-os.environ["HF_HUB_ENABLE_HF_TRANSFER"] = "true"
         logger.info("🔍 Running comprehensive circuit discovery...")
         
         # Test prompts covering various semantic domains
@@ -505,11 +458,6 @@ os.environ["HF_HUB_ENABLE_HF_TRANSFER"] = "true"
     
     async def run_active_inference_analysis(self) -> Dict[str, Any]:
         """Analyze Active Inference behavior and learning."""
-
-import signal
-signal.signal(signal.SIGPIPE, signal.SIG_IGN)
-import os
-os.environ["HF_HUB_ENABLE_HF_TRANSFER"] = "true"
         logger.info("🧠 Analyzing Active Inference behavior...")
         
         # Get current agent state
@@ -564,11 +512,6 @@ os.environ["HF_HUB_ENABLE_HF_TRANSFER"] = "true"
     
     async def validate_rq1_correspondence(self) -> Dict[str, Any]:
         """Validate RQ1: ≥70% AI-Circuit correspondence."""
-
-import signal
-signal.signal(signal.SIGPIPE, signal.SIG_IGN)
-import os
-os.environ["HF_HUB_ENABLE_HF_TRANSFER"] = "true"
         logger.info("📊 Validating RQ1: AI-Circuit correspondence...")
         
         calc = CorrespondenceCalculator()
@@ -684,11 +627,6 @@ os.environ["HF_HUB_ENABLE_HF_TRANSFER"] = "true"
     
     async def validate_rq2_efficiency(self) -> Dict[str, Any]:
         """Validate RQ2: ≥30% efficiency improvement."""
-
-import signal
-signal.signal(signal.SIGPIPE, signal.SIG_IGN)
-import os
-os.environ["HF_HUB_ENABLE_HF_TRANSFER"] = "true"
         logger.info("⚡ Validating RQ2: Intervention efficiency...")
         
         calc = EfficiencyCalculator()
@@ -745,11 +683,6 @@ os.environ["HF_HUB_ENABLE_HF_TRANSFER"] = "true"
     
     async def validate_rq3_predictions(self) -> Dict[str, Any]:
         """Validate RQ3: ≥3 novel predictions."""
-
-import signal
-signal.signal(signal.SIGPIPE, signal.SIG_IGN)
-import os
-os.environ["HF_HUB_ENABLE_HF_TRANSFER"] = "true"
         logger.info("🔮 Validating RQ3: Novel prediction generation...")
         
         # Generate predictions using Active Inference agent
@@ -810,11 +743,6 @@ os.environ["HF_HUB_ENABLE_HF_TRANSFER"] = "true"
     
     async def run_statistical_validation(self) -> Dict[str, Any]:
         """Run comprehensive statistical validation of all results."""
-
-import signal
-signal.signal(signal.SIGPIPE, signal.SIG_IGN)
-import os
-os.environ["HF_HUB_ENABLE_HF_TRANSFER"] = "true"
         logger.info("📈 Running statistical validation...")
         
         statistical_results = {
@@ -860,11 +788,6 @@ os.environ["HF_HUB_ENABLE_HF_TRANSFER"] = "true"
     
     async def run_circuit_analysis(self) -> Dict[str, Any]:
         """Analyze discovered circuit structure and properties."""
-
-import signal
-signal.signal(signal.SIGPIPE, signal.SIG_IGN)
-import os
-os.environ["HF_HUB_ENABLE_HF_TRANSFER"] = "true"
         logger.info("🔗 Analyzing circuit structure...")
         
         if not self.discovered_features:
@@ -915,11 +838,6 @@ os.environ["HF_HUB_ENABLE_HF_TRANSFER"] = "true"
     
     async def generate_comprehensive_visualizations(self) -> List[str]:
         """Generate comprehensive visualizations of all results."""
-
-import signal
-signal.signal(signal.SIGPIPE, signal.SIG_IGN)
-import os
-os.environ["HF_HUB_ENABLE_HF_TRANSFER"] = "true"
         logger.info("📊 Generating comprehensive visualizations...")
         
         viz_files = []
@@ -964,11 +882,6 @@ os.environ["HF_HUB_ENABLE_HF_TRANSFER"] = "true"
     
     def _create_circuit_visualization(self, output_file: Path):
         """Create interactive circuit graph visualization."""
-
-import signal
-signal.signal(signal.SIGPIPE, signal.SIG_IGN)
-import os
-os.environ["HF_HUB_ENABLE_HF_TRANSFER"] = "true"
         if not self.discovered_features:
             return
         
@@ -1034,11 +947,6 @@ os.environ["HF_HUB_ENABLE_HF_TRANSFER"] = "true"
     
     def _create_rq_dashboard(self, output_file: Path):
         """Create Research Questions dashboard."""
-
-import signal
-signal.signal(signal.SIGPIPE, signal.SIG_IGN)
-import os
-os.environ["HF_HUB_ENABLE_HF_TRANSFER"] = "true"
         # Create subplots
         fig = make_subplots(
             rows=2, cols=2,
@@ -1114,11 +1022,6 @@ os.environ["HF_HUB_ENABLE_HF_TRANSFER"] = "true"
     
     def _create_ai_dynamics_visualization(self, output_file: Path):
         """Create Active Inference dynamics visualization."""
-
-import signal
-signal.signal(signal.SIGPIPE, signal.SIG_IGN)
-import os
-os.environ["HF_HUB_ENABLE_HF_TRANSFER"] = "true"
         # Create placeholder data (replace with actual AI agent data)
         steps = list(range(20))
         efe_values = [5.0 - 0.2*i + 0.1*np.random.randn() for i in steps]
@@ -1146,11 +1049,6 @@ os.environ["HF_HUB_ENABLE_HF_TRANSFER"] = "true"
     
     def _create_intervention_analysis(self, output_file: Path):
         """Create intervention effectiveness analysis."""
-
-import signal
-signal.signal(signal.SIGPIPE, signal.SIG_IGN)
-import os
-os.environ["HF_HUB_ENABLE_HF_TRANSFER"] = "true"
         if not self.intervention_results:
             return
         
@@ -1203,11 +1101,6 @@ os.environ["HF_HUB_ENABLE_HF_TRANSFER"] = "true"
     
     def _create_statistical_visualization(self, output_file: Path):
         """Create statistical analysis visualization."""
-
-import signal
-signal.signal(signal.SIGPIPE, signal.SIG_IGN)
-import os
-os.environ["HF_HUB_ENABLE_HF_TRANSFER"] = "true"
         # Placeholder statistical data
         fig = make_subplots(
             rows=2, cols=2,
@@ -1230,11 +1123,6 @@ os.environ["HF_HUB_ENABLE_HF_TRANSFER"] = "true"
     
     def _create_golden_gate_visualization(self, output_file: Path):
         """Create Golden Gate Bridge analysis visualization."""
-
-import signal
-signal.signal(signal.SIGPIPE, signal.SIG_IGN)
-import os
-os.environ["HF_HUB_ENABLE_HF_TRANSFER"] = "true"
         # Placeholder data for Golden Gate analysis
         test_results = [0.8, 0.9, 0.7, 0.85, 0.75]  # Success rates for different prompts
         prompt_names = ['Bridge Location', 'SF Landmark', 'Red Bridge', 'Visitors', 'Famous City']
@@ -1259,11 +1147,6 @@ os.environ["HF_HUB_ENABLE_HF_TRANSFER"] = "true"
     # Helper methods for analysis
     def _calculate_belief_convergence(self, belief_history):
         """Calculate belief convergence metric."""
-
-import signal
-signal.signal(signal.SIGPIPE, signal.SIG_IGN)
-import os
-os.environ["HF_HUB_ENABLE_HF_TRANSFER"] = "true"
         if len(belief_history) < 2:
             return 0.0
         
@@ -1279,11 +1162,6 @@ os.environ["HF_HUB_ENABLE_HF_TRANSFER"] = "true"
     
     def _calculate_efe_reduction(self, efe_history):
         """Calculate Expected Free Energy reduction."""
-
-import signal
-signal.signal(signal.SIGPIPE, signal.SIG_IGN)
-import os
-os.environ["HF_HUB_ENABLE_HF_TRANSFER"] = "true"
         if len(efe_history) < 2:
             return 0.0
         
@@ -1294,21 +1172,11 @@ os.environ["HF_HUB_ENABLE_HF_TRANSFER"] = "true"
     
     def _calculate_exploration_exploitation(self, belief_history):
         """Calculate exploration vs exploitation balance."""
-
-import signal
-signal.signal(signal.SIGPIPE, signal.SIG_IGN)
-import os
-os.environ["HF_HUB_ENABLE_HF_TRANSFER"] = "true"
         # Simplified calculation
         return 0.6  # Balanced exploration/exploitation
     
     def _calculate_uncertainty_reduction(self, belief_history):
         """Calculate uncertainty reduction over time."""
-
-import signal
-signal.signal(signal.SIGPIPE, signal.SIG_IGN)
-import os
-os.environ["HF_HUB_ENABLE_HF_TRANSFER"] = "true"
         if len(belief_history) < 2:
             return 0.0
         
@@ -1317,11 +1185,6 @@ os.environ["HF_HUB_ENABLE_HF_TRANSFER"] = "true"
     
     def _analyze_intervention_strategy(self):
         """Analyze intervention selection strategy."""
-
-import signal
-signal.signal(signal.SIGPIPE, signal.SIG_IGN)
-import os
-os.environ["HF_HUB_ENABLE_HF_TRANSFER"] = "true"
         if not self.intervention_results:
             return {}
         
@@ -1336,11 +1199,6 @@ os.environ["HF_HUB_ENABLE_HF_TRANSFER"] = "true"
     
     def _analyze_semantic_features(self):
         """Analyze semantic properties of discovered features."""
-
-import signal
-signal.signal(signal.SIGPIPE, signal.SIG_IGN)
-import os
-os.environ["HF_HUB_ENABLE_HF_TRANSFER"] = "true"
         if not self.discovered_features:
             return {}
         
@@ -1357,11 +1215,6 @@ os.environ["HF_HUB_ENABLE_HF_TRANSFER"] = "true"
     
     def _analyze_intervention_effectiveness(self):
         """Analyze overall intervention effectiveness."""
-
-import signal
-signal.signal(signal.SIGPIPE, signal.SIG_IGN)
-import os
-os.environ["HF_HUB_ENABLE_HF_TRANSFER"] = "true"
         if not self.intervention_results:
             return {}
         
@@ -1377,21 +1230,11 @@ os.environ["HF_HUB_ENABLE_HF_TRANSFER"] = "true"
     
     def _calculate_confidence_interval(self, value, confidence=0.95):
         """Calculate confidence interval for a metric."""
-
-import signal
-signal.signal(signal.SIGPIPE, signal.SIG_IGN)
-import os
-os.environ["HF_HUB_ENABLE_HF_TRANSFER"] = "true"
         margin = 1.96 * np.sqrt(value * (100 - value) / 100)  # Simplified CI
         return [max(0, value - margin), min(100, value + margin)]
     
     def _calculate_cohens_d(self, group1, group2):
         """Calculate Cohen's d effect size."""
-
-import signal
-signal.signal(signal.SIGPIPE, signal.SIG_IGN)
-import os
-os.environ["HF_HUB_ENABLE_HF_TRANSFER"] = "true"
         if len(group1) == 0 or len(group2) == 0:
             return 0.0
         
@@ -1403,11 +1246,6 @@ os.environ["HF_HUB_ENABLE_HF_TRANSFER"] = "true"
     
     async def save_comprehensive_results(self, result: ComprehensiveExperimentResult):
         """Save all results to files."""
-
-import signal
-signal.signal(signal.SIGPIPE, signal.SIG_IGN)
-import os
-os.environ["HF_HUB_ENABLE_HF_TRANSFER"] = "true"
         logger.info("💾 Saving comprehensive results...")
         
         # Save main results as JSON
@@ -1439,11 +1277,6 @@ os.environ["HF_HUB_ENABLE_HF_TRANSFER"] = "true"
     
     def print_final_summary(self, result: ComprehensiveExperimentResult):
         """Print final experiment summary."""
-
-import signal
-signal.signal(signal.SIGPIPE, signal.SIG_IGN)
-import os
-os.environ["HF_HUB_ENABLE_HF_TRANSFER"] = "true"
         print("\n" + "="*80)
         print("🎯 COMPREHENSIVE ACTIVE CIRCUIT DISCOVERY EXPERIMENT RESULTS")
         print("="*80)
@@ -1499,11 +1332,6 @@ os.environ["HF_HUB_ENABLE_HF_TRANSFER"] = "true"
 # Main execution function
 async def main():
     """Run the comprehensive experiment."""
-
-import signal
-signal.signal(signal.SIGPIPE, signal.SIG_IGN)
-import os
-os.environ["HF_HUB_ENABLE_HF_TRANSFER"] = "true"
     print("🚀 Starting Comprehensive Active Circuit Discovery Experiment")
     print("=" * 60)
     

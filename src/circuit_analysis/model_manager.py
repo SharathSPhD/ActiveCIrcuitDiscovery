@@ -53,12 +53,12 @@ class ModelManager:
         print("Using default cache (will be lost on droplet recreation)")
     
     def _configure_offline_mode(self):
-        """Configure local-only mode to avoid network calls."""
-        # Force HuggingFace to use local files only
-        os.environ['HF_HUB_OFFLINE'] = '1'
-        os.environ['TRANSFORMERS_OFFLINE'] = '1'
+        """Configure cache-first mode (don't force offline yet)."""
+        # Don't force offline mode - let HuggingFace decide based on cache availability
+        # os.environ['HF_HUB_OFFLINE'] = '1'  # Commented out to allow initial downloads
+        # os.environ['TRANSFORMERS_OFFLINE'] = '1'  # Commented out to allow initial downloads
         
-        # Disable update checks
+        # Disable update checks but allow downloads
         os.environ['HF_HUB_DISABLE_TELEMETRY'] = '1'
         os.environ['HF_HUB_DISABLE_PROGRESS_BARS'] = '0'
     
@@ -66,39 +66,16 @@ class ModelManager:
                   transcoder_set: str = "gemma") -> ReplacementModel:
         """Get or create the shared model instance."""
         if self._model is None:
-            print(f"Loading model {model_name} (one-time initialization)")
-            
-            try:
-                # Try local-only first
-                self._model = ReplacementModel.from_pretrained(
-                    model_name=model_name,
-                    transcoder_set=transcoder_set,
-                    device=torch.device("cuda"),
-                    dtype=torch.bfloat16,
-                    local_files_only=True  # Force local usage
-                )
-                print("Loaded from local cache")
-                
-            except Exception as e:
-                if "local_files_only" in str(e) or "offline" in str(e):
-                    print("Local files not found, downloading once...")
-                    # Temporarily allow downloads for initial setup
-                    os.environ.pop('HF_HUB_OFFLINE', None)
-                    os.environ.pop('TRANSFORMERS_OFFLINE', None)
-                    
-                    self._model = ReplacementModel.from_pretrained(
-                        model_name=model_name,
-                        transcoder_set=transcoder_set,
-                        device=torch.device("cuda"),
-                        dtype=torch.bfloat16
-                    )
-                    
-                    # Re-enable offline mode
-                    os.environ['HF_HUB_OFFLINE'] = '1'
-                    os.environ['TRANSFORMERS_OFFLINE'] = '1'
-                    print("Downloaded and cached for future use")
-                else:
-                    raise e
+            print(f"Loading model {model_name}...")
+            # Let HuggingFace handle cache automatically - it will use cache if available
+            self._model = ReplacementModel.from_pretrained(
+                model_name=model_name,
+                transcoder_set=transcoder_set,
+                device=torch.device("cuda"),
+                dtype=torch.bfloat16
+                # Remove local_files_only to allow cache-first behavior
+            )
+            print(f"✅ Model {model_name} loaded successfully")
         
         return self._model
     

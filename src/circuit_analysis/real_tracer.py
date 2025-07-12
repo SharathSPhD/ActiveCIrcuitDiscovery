@@ -1,10 +1,10 @@
 """
-from .model_manager import model_manager
 Real Circuit Tracer using circuit_tracer library with Gemma-2-2B transcoder support.
 No SAE fallbacks, mocks, or approximations - pure circuit-tracer integration.
 """
 
 import torch
+from .model_manager import model_manager
 from typing import Dict, List, Tuple, Optional, Any
 from dataclasses import dataclass
 import numpy as np
@@ -39,18 +39,14 @@ class RealCircuitTracer(ICircuitTracer):
             print(f"📥 Loading {self.model_name} with circuit-tracer and {self.transcoder_set} transcoders...")
             
             try:
-                # Load tokenizer
-                self.tokenizer = AutoTokenizer.from_pretrained(self.model_name)
-                if self.tokenizer.pad_token is None:
-                    self.tokenizer.pad_token = self.tokenizer.eos_token
+                # Use model_manager for cached singleton model loading
+                print(f"🔧 Using model_manager for cached {self.model_name} + {self.transcoder_set}")
                 
-                # Initialize circuit-tracer ReplacementModel with GemmaScope transcoders
-                self.model = ReplacementModel.from_pretrained(
-                    model_name=self.model_name,
-                    transcoder_set=self.transcoder_set,
-                    device=torch.device("cuda"),
-                    dtype=torch.bfloat16
-                )
+                # Get shared tokenizer instance
+                self.tokenizer = model_manager.get_tokenizer(self.model_name)
+                
+                # Get shared model instance (loads once, reuses thereafter)
+                self.model = model_manager.get_model(self.model_name, self.transcoder_set)
                 
                 print(f"✅ RealCircuitTracer initialized successfully!")
                 print(f"   Model: {self.model_name}")
