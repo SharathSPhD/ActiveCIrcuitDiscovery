@@ -30,7 +30,7 @@ from src.circuit_analysis.real_tracer import RealCircuitTracer
 from src.active_inference.semantic_circuit_agent import SemanticCircuitAgent
 from src.config.experiment_config import CompleteConfig, InterventionType
 from src.core.data_structures import CircuitFeature
-from sota_baselines import SOTABaselineComparison
+from experiments.sota_comparison.sota_baselines import SOTABaselineComparison
 
 def run_refact4_experiment():
     """

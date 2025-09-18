@@ -1,0 +1,34 @@
+CIRCUIT-TRACER ANALYSIS REPORT
+==================================================
+
+Experiment: refact4_20250915_154846
+Generated: 4 method visualizations
+
+Activation Patching:
+  - Transcoder Features: 3
+  - Layer Range: 6-6
+  - Avg Effect Magnitude: 0.010483
+  - Avg Activation: 7.083
+  - Circuit IDs: ['L6F9865', 'L6F349', 'L6F850']
+
+Attribution Patching:
+  - Transcoder Features: 3
+  - Layer Range: 6-6
+  - Avg Effect Magnitude: 0.007696
+  - Avg Activation: 7.411
+  - Circuit IDs: ['L6F9865', 'L6F349', 'L6F349']
+
+Activation Ranking:
+  - Transcoder Features: 3
+  - Layer Range: 6-6
+  - Avg Effect Magnitude: 0.007013
+  - Avg Activation: 7.620
+  - Circuit IDs: ['L6F9865', 'L6F850', 'L6F349']
+
+Enhanced Active Inference:
+  - Transcoder Features: 3
+  - Layer Range: 8-9
+  - Avg Effect Magnitude: 0.076027
+  - Avg Activation: 17.146
+  - Circuit IDs: ['L8F3099', 'L8F3099', 'L9F2638']
+
