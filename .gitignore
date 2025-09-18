@@ -88,3 +88,10 @@ results/
 *.log
 *.backup*
 temp_*
+
+books/
+ref_projects/
+report/
+COMP*.md
+diss*.md
+DISS*.md
