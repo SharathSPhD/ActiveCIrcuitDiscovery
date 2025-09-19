@@ -305,7 +305,12 @@ class CaseSpecificAnalyzer:
         # 3. Intervention effects visualization
         intervention_path = self._create_intervention_effects_chart(test_case, case_dir)
         generated_paths.append(intervention_path)
-        
+
+        # 4. Layer and feature analysis visualization (NEW)
+        layer_feature_path = self._create_layer_feature_analysis(test_case, case_dir)
+        if layer_feature_path:
+            generated_paths.append(layer_feature_path)
+
         return generated_paths
 
     def _create_method_comparison_chart(self, test_case: TestCase, case_dir: Path) -> Path:
@@ -506,12 +511,110 @@ class CaseSpecificAnalyzer:
         plt.suptitle(f'INTERVENTION EFFECTS ANALYSIS - CASE {test_case.case_id}\n"{test_case.test_prompt}"', 
                     fontsize=16, fontweight='bold')
         plt.tight_layout()
-        
+
         output_path = case_dir / 'intervention_effects.png'
         plt.savefig(output_path, dpi=300, bbox_inches='tight')
         plt.close()
-        
+
         return output_path
+
+    def _create_layer_feature_analysis(self, test_case: TestCase, case_dir: Path) -> Optional[Path]:
+        """Create layer and feature analysis visualization for Active Inference method."""
+
+        # Check if Enhanced Active Inference has layer data
+        eai_result = test_case.method_results.get('Enhanced Active Inference')
+        if not eai_result or 'method_specific_metrics' not in eai_result or 'layer_activations' not in eai_result['method_specific_metrics']:
+            return None
+
+        layer_data = eai_result['method_specific_metrics']['layer_activations']
+        discovered_features = eai_result['method_specific_metrics'].get('discovered_features', [])
+
+        if not layer_data:
+            return None
+
+        chart_path = case_dir / f"layer_feature_analysis.png"
+
+        fig = plt.figure(figsize=(16, 12))
+        gs = GridSpec(2, 2, figure=fig)
+
+        # 1. Layer activation heatmap
+        ax1 = fig.add_subplot(gs[0, :])
+        layers = list(layer_data.keys())
+        activations_matrix = []
+        feature_labels = []
+
+        for layer in sorted(layers):
+            layer_features = layer_data[layer]['features']
+            layer_activations = layer_data[layer]['activation_strengths']
+            activations_matrix.extend(layer_activations)
+            feature_labels.extend([f"{layer.replace('layer_', 'L')}: {feat}" for feat in layer_features])
+
+        if activations_matrix:
+            # Reshape for heatmap
+            n_features = len(activations_matrix)
+            heatmap_data = np.array(activations_matrix).reshape(1, -1)
+
+            im = ax1.imshow(heatmap_data, cmap='viridis', aspect='auto')
+            ax1.set_xticks(range(n_features))
+            ax1.set_xticklabels(feature_labels, rotation=45, ha='right', fontsize=8)
+            ax1.set_yticks([0])
+            ax1.set_yticklabels(['Activation Strength'])
+            ax1.set_title('Layer-wise Feature Activation Analysis\n(Enhanced Active Inference)', fontsize=14, pad=20)
+
+            # Add colorbar
+            cbar = plt.colorbar(im, ax=ax1)
+            cbar.set_label('Activation Strength', rotation=270, labelpad=15)
+
+        # 2. Layer summary statistics
+        ax2 = fig.add_subplot(gs[1, 0])
+        layer_means = []
+        layer_names = []
+        layer_counts = []
+
+        for layer in sorted(layers):
+            layer_means.append(layer_data[layer]['mean_activation'])
+            layer_names.append(layer.replace('layer_', 'Layer '))
+            layer_counts.append(len(layer_data[layer]['features']))
+
+        bars = ax2.bar(layer_names, layer_means, alpha=0.7, color='skyblue')
+        ax2.set_ylabel('Mean Activation Strength')
+        ax2.set_title('Mean Activation by Layer')
+        ax2.tick_params(axis='x', rotation=45)
+
+        # Add count annotations
+        for bar, count in zip(bars, layer_counts):
+            height = bar.get_height()
+            ax2.text(bar.get_x() + bar.get_width()/2., height + 0.001,
+                    f'{count} features', ha='center', va='bottom', fontsize=9)
+
+        # 3. Feature distribution analysis
+        ax3 = fig.add_subplot(gs[1, 1])
+
+        # EFE metrics from Enhanced Active Inference
+        efe_score = eai_result['method_specific_metrics'].get('efe_minimization_score', 0)
+        belief_corr = eai_result['method_specific_metrics'].get('belief_correspondence', 0)
+        feature_precision = eai_result['method_specific_metrics'].get('feature_selection_precision', 0)
+        kl_div = eai_result['method_specific_metrics'].get('kl_divergence_mean', 0)
+
+        metrics = ['EFE Score', 'Belief Corr.', 'Feature Prec.', 'KL Div.']
+        values = [efe_score, belief_corr, feature_precision, kl_div]
+
+        bars = ax3.bar(metrics, values, alpha=0.7, color=['red', 'green', 'blue', 'orange'])
+        ax3.set_ylabel('Metric Value')
+        ax3.set_title('Active Inference Metrics')
+        ax3.tick_params(axis='x', rotation=45)
+
+        # Add value annotations
+        for bar, value in zip(bars, values):
+            height = bar.get_height()
+            ax3.text(bar.get_x() + bar.get_width()/2., height + 0.001,
+                    f'{value:.3f}', ha='center', va='bottom', fontsize=9)
+
+        plt.tight_layout()
+        plt.savefig(chart_path, dpi=300, bbox_inches='tight')
+        plt.close()
+
+        return chart_path
 
     def _generate_comprehensive_overview(self) -> Path:
         """Generate comprehensive overview of all cases."""

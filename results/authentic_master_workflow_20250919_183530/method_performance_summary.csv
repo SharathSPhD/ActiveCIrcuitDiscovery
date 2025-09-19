@@ -1,0 +1,5 @@
+Method,Avg_Effect,Std_Effect,Success_Rate,Effect_Success_Rate,Avg_Time,Total_Tests
+Enhanced Active Inference,3.855702,0.184700,88.6,100.0,0.001,35
+Activation Patching,0.008121,0.004346,94.3,68.6,0.000,35
+Attribution Patching,0.004933,0.002723,80.0,48.6,0.000,35
+Activation Ranking,0.003692,0.002799,77.1,22.9,0.000,35

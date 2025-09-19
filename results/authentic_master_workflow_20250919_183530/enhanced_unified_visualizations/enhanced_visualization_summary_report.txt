@@ -1,0 +1,73 @@
+ENHANCED UNIFIED AUTHENTIC VISUALIZATION SUMMARY REPORT
+======================================================================
+
+Generated: 2025-09-19 18:50:24
+Source Data: authentic_master_workflow_20250919_183530
+Output Directory: /home/ubuntu/ActiveCIrcuitDiscovery/results/authentic_master_workflow_20250919_183530/enhanced_unified_visualizations
+
+CASE-SPECIFIC ANALYSIS SUMMARY:
+  Total Test Cases: 35
+  Methods Compared: 4
+  Case Analysis Directories: 137
+
+CASE DIFFICULTY DISTRIBUTION:
+  Easy: 30 cases (85.7%)
+  Medium: 3 cases (8.6%)
+  Very Hard: 2 cases (5.7%)
+
+METHOD PERFORMANCE ACROSS ALL CASES:
+  Enhanced Active Inference:
+    Average Effect: 3.855702 ± 0.184700
+    Success Rate: 88.6%
+    Avg Computation Time: 0.001274s
+
+  Activation Patching:
+    Average Effect: 0.008121 ± 0.004346
+    Success Rate: 94.3%
+    Avg Computation Time: 0.000039s
+
+  Attribution Patching:
+    Average Effect: 0.004933 ± 0.002723
+    Success Rate: 80.0%
+    Avg Computation Time: 0.000042s
+
+  Activation Ranking:
+    Average Effect: 0.003692 ± 0.002799
+    Success Rate: 77.1%
+    Avg Computation Time: 0.000042s
+
+TOP PERFORMING CASES (Highest Success Rates):
+  Case 01: 100.0% - "The Golden Gate Bridge is located in"
+  Case 02: 100.0% - "The Statue of Liberty stands in"
+  Case 04: 100.0% - "The Great Wall of China was built to"
+  Case 05: 100.0% - "The Amazon Rainforest is primarily located in"
+  Case 06: 100.0% - "The square root of 64 is"
+
+MOST CHALLENGING CASES (Lowest Success Rates):
+  Case 03: 50.0% - "Mount Everest is the highest peak in"
+  Case 16: 50.0% - "Water freezes at"
+  Case 17: 50.0% - "The chemical formula for water is"
+  Case 18: 0.0% - "The human body has"
+  Case 20: 0.0% - "The speed of light in vacuum is approximately"
+
+GENERATED VISUALIZATIONS:
+  Total Files: 137
+  Case-Specific Analysis Files: 137
+  Individual Case Directories: 35
+
+ENHANCED RESEARCH CONTRIBUTIONS:
+  ✅ Case-by-case authentic circuit discovery analysis
+  ✅ Individual Gemma output comparison per test case
+  ✅ Method performance visualization for every case
+  ✅ Intervention effects analysis per case/method combination
+  ✅ Comprehensive difficulty and success rate analysis
+  ✅ Academic-ready case-specific figures for dissertation
+
+CRITICAL GAP ADDRESSED:
+  ❌ BEFORE: Only high-level statistical summaries
+  ✅ AFTER: Detailed case-specific analysis for all 35 test cases
+  ✅ Shows actual circuit differences per method per case
+  ✅ Visualizes authentic Gemma I/O differences per case
+
+All visualizations based on authentic experimental data
+from real Gemma-2-2B model execution - no synthetic data.
