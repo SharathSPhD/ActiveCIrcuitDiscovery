@@ -1,0 +1,32 @@
+
+# === GEMMA MODEL EXECUTION ===
+def execute_gemma_inference(model, tokenizer, prompt: str, max_new_tokens: int = 50) -> str:
+    """Execute actual Gemma model inference and return output."""
+    try:
+        # Tokenize input
+        inputs = tokenizer(prompt, return_tensors="pt", padding=True, truncation=True)
+        inputs = {k: v.to(model.device) for k, v in inputs.items()}
+        
+        # Generate response
+        with torch.no_grad():
+            outputs = model.generate(
+                **inputs,
+                max_new_tokens=max_new_tokens,
+                do_sample=True,
+                temperature=0.7,
+                pad_token_id=tokenizer.eos_token_id
+            )
+        
+        # Decode output
+        generated_text = tokenizer.decode(outputs[0], skip_special_tokens=True)
+        
+        # Extract only the new generated part (remove input prompt)
+        if generated_text.startswith(prompt):
+            generated_text = generated_text[len(prompt):].strip()
+        
+        return generated_text
+        
+    except Exception as e:
+        print("Error in Gemma inference:", e)
+        return "[Error: " + str(e) + "]"
+
