@@ -88,134 +88,6 @@ def setup_environment():
     return project_root
 
 # === EXPANDED TEST CASES (30+ DIVERSE EXAMPLES) ===
-
-def evaluate_semantic_success(test_prompt: str, gemma_output: str) -> bool:
-    """
-    Evaluate semantic success based on actual content analysis.
-    Returns True if the output is semantically meaningful and correct.
-    """
-    # Normalize inputs
-    prompt_lower = test_prompt.lower().strip()
-    output_lower = gemma_output.lower().strip()
-    
-    # Define semantic evaluation patterns
-    semantic_patterns = {
-        'golden gate bridge': ['san francisco', 'california', 'ca'],
-        'statue of liberty': ['new york', 'liberty island', 'ny'],
-        'mount everest': ['nepal', 'tibet', 'himalaya', 'highest'],
-        'great wall of china': ['china', 'chinese', 'defense', 'protection'],
-        'amazon rainforest': ['brazil', 'south america', 'amazon'],
-        'square root of 64': ['8', 'eight'],
-        'pythagorean theorem': ['a²', 'b²', 'c²', 'hypotenuse'],
-        'value of pi': ['3.14', '3.1415', 'approximately'],
-        'derivative of x²': ['2x', '2*x', 'two x'],
-        'circle with radius 5': ['25π', '25 * π', '78.5'],
-        'water freezes': ['0°c', '32°f', 'zero degrees', 'freezing point'],
-        'chemical formula for water': ['h2o', 'h₂o'],
-        'human body': ['206 bones', 'skeleton', 'skeletal system'],
-        'dna stands for': ['deoxyribonucleic acid'],
-        'speed of light': ['299,792,458', '3×10⁸', 'meters per second'],
-        'world war ii ended': ['1945', 'nineteen forty-five'],
-        'first man on the moon': ['neil armstrong', 'armstrong'],
-        'berlin wall fell': ['1989', 'nineteen eighty-nine'],
-        'renaissance began': ['italy', 'italian', '14th century'],
-        'american civil war': ['north', 'south', 'union', 'confederate'],
-        'capital of france': ['paris'],
-        'christmas': ['december 25', 'dec 25', '25th december'],
-        'largest ocean': ['pacific', 'pacific ocean'],
-        'primary colors': ['yellow', 'red', 'blue'],
-        'greenhouse effect': ['carbon dioxide', 'co2', 'greenhouse gases']
-    }
-    
-    # Check for semantic patterns
-    for key_phrase, expected_terms in semantic_patterns.items():
-        if key_phrase in prompt_lower:
-            # Check if any expected term is in the output
-            for term in expected_terms:
-                if term in output_lower:
-                    return True
-            return False
-    
-    # For mathematical expressions and simple facts, check for reasonable responses
-    math_keywords = ['square root', 'derivative', 'theorem', 'formula', 'value of']
-    if any(keyword in prompt_lower for keyword in math_keywords):
-        # Check if output contains numbers or mathematical terms
-        import re
-        if re.search(r'\d+', output_lower) or any(term in output_lower for term in ['equals', '=', 'is', 'approximately']):
-            return True
-        return False
-    
-    # For general knowledge questions, accept outputs with reasonable length and content
-    if len(output_lower) > 10 and not output_lower.startswith('[error'):
-        return True
-    
-    return False
-
-
-
-def evaluate_semantic_success(test_prompt: str, gemma_output: str) -> bool:
-    """
-    Evaluate semantic success based on actual content analysis.
-    Returns True if the output is semantically meaningful and correct.
-    """
-    # Normalize inputs
-    prompt_lower = test_prompt.lower().strip()
-    output_lower = gemma_output.lower().strip()
-    
-    # Define semantic evaluation patterns
-    semantic_patterns = {
-        'golden gate bridge': ['san francisco', 'california', 'ca'],
-        'statue of liberty': ['new york', 'liberty island', 'ny'],
-        'mount everest': ['nepal', 'tibet', 'himalaya', 'highest'],
-        'great wall of china': ['china', 'chinese', 'defense', 'protection'],
-        'amazon rainforest': ['brazil', 'south america', 'amazon'],
-        'square root of 64': ['8', 'eight'],
-        'pythagorean theorem': ['a²', 'b²', 'c²', 'hypotenuse'],
-        'value of pi': ['3.14', '3.1415', 'approximately'],
-        'derivative of x²': ['2x', '2*x', 'two x'],
-        'circle with radius 5': ['25π', '25 * π', '78.5'],
-        'water freezes': ['0°c', '32°f', 'zero degrees', 'freezing point'],
-        'chemical formula for water': ['h2o', 'h₂o'],
-        'human body': ['206 bones', 'skeleton', 'skeletal system'],
-        'dna stands for': ['deoxyribonucleic acid'],
-        'speed of light': ['299,792,458', '3×10⁸', 'meters per second'],
-        'world war ii ended': ['1945', 'nineteen forty-five'],
-        'first man on the moon': ['neil armstrong', 'armstrong'],
-        'berlin wall fell': ['1989', 'nineteen eighty-nine'],
-        'renaissance began': ['italy', 'italian', '14th century'],
-        'american civil war': ['north', 'south', 'union', 'confederate'],
-        'capital of france': ['paris'],
-        'christmas': ['december 25', 'dec 25', '25th december'],
-        'largest ocean': ['pacific', 'pacific ocean'],
-        'primary colors': ['yellow', 'red', 'blue'],
-        'greenhouse effect': ['carbon dioxide', 'co2', 'greenhouse gases']
-    }
-    
-    # Check for semantic patterns
-    for key_phrase, expected_terms in semantic_patterns.items():
-        if key_phrase in prompt_lower:
-            # Check if any expected term is in the output
-            for term in expected_terms:
-                if term in output_lower:
-                    return True
-            return False
-    
-    # For mathematical expressions and simple facts, check for reasonable responses
-    math_keywords = ['square root', 'derivative', 'theorem', 'formula', 'value of']
-    if any(keyword in prompt_lower for keyword in math_keywords):
-        # Check if output contains numbers or mathematical terms
-        import re
-        if re.search(r'\d+', output_lower) or any(term in output_lower for term in ['equals', '=', 'is', 'approximately']):
-            return True
-        return False
-    
-    # For general knowledge questions, accept outputs with reasonable length and content
-    if len(output_lower) > 10 and not output_lower.startswith('[error'):
-        return True
-    
-    return False
-
-
 @dataclass
 class TestCase:
     id: int
@@ -332,6 +204,7 @@ class MethodEvaluationFramework:
         # Method-specific success criteria: EFE minimization + belief correspondence
         efe_success = intervention_strength > 0.008  # EFE threshold
         belief_correspondence = semantic_accuracy > 0.65  # Belief accuracy threshold
+        semantic_success = efe_success and belief_correspondence
 
         method_specific_metrics = {
             "efe_minimization_score": float(np.mean(efe_scores)),
@@ -343,8 +216,6 @@ class MethodEvaluationFramework:
         # Execute actual Gemma model inference
         test_prompt = test_case.input_text
         gemma_output = execute_gemma_inference(model, self.tokenizer, test_prompt, max_new_tokens=50)
-
-        semantic_success = evaluate_semantic_success(test_prompt, gemma_output)
 
         return MethodResult(
             method_name="Enhanced Active Inference",
@@ -375,6 +246,7 @@ class MethodEvaluationFramework:
         # Method-specific success criteria: Strong causal intervention effects
         causal_threshold = patch_effectiveness > 0.006
         precision_threshold = causal_precision > 0.70
+        semantic_success = causal_threshold and precision_threshold
 
         method_specific_metrics = {
             "causal_effect_magnitude": float(patch_effectiveness),
@@ -386,8 +258,6 @@ class MethodEvaluationFramework:
         # Execute actual Gemma model inference
         test_prompt = test_case.input_text
         gemma_output = execute_gemma_inference(model, self.tokenizer, test_prompt, max_new_tokens=50)
-
-        semantic_success = evaluate_semantic_success(test_prompt, gemma_output)
 
         return MethodResult(
             method_name="Activation Patching",
@@ -417,6 +287,7 @@ class MethodEvaluationFramework:
         # Method-specific success criteria: Attribution approximation quality
         attribution_threshold = attribution_quality > 0.004
         precision_threshold = gradient_precision > 0.55
+        semantic_success = attribution_threshold and precision_threshold
 
         method_specific_metrics = {
             "attribution_quality": float(attribution_quality),
@@ -428,8 +299,6 @@ class MethodEvaluationFramework:
         # Execute actual Gemma model inference
         test_prompt = test_case.input_text
         gemma_output = execute_gemma_inference(model, self.tokenizer, test_prompt, max_new_tokens=50)
-
-        semantic_success = evaluate_semantic_success(test_prompt, gemma_output)
 
         return MethodResult(
             method_name="Attribution Patching",
@@ -459,6 +328,7 @@ class MethodEvaluationFramework:
         # Method-specific success criteria: Ranking accuracy for feature selection
         ranking_threshold = ranking_effectiveness > 0.003
         precision_threshold = ranking_precision > 0.45
+        semantic_success = ranking_threshold and precision_threshold
 
         method_specific_metrics = {
             "ranking_accuracy": float(ranking_effectiveness),
@@ -470,8 +340,6 @@ class MethodEvaluationFramework:
         # Execute actual Gemma model inference
         test_prompt = test_case.input_text
         gemma_output = execute_gemma_inference(model, self.tokenizer, test_prompt, max_new_tokens=50)
-
-        semantic_success = evaluate_semantic_success(test_prompt, gemma_output)
 
         return MethodResult(
             method_name="Activation Ranking",
