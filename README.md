@@ -16,6 +16,10 @@ A comprehensive research implementation demonstrating how Active Inference princ
 - ✅ **RQ2**: >35% efficiency improvement (target: 30%)
 - ✅ **RQ3**: 5+ validated novel predictions (target: 3)
 
+### 🔧 Recent Fix (2025-11-05): Baseline Execution
+
+**FIXED**: Removed baseline simulation code - all baselines now execute actual interventions for scientifically valid RQ2 efficiency comparisons. See [`docs/BASELINE_EXECUTION.md`](docs/BASELINE_EXECUTION.md) for details.
+
 ## 🎯 Overview
 
 This project implements a novel approach to circuit discovery that uses Expected Free Energy minimization to guide intervention selection, making circuit discovery significantly more efficient than traditional exhaustive or random search methods. The enhanced version includes comprehensive statistical validation, novel prediction generation systems, and publication-ready visualizations.
