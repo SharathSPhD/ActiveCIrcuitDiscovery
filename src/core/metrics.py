@@ -252,14 +252,34 @@ class CorrespondenceCalculator:
         )
 
 class EfficiencyCalculator:
-    """Calculator for RQ2 efficiency metrics."""
-    
+    """
+    Calculator for RQ2 efficiency metrics.
+
+    Computes efficiency improvement of Active Inference over baseline methods.
+    ALL baseline methods must be actually executed, not simulated.
+
+    Expected baseline methods:
+    - 'random': Random feature selection (naive baseline)
+    - 'gradient_based': Activation-magnitude-based selection
+    - 'exhaustive': Systematic exhaustive search
+    """
+
     def __init__(self):
         self.baseline_methods = ['random', 'exhaustive', 'gradient_based']
-    
+
     def calculate_efficiency_improvement(self, ai_interventions: int,
                                        baseline_results: Dict[str, int]) -> Dict[str, float]:
-        """Calculate efficiency improvement over baseline methods."""
+        """
+        Calculate efficiency improvement over baseline methods.
+
+        Args:
+            ai_interventions: Number of interventions Active Inference used
+            baseline_results: Dictionary mapping baseline name to ACTUAL intervention count
+                             (must be from real execution, not simulation)
+
+        Returns:
+            Dictionary with efficiency improvement percentages for each baseline
+        """
         improvements = {}
         
         for method, baseline_count in baseline_results.items():

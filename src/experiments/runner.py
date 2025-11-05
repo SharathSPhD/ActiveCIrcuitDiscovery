@@ -62,7 +62,6 @@ class YorKExperimentRunner(IExperimentRunner):
         
         # Experiment state
         self.experiment_results = []
-        self.baseline_results = {}
         
         # Enhanced metrics calculators
         self.correspondence_calculator = CorrespondenceCalculator()
@@ -103,11 +102,8 @@ class YorKExperimentRunner(IExperimentRunner):
             bootstrap_samples=1000
         ))
         logger.info("Enhanced prediction system initialized")
-        
-        # Setup baseline methods for efficiency comparison
-        self._setup_baseline_methods()
-        
-        logger.info("Enhanced experiment setup completed successfully")
+
+        logger.info("Enhanced experiment setup completed successfully - baselines will execute dynamically")
     
     def run_experiment(self, test_inputs: List[str]) -> ExperimentResult:
         """Run complete experiment on test inputs."""
@@ -329,77 +325,123 @@ class YorKExperimentRunner(IExperimentRunner):
         return interventions
     
     def _run_baseline_comparisons(self, text: str, active_features: Dict) -> Dict[str, int]:
-        """Run baseline comparisons - should need many more iterations."""
-        baseline_strategies = ['random', 'high_activation', 'sequential']
+        """
+        Run actual baseline comparisons - ALL baselines execute real interventions.
+
+        This function implements three baseline strategies:
+        1. random: Random feature selection (naive baseline)
+        2. gradient_based: Select features by activation magnitude (proxy for gradient importance)
+        3. exhaustive: Systematic exhaustive search through all features
+
+        Each baseline is ACTUALLY EXECUTED, not simulated. Baselines typically need
+        many more interventions than Active Inference to achieve similar understanding.
+
+        Args:
+            text: Input text for interventions
+            active_features: Dictionary of active features by layer
+
+        Returns:
+            Dictionary mapping strategy name to intervention count
+        """
+        baseline_strategies = ['random', 'gradient_based', 'exhaustive']
         baseline_counts = {}
-        
+
         # Flatten features
         all_features = []
         for layer_features in active_features.values():
             all_features.extend(layer_features)
-        
+
         if not all_features:
+            logger.warning("No active features found for baseline comparison")
             return baseline_counts
-        
+
+        logger.info(f"Starting baseline comparisons with {len(all_features)} features")
+        logger.info(f"NOTE: All baselines execute ACTUAL interventions, not simulations")
+
         for strategy in baseline_strategies:
-            logger.info(f"Running {strategy} baseline strategy")
-            
+            logger.info(f"=" * 60)
+            logger.info(f"Executing {strategy.upper()} baseline strategy")
+            logger.info(f"=" * 60)
+
             intervention_count = 0
             max_baseline_interventions = self.config.active_inference.max_interventions * 3  # Allow more for baselines
             strategy_features = all_features.copy()
             baseline_effects = []
-            
+
+            # For gradient_based and exhaustive, we may need to compute additional metrics
+            if strategy == 'gradient_based':
+                # Sort features by activation magnitude (proxy for gradient importance)
+                strategy_features = sorted(strategy_features,
+                                         key=lambda f: f.max_activation,
+                                         reverse=True)
+                logger.info(f"Sorted {len(strategy_features)} features by activation magnitude")
+
             while intervention_count < max_baseline_interventions and strategy_features:
                 # Select feature based on strategy
                 if strategy == 'random':
+                    # Random selection - naive baseline
                     import random
                     feature = random.choice(strategy_features)
-                elif strategy == 'high_activation':
-                    feature = max(strategy_features, key=lambda f: f.max_activation)
-                elif strategy == 'sequential':
+                    logger.debug(f"Random selection: Feature {feature.feature_id}")
+
+                elif strategy == 'gradient_based':
+                    # Select feature with highest activation (already sorted)
+                    # This approximates gradient-based selection without computing actual gradients
                     feature = strategy_features[0]
+                    logger.debug(f"Gradient-based selection: Feature {feature.feature_id} "
+                               f"(activation: {feature.max_activation:.4f})")
+
+                elif strategy == 'exhaustive':
+                    # Systematic exhaustive search - try every feature in order
+                    feature = strategy_features[0]
+                    logger.debug(f"Exhaustive search: Feature {feature.feature_id} "
+                               f"({intervention_count + 1}/{len(all_features)})")
                 else:
+                    # Fallback
                     feature = strategy_features[0]
-                
-                # Remove selected feature
+
+                # Remove selected feature from pool
                 strategy_features.remove(feature)
-                
+
                 try:
-                    # Perform intervention
+                    # ACTUALLY PERFORM THE INTERVENTION (not simulated!)
                     result = self.tracer.perform_intervention(
                         text, feature, InterventionType.ABLATION
                     )
                     baseline_effects.append(result.effect_size)
                     intervention_count += 1
-                    
-                    # Simple convergence check for baseline (less sophisticated than AI)
-                    if len(baseline_effects) >= 5:
+
+                    if intervention_count % 10 == 0:
+                        logger.info(f"{strategy}: {intervention_count} interventions completed")
+
+                    # Convergence check for baseline (less sophisticated than AI)
+                    # Random and gradient_based can converge early if effects stabilize
+                    if strategy != 'exhaustive' and len(baseline_effects) >= 5:
                         recent_effects = baseline_effects[-5:]
                         if np.std(recent_effects) < 0.05:  # Low variance = convergence
-                            logger.info(f"{strategy} baseline converged after {intervention_count} interventions")
+                            logger.info(f"{strategy} baseline converged after {intervention_count} interventions "
+                                      f"(effect variance: {np.std(recent_effects):.4f})")
                             break
-                            
+
+                    # For exhaustive search, we typically want to try all features
+                    # unless we run out of budget
+
                 except Exception as e:
-                    logger.warning(f"{strategy} baseline intervention failed: {e}")
+                    logger.warning(f"{strategy} baseline intervention on feature {feature.feature_id} failed: {e}")
                     continue
-            
+
             baseline_counts[strategy] = intervention_count
-            logger.info(f"{strategy} baseline completed: {intervention_count} interventions")
-        
+            logger.info(f"✓ {strategy.upper()} baseline completed: {intervention_count} ACTUAL interventions executed")
+
+        # Log comparison summary
+        logger.info(f"=" * 60)
+        logger.info("BASELINE EXECUTION SUMMARY:")
+        for strategy, count in baseline_counts.items():
+            logger.info(f"  {strategy}: {count} interventions")
+        logger.info(f"=" * 60)
+
         return baseline_counts
     
-    def _setup_baseline_methods(self):
-        """Setup baseline methods for efficiency comparison."""
-        # Simulate baseline intervention counts
-        # In practice, these would be run or estimated from literature
-        
-        self.baseline_results = {
-            'random': 50,  # Random intervention selection
-            'exhaustive': 100,  # Exhaustive search
-            'gradient_based': 30  # Gradient-based selection
-        }
-        
-        logger.info(f"Baseline methods configured: {self.baseline_results}")
     
     def _calculate_correspondence_from_result(self, result: InterventionResult) -> CorrespondenceMetrics:
         """Calculate correspondence metrics from intervention result using proper calculator."""
