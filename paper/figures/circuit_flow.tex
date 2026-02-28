@@ -1,34 +1,32 @@
 % figures/circuit_flow.tex -- Flow of a single intervention step (TikZ)
-% Updated for circuit-tracer feature_intervention API
+% Compact version for IEEE single-column
 
 \begin{tikzpicture}[
-    font=\small,
-    node distance = 0.7cm,
+    font=\scriptsize,
+    node distance = 0.5cm,
     flowstep/.style = {
         rectangle, draw=black!60, fill=white,
-        rounded corners=2pt, minimum width=2.5cm, minimum height=0.55cm,
+        rounded corners=2pt, minimum width=2.2cm, minimum height=0.45cm,
         align=center, line width=0.4pt
     },
     decision/.style = {
         diamond, draw=blue!60!black, fill=blue!6,
-        aspect=2.5, minimum width=1cm, align=center,
-        inner sep=1pt, font=\small, line width=0.4pt
+        aspect=2.5, minimum width=0.8cm, align=center,
+        inner sep=1pt, font=\scriptsize, line width=0.4pt
     },
-    arr/.style = {-{Latex[length=2mm]}, thick, draw=black!50},
-    ann/.style = {font=\scriptsize, text=black!60},
+    arr/.style = {-{Latex[length=1.5mm]}, semithick, draw=black!50},
+    ann/.style = {font=\tiny, text=black!60},
 ]
 
-% Steps
-\node[flowstep] (s1) {Graph attribution\\(EAP + prune)};
-\node[flowstep, below=of s1] (s2) {Extract candidates\\$(l, p, f)$};
-\node[flowstep, below=of s2] (s3) {Score candidates\\$S(i) = \text{imp}\cdot\lambda_\ell + w\cdot u(i)$};
+\node[flowstep] (s1) {EAP + prune};
+\node[flowstep, below=of s1] (s2) {Extract candidates $(l, p, f)$};
+\node[flowstep, below=of s2] (s3) {Score: $S = \text{imp}\cdot\lambda_\ell + \omega_e\cdot u$};
 \node[flowstep, below=of s3] (s4) {Select $i^* = \arg\max S$};
-\node[flowstep, below=of s4] (s5) {\texttt{model.feature\_intervention}\\$(l, p, f, \text{mult}=0)$};
-\node[decision, below=0.8cm of s5] (d1) {$\Delta\text{KL}$?};
-\node[flowstep, below right=0.8cm and 0.4cm of d1] (s6a) {$u(i^*)\gets 0$\\$\lambda_\ell +\!\!= |\Delta\text{KL}|$};
-\node[flowstep, below left=0.8cm and 0.4cm of d1] (s6b) {$u(i^*)\gets 0$\\(no update to $\lambda_\ell$)};
+\node[flowstep, below=of s4] (s5) {\texttt{feature\_intervention}$(l,p,f,0)$};
+\node[decision, below=0.6cm of s5] (d1) {$\Delta$KL?};
+\node[flowstep, below right=0.6cm and 0.2cm of d1] (s6a) {$u(i^*)\!\gets\!0$, update $\lambda_\ell$};
+\node[flowstep, below left=0.6cm and 0.2cm of d1] (s6b) {$u(i^*)\!\gets\!0$, no update};
 
-% Arrows
 \draw[arr] (s1) -- (s2);
 \draw[arr] (s2) -- (s3);
 \draw[arr] (s3) -- (s4);
@@ -37,12 +35,10 @@
 \draw[arr] (d1) -- (s6a) node[midway, right, ann]{$>0$};
 \draw[arr] (d1) -- (s6b) node[midway, left, ann]{$=0$};
 
-% Loop arrow
-\draw[arr, dashed] (s6a.north) -- ++(0, 0.2) -| ([xshift=1.5cm]s3.east) -- (s3.east)
-    node[pos=0.15, right, ann]{next step};
-\draw[arr, dashed] (s6b.north) -- ++(0, 0.2) -| ([xshift=-1.5cm]s3.west) -- (s3.west);
+\draw[arr, dashed] (s6a.north) -- ++(0, 0.15) -| ([xshift=1.0cm]s3.east) -- (s3.east)
+    node[pos=0.15, right, ann]{next};
+\draw[arr, dashed] (s6b.north) -- ++(0, 0.15) -| ([xshift=-1.0cm]s3.west) -- (s3.west);
 
-% Budget label
-\node[ann, right=1.2cm of s4] {repeat $\le B$ times};
+\node[ann, right=0.8cm of s4] {$\le B$ steps};
 
 \end{tikzpicture}

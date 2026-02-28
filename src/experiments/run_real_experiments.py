@@ -12,9 +12,15 @@ import os
 import json
 import time
 import logging
+import argparse
 from pathlib import Path
 from collections import defaultdict
 from typing import Any, Dict, List, Optional, Tuple
+
+try:
+    from circuit_tracer.utils.create_graph_files import create_graph_files
+except ImportError:
+    create_graph_files = None
 
 import torch
 import numpy as np
@@ -49,6 +55,44 @@ MULTISTEP_PROMPTS = [
     "The capital of France is Paris. Paris is in Europe. The continent containing Paris is",
     "All dogs are animals. Fido is a dog. Therefore Fido is",
 ]
+
+# Multi-domain prompts from IRP (5 cognitive domains)
+DOMAIN_PROMPTS: Dict[str, List[str]] = {
+    "geography": [
+        "The capital of France is",
+        "The Golden Gate Bridge connects San Francisco to",
+    ],
+    "math": [
+        "The square root of 64 is",
+        "If 2 + 3 = 5 then 3 + 4 =",
+    ],
+    "science": [
+        "Water is made of hydrogen and",
+        "The speed of light is approximately",
+    ],
+    "logic": [
+        "All mammals are warm-blooded. A whale is a mammal. Therefore a whale is",
+        "All birds have wings. A penguin is a bird. Therefore a penguin has",
+    ],
+    "history": [
+        "The year World War II ended was",
+        "The first person to walk on the moon was",
+    ],
+}
+
+# Model configurations: model_name, transcoder_set, n_layers (for layer bin boundaries)
+MODEL_CONFIG: Dict[str, Dict[str, Any]] = {
+    "gemma": {
+        "model_name": "google/gemma-2-2b",
+        "transcoder_set": "gemma",
+        "n_layers": 26,
+    },
+    "llama": {
+        "model_name": "meta-llama/Llama-3.2-1B",
+        "transcoder_set": "llama",
+        "n_layers": 16,
+    },
+}
 
 
 class ActiveInferenceSelector:
@@ -416,94 +460,316 @@ def run_multistep_experiment(
     }
 
 
-def main():
-    logger.info("Loading Gemma-2-2B with transcoders...")
-    model = ReplacementModel.from_pretrained(
-        model_name='google/gemma-2-2b',
-        transcoder_set='gemma',
-        backend='transformerlens',
-        device=torch.device('cuda' if torch.cuda.is_available() else 'cpu'),
-        dtype=torch.float32,
+def run_domain_experiment(
+    model: ReplacementModel,
+    domain_prompts: Dict[str, List[str]],
+    budget: int = 20,
+    max_per_layer: int = 3,
+    max_candidates: int = 40,
+) -> Dict[str, Any]:
+    """Run multi-domain experiment across 5 cognitive domains (IRP).
+
+    Categorizes results by domain and reports layer distribution per domain.
+    """
+    by_domain: Dict[str, Dict[str, Any]] = {}
+    n_layers = model.cfg.n_layers
+
+    for domain, prompts in domain_prompts.items():
+        domain_results = []
+        domain_early, domain_mid, domain_late = 0, 0, 0
+
+        for pi, prompt in enumerate(prompts):
+            logger.info(f"Domain [{domain}] prompt {pi+1}/{len(prompts)}: '{prompt[:50]}...'")
+
+            raw = attribute(
+                prompt=prompt, model=model, max_n_logits=5,
+                desired_logit_prob=0.9, batch_size=256, verbose=False
+            )
+            candidates = extract_candidates(raw, max_per_layer, max_candidates)
+
+            clean_logits, _ = model.feature_intervention(prompt, [], return_activations=False)
+            clean_last = clean_logits[0, -1, :]
+            clean_probs = torch.softmax(clean_last, -1)
+            clean_top = model.tokenizer.decode([int(clean_probs.argmax().item())])
+
+            gt = {}
+            for feat in candidates:
+                kl, ld = ablate_feature(model, prompt, feat, clean_probs, clean_last)
+                gt[feat['fid']] = {'kl': kl, 'ld': ld, 'layer': feat['layer']}
+            gt_sorted = sorted(gt.items(), key=lambda x: x[1]['kl'], reverse=True)
+
+            selector = ActiveInferenceSelector(candidates, exploration_weight=2.0)
+            ai_kls = []
+            for step in range(min(budget, len(candidates))):
+                idx, feat = selector.select_next()
+                kl = gt[feat['fid']]['kl']
+                selector.update(idx, kl)
+                ai_kls.append(kl)
+
+            greedy_kls = [gt[candidates[i]['fid']]['kl'] for i in range(min(budget, len(candidates)))]
+
+            rand_trials = []
+            for trial in range(10):
+                sh = list(range(len(candidates)))
+                np.random.shuffle(sh)
+                rand_trials.append([gt[candidates[i]['fid']]['kl'] for i in sh[:budget]])
+
+            oracle_kls = [v['kl'] for _, v in gt_sorted[:budget]]
+
+            early = sum(1 for fid, v in gt_sorted[:10] if v['layer'] < n_layers // 3)
+            mid = sum(1 for fid, v in gt_sorted[:10] if n_layers // 3 <= v['layer'] < 2 * n_layers // 3)
+            late = sum(1 for fid, v in gt_sorted[:10] if v['layer'] >= 2 * n_layers // 3)
+            domain_early += early
+            domain_mid += mid
+            domain_late += late
+
+            domain_results.append({
+                'prompt': prompt,
+                'clean_prediction': clean_top,
+                'n_candidates': len(candidates),
+                'top10_features': [(fid, v['kl'], v['layer']) for fid, v in gt_sorted[:10]],
+                'ai_kls': ai_kls,
+                'greedy_kls': greedy_kls,
+                'ai_mean': float(np.mean(ai_kls)),
+                'greedy_mean': float(np.mean(greedy_kls)),
+                'random_mean': float(np.mean([np.mean(t) for t in rand_trials])),
+                'ai_cumkl': float(np.sum(ai_kls)),
+                'greedy_cumkl': float(np.sum(greedy_kls)),
+                'random_cumkl': float(np.mean([np.sum(t) for t in rand_trials])),
+                'oracle_cumkl': float(np.sum(oracle_kls)),
+                'layer_distribution': {'early': early, 'mid': mid, 'late': late},
+            })
+
+        ai_means = [r['ai_mean'] for r in domain_results]
+        greedy_means = [r['greedy_mean'] for r in domain_results]
+        rand_means = [r['random_mean'] for r in domain_results]
+
+        by_domain[domain] = {
+            'per_prompt': domain_results,
+            'layer_distribution': {'early': domain_early, 'mid': domain_mid, 'late': domain_late},
+            'ai_mean_kl': float(np.mean(ai_means)),
+            'greedy_mean_kl': float(np.mean(greedy_means)),
+            'random_mean_kl': float(np.mean(rand_means)),
+            'ai_vs_random_pct': float((np.mean(ai_means) - np.mean(rand_means)) / max(np.mean(rand_means), 1e-10) * 100),
+            'ai_vs_greedy_pct': float((np.mean(ai_means) - np.mean(greedy_means)) / max(np.mean(greedy_means), 1e-10) * 100),
+        }
+
+    all_ai = [d['ai_mean_kl'] for d in by_domain.values()]
+    all_greedy = [d['greedy_mean_kl'] for d in by_domain.values()]
+    all_rand = [d['random_mean_kl'] for d in by_domain.values()]
+
+    return {
+        'task': 'Domain',
+        'budget': budget,
+        'by_domain': by_domain,
+        'aggregate': {
+            'ai_mean_kl': float(np.mean(all_ai)),
+            'greedy_mean_kl': float(np.mean(all_greedy)),
+            'random_mean_kl': float(np.mean(all_rand)),
+            'ai_vs_random_pct': float((np.mean(all_ai) - np.mean(all_rand)) / max(np.mean(all_rand), 1e-10) * 100),
+            'ai_vs_greedy_pct': float((np.mean(all_ai) - np.mean(all_greedy)) / max(np.mean(all_greedy), 1e-10) * 100),
+        }
+    }
+
+
+def _save_graph_for_prompt(
+    model: ReplacementModel,
+    prompt: str,
+    slug: str,
+    output_path: Path,
+) -> None:
+    """Run attribution for a prompt and save raw graph files. No-op if create_graph_files unavailable."""
+    if create_graph_files is None:
+        logger.warning("create_graph_files not available; skipping graph export")
+        return
+    try:
+        raw_graph = attribute(
+            prompt=prompt, model=model, max_n_logits=5,
+            desired_logit_prob=0.9, batch_size=256, verbose=False
+        )
+        create_graph_files(raw_graph, slug, str(output_path))
+        logger.info(f"Graph saved: {output_path / slug}")
+    except Exception as e:
+        logger.warning(f"Graph export failed for {slug}: {e}")
+
+
+def _parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        description="Run Active Circuit Discovery experiments on Gemma and/or Llama."
     )
-    logger.info("Model loaded.")
+    parser.add_argument(
+        "--model",
+        choices=["gemma", "llama", "both"],
+        default="both",
+        help="Model to run (default: both)",
+    )
+    parser.add_argument(
+        "--experiment",
+        choices=["ioi", "steering", "multistep", "domain", "all"],
+        default="all",
+        help="Experiment type to run (default: all)",
+    )
+    return parser.parse_args()
 
-    results_dir = Path(__file__).parent.parent.parent / 'results'
+
+def main():
+    args = _parse_args()
+
+    models_to_run = ["gemma", "llama"] if args.model == "both" else [args.model]
+    experiments_to_run = (
+        ["ioi", "steering", "multistep", "domain"]
+        if args.experiment == "all"
+        else [args.experiment]
+    )
+
+    base_dir = Path(__file__).parent.parent.parent
+    results_dir = base_dir / "results"
+    graphs_dir = results_dir / "graphs"
     results_dir.mkdir(exist_ok=True)
+    graphs_dir.mkdir(exist_ok=True)
 
-    # IOI experiment
-    logger.info("Running IOI experiment...")
-    t0 = time.time()
-    ioi_results = run_ioi_experiment(model, IOI_PROMPTS, budget=20)
-    ioi_results['elapsed_seconds'] = time.time() - t0
-    ioi_results['model'] = 'google/gemma-2-2b'
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    with open(results_dir / 'ioi_results.json', 'w') as f:
-        json.dump(ioi_results, f, indent=2)
-    logger.info(f"IOI results saved. AI vs Random: {ioi_results['aggregate']['ai_vs_random_pct']:+.1f}%")
+    for model_key in models_to_run:
+        cfg = MODEL_CONFIG[model_key]
+        logger.info(f"Loading {cfg['model_name']} with transcoders ({cfg['transcoder_set']})...")
+        model = ReplacementModel.from_pretrained(
+            model_name=cfg["model_name"],
+            transcoder_set=cfg["transcoder_set"],
+            backend="transformerlens",
+            device=device,
+            dtype=torch.float32,
+        )
+        logger.info("Model loaded.")
 
-    # Steering experiment
-    logger.info("Running steering experiment...")
-    t0 = time.time()
-    steer_results = run_steering_experiment(model, STEERING_PROMPTS)
-    steer_results['elapsed_seconds'] = time.time() - t0
-    steer_results['model'] = 'google/gemma-2-2b'
+        if "ioi" in experiments_to_run:
+            logger.info(f"Running IOI experiment [{model_key}]...")
+            _save_graph_for_prompt(
+                model, IOI_PROMPTS[0], f"ioi_{model_key}", graphs_dir
+            )
+            t0 = time.time()
+            ioi_results = run_ioi_experiment(model, IOI_PROMPTS, budget=20)
+            ioi_results["elapsed_seconds"] = time.time() - t0
+            ioi_results["model"] = cfg["model_name"]
+            out_path = results_dir / f"ioi_results_{model_key}.json"
+            with open(out_path, "w") as f:
+                json.dump(ioi_results, f, indent=2)
+            logger.info(f"IOI results saved to {out_path}. AI vs Random: {ioi_results['aggregate']['ai_vs_random_pct']:+.1f}%")
 
-    with open(results_dir / 'steering_results.json', 'w') as f:
-        json.dump(steer_results, f, indent=2)
-    logger.info("Steering results saved.")
+        if "steering" in experiments_to_run:
+            logger.info(f"Running steering experiment [{model_key}]...")
+            _save_graph_for_prompt(
+                model, STEERING_PROMPTS[0], f"steering_{model_key}", graphs_dir
+            )
+            t0 = time.time()
+            steer_results = run_steering_experiment(model, STEERING_PROMPTS)
+            steer_results["elapsed_seconds"] = time.time() - t0
+            steer_results["model"] = cfg["model_name"]
+            out_path = results_dir / f"steering_results_{model_key}.json"
+            with open(out_path, "w") as f:
+                json.dump(steer_results, f, indent=2)
+            logger.info(f"Steering results saved to {out_path}.")
 
-    # Multi-step reasoning experiment
-    logger.info("Running multi-step reasoning experiment...")
-    t0 = time.time()
-    ms_results = run_multistep_experiment(model, MULTISTEP_PROMPTS, budget=20)
-    ms_results['elapsed_seconds'] = time.time() - t0
-    ms_results['model'] = 'google/gemma-2-2b'
+        if "multistep" in experiments_to_run:
+            logger.info(f"Running multi-step experiment [{model_key}]...")
+            _save_graph_for_prompt(
+                model, MULTISTEP_PROMPTS[0], f"multistep_{model_key}", graphs_dir
+            )
+            t0 = time.time()
+            ms_results = run_multistep_experiment(model, MULTISTEP_PROMPTS, budget=20)
+            ms_results["elapsed_seconds"] = time.time() - t0
+            ms_results["model"] = cfg["model_name"]
+            out_path = results_dir / f"multistep_results_{model_key}.json"
+            with open(out_path, "w") as f:
+                json.dump(ms_results, f, indent=2)
+            logger.info(f"Multi-step results saved to {out_path}.")
 
-    with open(results_dir / 'multistep_results.json', 'w') as f:
-        json.dump(ms_results, f, indent=2)
-    logger.info("Multi-step results saved.")
+        if "domain" in experiments_to_run:
+            first_domain_prompt = DOMAIN_PROMPTS["geography"][0]
+            logger.info(f"Running domain experiment [{model_key}]...")
+            _save_graph_for_prompt(
+                model, first_domain_prompt, f"domain_{model_key}", graphs_dir
+            )
+            t0 = time.time()
+            domain_results = run_domain_experiment(model, DOMAIN_PROMPTS, budget=20)
+            domain_results["elapsed_seconds"] = time.time() - t0
+            domain_results["model"] = cfg["model_name"]
+            out_path = results_dir / f"domain_results_{model_key}.json"
+            with open(out_path, "w") as f:
+                json.dump(domain_results, f, indent=2)
+            logger.info(f"Domain results saved to {out_path}.")
 
-    # Print summary
+    # Print summary for last model run (or first if multiple)
     print("\n" + "=" * 70)
     print("EXPERIMENT SUMMARY")
     print("=" * 70)
-    agg = ioi_results['aggregate']
-    print(f"\nIOI (5 prompts, budget=20):")
-    print(f"  AI mean KL:      {agg['ai_mean_kl']:.6f} +/- {agg['ai_std_kl']:.6f}")
-    print(f"  Greedy mean KL:  {agg['greedy_mean_kl']:.6f} +/- {agg['greedy_std_kl']:.6f}")
-    print(f"  Random mean KL:  {agg['random_mean_kl']:.6f} +/- {agg['random_std_kl']:.6f}")
-    print(f"  AI vs Random:    {agg['ai_vs_random_pct']:+.1f}%")
-    print(f"  AI vs Greedy:    {agg['ai_vs_greedy_pct']:+.1f}%")
-    print(f"  Oracle efficiency: AI={agg['ai_oracle_efficiency']:.1f}% "
-          f"Greedy={agg['greedy_oracle_efficiency']:.1f}% "
-          f"Random={agg['random_oracle_efficiency']:.1f}%")
+    for model_key in models_to_run:
+        cfg = MODEL_CONFIG[model_key]
+        print(f"\n--- {cfg['model_name']} ---")
+        if "ioi" in experiments_to_run:
+            p = results_dir / f"ioi_results_{model_key}.json"
+            if p.exists():
+                with open(p) as f:
+                    r = json.load(f)
+                agg = r["aggregate"]
+                print(f"\nIOI (5 prompts, budget=20):")
+                print(f"  AI mean KL:      {agg['ai_mean_kl']:.6f} +/- {agg['ai_std_kl']:.6f}")
+                print(f"  Greedy mean KL:  {agg['greedy_mean_kl']:.6f} +/- {agg['greedy_std_kl']:.6f}")
+                print(f"  Random mean KL:  {agg['random_mean_kl']:.6f} +/- {agg['random_std_kl']:.6f}")
+                print(f"  AI vs Random:    {agg['ai_vs_random_pct']:+.1f}%")
+                print(f"  AI vs Greedy:    {agg['ai_vs_greedy_pct']:+.1f}%")
+                print(f"  Oracle efficiency: AI={agg['ai_oracle_efficiency']:.1f}% "
+                      f"Greedy={agg['greedy_oracle_efficiency']:.1f}% "
+                      f"Random={agg['random_oracle_efficiency']:.1f}%")
+        if "steering" in experiments_to_run:
+            p = results_dir / f"steering_results_{model_key}.json"
+            if p.exists():
+                with open(p) as f:
+                    r = json.load(f)
+                n_changed = n_total = 0
+                for pr in r["per_prompt"]:
+                    for feat in pr["features"]:
+                        for mult in [5.0, 10.0]:
+                            key = f"mult_{mult}"
+                            if key in feat:
+                                n_total += 1
+                                if feat[key]["prediction_changed"]:
+                                    n_changed += 1
+                print(f"\nSteering ({len(STEERING_PROMPTS)} prompts):")
+                print(f"  Prediction changes: {n_changed}/{n_total} ({n_changed/max(n_total,1)*100:.0f}%)")
+        if "multistep" in experiments_to_run:
+            p = results_dir / f"multistep_results_{model_key}.json"
+            if p.exists():
+                with open(p) as f:
+                    r = json.load(f)
+                ms_agg = r["aggregate"]
+                print(f"\nMulti-step Reasoning ({len(MULTISTEP_PROMPTS)} prompts, budget=20):")
+                print(f"  AI mean KL:      {ms_agg['ai_mean_kl']:.6f} +/- {ms_agg['ai_std_kl']:.6f}")
+                print(f"  Greedy mean KL:  {ms_agg['greedy_mean_kl']:.6f} +/- {ms_agg['greedy_std_kl']:.6f}")
+                print(f"  Random mean KL:  {ms_agg['random_mean_kl']:.6f} +/- {ms_agg['random_std_kl']:.6f}")
+                print(f"  AI vs Random:    {ms_agg['ai_vs_random_pct']:+.1f}%")
+                print(f"  AI vs Greedy:    {ms_agg['ai_vs_greedy_pct']:+.1f}%")
+                print(f"  Oracle efficiency: AI={ms_agg['ai_oracle_efficiency']:.1f}%")
+                for pr in r["per_prompt"]:
+                    ld = pr["layer_distribution"]
+                    print(f"    '{pr['prompt'][:50]}...' -> '{pr['clean_prediction']}' "
+                          f"[early={ld['early']}, mid={ld['mid']}, late={ld['late']}]")
+        if "domain" in experiments_to_run:
+            p = results_dir / f"domain_results_{model_key}.json"
+            if p.exists():
+                with open(p) as f:
+                    r = json.load(f)
+                agg = r["aggregate"]
+                print(f"\nDomain (5 domains, 2 prompts each):")
+                print(f"  AI mean KL:      {agg['ai_mean_kl']:.6f}")
+                print(f"  Greedy mean KL:  {agg['greedy_mean_kl']:.6f}")
+                print(f"  Random mean KL:  {agg['random_mean_kl']:.6f}")
+                print(f"  AI vs Random:    {agg['ai_vs_random_pct']:+.1f}%")
+                print(f"  AI vs Greedy:    {agg['ai_vs_greedy_pct']:+.1f}%")
+                for domain, d in r["by_domain"].items():
+                    ld = d["layer_distribution"]
+                    print(f"    {domain}: [early={ld['early']}, mid={ld['mid']}, late={ld['late']}]")
 
-    n_changed = 0
-    n_total = 0
-    for pr in steer_results['per_prompt']:
-        for feat in pr['features']:
-            for mult in [5.0, 10.0]:
-                key = f'mult_{mult}'
-                if key in feat:
-                    n_total += 1
-                    if feat[key]['prediction_changed']:
-                        n_changed += 1
-    print(f"\nSteering ({len(STEERING_PROMPTS)} prompts):")
-    print(f"  Prediction changes: {n_changed}/{n_total} ({n_changed/n_total*100:.0f}%)")
 
-    ms_agg = ms_results['aggregate']
-    print(f"\nMulti-step Reasoning ({len(MULTISTEP_PROMPTS)} prompts, budget=20):")
-    print(f"  AI mean KL:      {ms_agg['ai_mean_kl']:.6f} +/- {ms_agg['ai_std_kl']:.6f}")
-    print(f"  Greedy mean KL:  {ms_agg['greedy_mean_kl']:.6f} +/- {ms_agg['greedy_std_kl']:.6f}")
-    print(f"  Random mean KL:  {ms_agg['random_mean_kl']:.6f} +/- {ms_agg['random_std_kl']:.6f}")
-    print(f"  AI vs Random:    {ms_agg['ai_vs_random_pct']:+.1f}%")
-    print(f"  AI vs Greedy:    {ms_agg['ai_vs_greedy_pct']:+.1f}%")
-    print(f"  Oracle efficiency: AI={ms_agg['ai_oracle_efficiency']:.1f}%")
-    for r in ms_results['per_prompt']:
-        ld = r['layer_distribution']
-        print(f"    '{r['prompt'][:50]}...' -> '{r['clean_prediction']}' "
-              f"[early={ld['early']}, mid={ld['mid']}, late={ld['late']}]")
-
-
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

@@ -62,15 +62,13 @@ The \ACD{} framework is packaged as a Docker container targeting the
 NVIDIA DGX Spark platform (GB10 GPU, 128~GB unified memory, CUDA~12.8,
 aarch64 architecture).
 
-\begin{lstlisting}[language=bash,caption={Docker build and run for DGX Spark.}]
+\begin{lstlisting}[language=bash,caption={Docker build and run for DGX Spark.},breaklines=true]
 # Build
 docker compose build active-circuit-discovery
-
 # Run experiments
 docker compose run active-circuit-discovery \
   python -m src.experiments.run_real_experiments
-
-# Results are saved to results/ directory
+# Results saved to results/
 \end{lstlisting}
 
 The \texttt{docker-compose.yml} in the repository root provides volume
@@ -89,37 +87,30 @@ during the implementation and validation process.
   \centering
   \caption{Summary of critical API fixes applied to the \ACD{} codebase.}
   \label{tab:fixes}
-  \small
-  \begin{tabularx}{\textwidth}{llXX}
+  \footnotesize
+  \newcolumntype{L}{>{\raggedright\arraybackslash}X}
+  \begin{tabularx}{\textwidth}{l l L L}
     \toprule
-    File & Issue & Error & Fix Applied \\
+    \textbf{File} & \textbf{Issue} & \textbf{Error} & \textbf{Fix} \\
     \midrule
-    \texttt{circuit\_tracer\_backend.py} & LogitTarget attribute &
-      \texttt{.token} attribute does not exist on \texttt{LogitTarget} &
-      Changed to \texttt{.token\_str} (correct attribute name) \\
-    \texttt{circuit\_tracer\_backend.py} & PruneResult handling &
-      Assumed \texttt{prune\_result.graph} exists; \texttt{PruneResult}
-      is a namedtuple with \texttt{node\_mask} and \texttt{edge\_mask} &
-      Rewrote to apply masks to raw graph's adjacency matrix \\
-    \texttt{intervention\_engine.py} & Model access &
-      \texttt{model.model.cfg} fails because \texttt{ReplacementModel}
-      inherits directly from \texttt{HookedTransformer} &
-      Changed to \texttt{model.cfg} (direct access) \\
-    \texttt{intervention\_engine.py} & Intervention method &
-      Used \texttt{run\_with\_hooks} with residual stream hooks instead
-      of transcoder-level intervention &
-      Replaced with \texttt{feature\_intervention} API for correct
-      causal effects \\
-    \texttt{runner.py} & Fake validation data &
-      \texttt{\_generate\_prediction\_test\_data()} used
-      \texttt{np.random.beta()} and \texttt{np.random.normal()} &
-      Removed; replaced with real measurements from
-      \texttt{feature\_intervention} \\
+    \texttt{ct\_backend.py} & LogitTarget attr.\ &
+      \texttt{.token} does not exist on \texttt{LogitTarget} &
+      Changed to \texttt{.token\_str} \\
+    \texttt{ct\_backend.py} & PruneResult &
+      Assumed \texttt{prune\_result.graph} exists &
+      Apply masks to raw adjacency matrix \\
+    \texttt{interv\_engine.py} & Model access &
+      \texttt{model.model.cfg} fails &
+      Use \texttt{model.cfg} directly \\
+    \texttt{interv\_engine.py} & Intervention &
+      Used \texttt{run\_with\_hooks} (residual stream) &
+      Use \texttt{feature\_intervention} API \\
+    \texttt{runner.py} & Fake data &
+      \texttt{np.random.beta/normal} for validation &
+      Real measurements only \\
     \texttt{pomdp\_agent.py} & Skip bias &
-      POMDP agent selected ``skip'' action 90\% of the time due to
-      miscalibrated action space &
-      Replaced POMDP with custom ActiveInferenceSelector using
-      uncertainty-weighted scoring \\
+      ``skip'' action 90\% of the time &
+      Custom ActiveInferenceSelector \\
     \bottomrule
   \end{tabularx}
 \end{table*}

@@ -50,7 +50,7 @@ this approach to a one-layer MLP with 4,096-dimensional activations, recovering 
 units~\cite{Bricken2023}. Templeton et al.\ extended the analysis to SAE features in
 Claude models, recovering structured emotional and semantic concepts~\cite{Templeton2024}.
 
-Anthropic's \texttt{circuit-tracer} library~\cite{marks2024sparse} provides
+Anthropic's \texttt{circuit-tracer} library~\cite{Anthropic2025CT,Ameisen2025} provides
 an end-to-end pipeline for feature-level attribution: transcoders decompose
 MLP activations into sparse features, and Edge Attribution Patching
 constructs a directed graph of feature interactions.  The
@@ -73,12 +73,12 @@ $\FE = \KL{q(\vect{s})}{p(\vect{s}\mid\vect{o})} \geq
 For planning and action selection, Da Costa et al.\ extended this to the Expected Free
 Energy, defined for a policy $\pi$ over future time steps $\tau > t$
 as~\cite{DaCosta2020}:
-\begin{equation}
+\begin{multline}
   \EFE(\pi) = \sum_{\tau > t}
-    \underbrace{\E[\log p(\vect{o}_\tau) - \log q(\vect{o}_\tau \mid \pi)]}_{\text{pragmatic value}}
-    - \underbrace{\E[\log q(\vect{s}_\tau \mid \pi) - \log q(\vect{s}_\tau \mid \vect{o}_\tau,\pi)]}_{\text{epistemic value}}.
+    \underbrace{\E\!\bigl[\log p(\vect{o}_\tau) - \log q(\vect{o}_\tau|\pi)\bigr]}_{\text{pragmatic}} \\
+    - \underbrace{\E\!\bigl[\log q(\vect{s}_\tau|\pi) - \log q(\vect{s}_\tau|\vect{o}_\tau,\pi)\bigr]}_{\text{epistemic}}
   \label{eq:efe}
-\end{equation}
+\end{multline}
 The pragmatic value measures expected reward (preference satisfaction), while the
 epistemic value measures expected information gain (uncertainty reduction). Policies are
 selected according to a Boltzmann distribution over negative \EFE\ values.
@@ -111,15 +111,15 @@ this uncertainty~-- analogous to Bayesian experimental design~\cite{MacKay2003}.
   \centering
   \caption{Comparison of automated circuit discovery methods.}
   \label{tab:method_comparison}
-  \begin{tabularx}{\columnwidth}{lXXXX}
+  \footnotesize
+  \begin{tabularx}{\columnwidth}{l c c c c}
     \toprule
-    Method & Uncertainty & Adaptive & Online & Testable \\
-           & Modelling & Selection & Learning & Predictions \\
+    \textbf{Method} & \textbf{Uncert.} & \textbf{Adapt.} & \textbf{Online} & \textbf{Test.} \\
     \midrule
     \ACDC~\cite{Conmy2023}   & No  & No  & No  & No \\
     \EAP~\cite{Syed2023}     & No  & No  & No  & No \\
-    Grad. Ranking            & No  & No  & No  & No \\
-    \textbf{\ACD (ours)}     & Yes & Yes & Yes & Yes \\
+    Grad.\ Ranking           & No  & No  & No  & No \\
+    \textbf{\ACD{} (ours)}   & Yes & Yes & Yes & Yes \\
     \bottomrule
   \end{tabularx}
 \end{table}

@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.28 (TeX Live 2025) (preloaded format=pdflatex 2026.2.28)  28 FEB 2026 18:55
+This is pdfTeX, Version 3.141592653-2.6-1.40.28 (TeX Live 2025) (preloaded format=pdflatex 2026.2.28)  28 FEB 2026 20:58
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -654,6 +654,9 @@ Document Style algorithmicx 1.2 - a greatly improved `algorithmic' style
 \ALG@tmplength=\skip69
 )
 Document Style - pseudocode environments for use with the `algorithmicx' style
+) (/home/sharaths/.TinyTeX/texmf-dist/tex/latex/url/url.sty
+\Urlmuskip=\muskip18
+Package: url 2013/09/16  ver 3.4  Verb mode for urls, etc.
 ) (/home/sharaths/.TinyTeX/texmf-dist/tex/latex/hyperref/hyperref.sty
 Package: hyperref 2026-01-29 v7.01p Hypertext links for LaTeX
  (/home/sharaths/.TinyTeX/texmf-dist/tex/generic/iftex/iftex.sty
@@ -714,10 +717,6 @@ Package hyperref Info: Backreferencing OFF on input line 4221.
 Package hyperref Info: Implicit mode ON; LaTeX internals redefined.
 Package hyperref Info: Bookmarks ON on input line 4468.
 \c@Hy@tempcnt=\count357
- (/home/sharaths/.TinyTeX/texmf-dist/tex/latex/url/url.sty
-\Urlmuskip=\muskip18
-Package: url 2013/09/16  ver 3.4  Verb mode for urls, etc.
-)
 LaTeX Info: Redefining \url on input line 4807.
 \XeTeXLinkMargin=\dimen341
  (/home/sharaths/.TinyTeX/texmf-dist/tex/generic/bitset/bitset.sty
@@ -810,7 +809,7 @@ Package: cite 2015/02/27  v 5.5
 \c@definition=\count372
 \c@proposition=\count373
 \c@theorem=\count374
-LaTeX Font Info:    Trying to load font information for T1+lmr on input line 86.
+LaTeX Font Info:    Trying to load font information for T1+lmr on input line 87.
  (/home/sharaths/.TinyTeX/texmf-dist/tex/latex/lm/t1lmr.fd
 File: t1lmr.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 ) (/home/sharaths/.TinyTeX/texmf-dist/tex/latex/l3backend/l3backend-pdftex.def
@@ -819,33 +818,33 @@ File: l3backend-pdftex.def 2025-10-09 L3 backend support: PDF output (pdfTeX)
 ) (./paper.aux)
 \openout1 = `paper.aux'.
 
-LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 86.
-LaTeX Font Info:    ... okay on input line 86.
-LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 86.
-LaTeX Font Info:    ... okay on input line 86.
-LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 86.
-LaTeX Font Info:    ... okay on input line 86.
-LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 86.
-LaTeX Font Info:    ... okay on input line 86.
-LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 86.
-LaTeX Font Info:    ... okay on input line 86.
-LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 86.
-LaTeX Font Info:    ... okay on input line 86.
-LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 86.
-LaTeX Font Info:    ... okay on input line 86.
-LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 86.
-LaTeX Font Info:    ... okay on input line 86.
-LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 86.
-LaTeX Font Info:    ... okay on input line 86.
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 87.
+LaTeX Font Info:    ... okay on input line 87.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 87.
+LaTeX Font Info:    ... okay on input line 87.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 87.
+LaTeX Font Info:    ... okay on input line 87.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 87.
+LaTeX Font Info:    ... okay on input line 87.
+LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 87.
+LaTeX Font Info:    ... okay on input line 87.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 87.
+LaTeX Font Info:    ... okay on input line 87.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 87.
+LaTeX Font Info:    ... okay on input line 87.
+LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 87.
+LaTeX Font Info:    ... okay on input line 87.
+LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 87.
+LaTeX Font Info:    ... okay on input line 87.
 
 -- Lines per column: 58 (exact).
-LaTeX Info: Redefining \microtypecontext on input line 86.
-Package microtype Info: Applying patch `item' on input line 86.
-Package microtype Info: Applying patch `toc' on input line 86.
-Package microtype Info: Applying patch `eqnum' on input line 86.
-Package microtype Info: Applying patch `footnote' on input line 86.
-Package microtype Info: Applying patch `verbatim' on input line 86.
-LaTeX Info: Redefining \microtypesetup on input line 86.
+LaTeX Info: Redefining \microtypecontext on input line 87.
+Package microtype Info: Applying patch `item' on input line 87.
+Package microtype Info: Applying patch `toc' on input line 87.
+Package microtype Info: Applying patch `eqnum' on input line 87.
+Package microtype Info: Applying patch `footnote' on input line 87.
+Package microtype Info: Applying patch `verbatim' on input line 87.
+LaTeX Info: Redefining \microtypesetup on input line 87.
 Package microtype Info: Generating PDF output.
 Package microtype Info: Character protrusion enabled (level 2).
 Package microtype Info: Using default protrusion set `alltext'.
@@ -866,7 +865,7 @@ File: epstopdf-sys.cfg 2010/07/13 v1.3 Configuration of (r)epstopdf for TeX Live
 ))
 Package pgfplots notification 'compat/show suggested version=true': document has been generated with the most recent feature set (\pgfplotsset{compat=1.18}).
 
-Package hyperref Info: Link coloring ON on input line 86.
+Package hyperref Info: Link coloring ON on input line 87.
 (./paper.out) (./paper.out)
 \@outlinefile=\write4
 \openout4 = `paper.out'.
@@ -887,41 +886,41 @@ Package microtype Info: Loading generic protrusion settings for font family
 (microtype)             `lmtt' (encoding: T1).
 (microtype)             For optimal results, create family-specific settings.
 (microtype)             See the microtype manual for details.
-LaTeX Font Info:    Trying to load font information for OT1+lmr on input line 9.
+LaTeX Font Info:    Trying to load font information for OT1+lmr on input line 21.
  (/home/sharaths/.TinyTeX/texmf-dist/tex/latex/lm/ot1lmr.fd
 File: ot1lmr.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 )
-LaTeX Font Info:    Trying to load font information for OML+lmm on input line 9.
+LaTeX Font Info:    Trying to load font information for OML+lmm on input line 21.
  (/home/sharaths/.TinyTeX/texmf-dist/tex/latex/lm/omllmm.fd
 File: omllmm.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 )
-LaTeX Font Info:    Trying to load font information for OMS+lmsy on input line 9.
+LaTeX Font Info:    Trying to load font information for OMS+lmsy on input line 21.
  (/home/sharaths/.TinyTeX/texmf-dist/tex/latex/lm/omslmsy.fd
 File: omslmsy.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 )
-LaTeX Font Info:    Trying to load font information for OMX+lmex on input line 9.
+LaTeX Font Info:    Trying to load font information for OMX+lmex on input line 21.
  (/home/sharaths/.TinyTeX/texmf-dist/tex/latex/lm/omxlmex.fd
 File: omxlmex.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 )
 LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <9> on input line 9.
+(Font)              <9> on input line 21.
 LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <6> on input line 9.
+(Font)              <6> on input line 21.
 LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <5> on input line 9.
-LaTeX Font Info:    Trying to load font information for U+msa on input line 9.
+(Font)              <5> on input line 21.
+LaTeX Font Info:    Trying to load font information for U+msa on input line 21.
  (/home/sharaths/.TinyTeX/texmf-dist/tex/latex/amsfonts/umsa.fd
 File: umsa.fd 2013/01/14 v3.01 AMS symbols A
 ) (/home/sharaths/.TinyTeX/texmf-dist/tex/latex/microtype/mt-msa.cfg
 File: mt-msa.cfg 2006/02/04 v1.1 microtype config. file: AMS symbols (a) (RS)
 )
-LaTeX Font Info:    Trying to load font information for U+msb on input line 9.
+LaTeX Font Info:    Trying to load font information for U+msb on input line 21.
  (/home/sharaths/.TinyTeX/texmf-dist/tex/latex/amsfonts/umsb.fd
 File: umsb.fd 2013/01/14 v3.01 AMS symbols B
 ) (/home/sharaths/.TinyTeX/texmf-dist/tex/latex/microtype/mt-msb.cfg
 File: mt-msb.cfg 2005/06/01 v1.0 microtype config. file: AMS symbols (b) (RS)
 ))
-Underfull \hbox (badness 7081) in paragraph at lines 105--107
+Underfull \hbox (badness 7081) in paragraph at lines 106--108
 []\T1/lmr/bx/it/9 (+20) Abstract\T1/lmr/bx/sc/9 (+20) ---Mechanistic in-ter-pretabil-ity seeks to
  []
 
@@ -936,42 +935,18 @@ LaTeX Font Info:    External font `lmex10' loaded for size
  [1{/home/sharaths/.TinyTeX/texmf-var/fonts/map/pdftex/updmap/pdftex.map}{/home/sharaths/.TinyTeX/texmf-dist/fonts/enc/dvips/lm/lm-ec.enc}
 
 
-{/home/sharaths/.TinyTeX/texmf-dist/fonts/enc/dvips/lm/lm-mathsy.enc}{/home/sharaths/.TinyTeX/texmf-dist/fonts/enc/dvips/lm/lm-rm.enc}{/home/sharaths/.TinyTeX/texmf-dist/fonts/enc/dvips/lm/lm-mathit.enc}]
-Underfull \hbox (badness 1622) in paragraph at lines 58--63
-\T1/lmr/m/n/10 (+20) the \T1/lmtt/m/n/10 feature_intervention \T1/lmr/m/n/10 (+20) API for causally cor-rect
- []
-
-) (./sections/background.tex
-Underfull \hbox (badness 3838) in paragraph at lines 53--61
-[]\T1/lmr/m/n/10 (+20) Anthropic's \T1/lmtt/m/n/10 circuit-tracer \T1/lmr/m/n/10 (+20) li-brary [[][]14[][]] pro-vides
- []
-
-
-Underfull \hbox (badness 3568) in paragraph at lines 53--61
-\T1/lmr/m/n/10 (+20) an end-to-end pipeline for feature-level at-tri-bu-tion:
+{/home/sharaths/.TinyTeX/texmf-dist/fonts/enc/dvips/lm/lm-rm.enc}{/home/sharaths/.TinyTeX/texmf-dist/fonts/enc/dvips/lm/lm-mathsy.enc}{/home/sharaths/.TinyTeX/texmf-dist/fonts/enc/dvips/lm/lm-mathit.enc}]) (./sections/background.tex
+Underfull \hbox (badness 1490) in paragraph at lines 53--61
+[]\T1/lmr/m/n/10 (+20) Anthropic's \T1/lmtt/m/n/10 circuit-tracer \T1/lmr/m/n/10 (+20) li-brary [[][]14[][]], [[][]15[][]] pro-
  []
 
 [2]
-Overfull \hbox (86.58447pt too wide) detected at line 81
-[][][][]\OMS/lmsy/m/n/10 G\OT1/lmr/m/n/10 (\OML/lmm/m/it/10 ^^Y\OT1/lmr/m/n/10 ) = [] [] \OMS/lmsy/m/n/10 ^^@ [] \OML/lmm/m/it/10 :
- []
-
 Package microtype Info: Character `029' is missing
 (microtype)             in font `T1/lmr/m/sc/8'.
 (microtype)             Ignoring protrusion settings for this character.
 
-Overfull \hbox (8.81834pt too wide) in paragraph at lines 124--124
-[]|\T1/lmr/m/n/8 (-20) Uncertainty| 
- []
-
-
-Overfull \hbox (1.88365pt too wide) in paragraph at lines 124--124
-[]|\T1/lmr/m/n/8 (-20) Modelling| 
- []
-
-
-Overfull \hbox (6.67984pt too wide) in paragraph at lines 124--124
-[]|\T1/lmr/m/n/8 (-20) Predictions| 
+Underfull \hbox (badness 10000) in alignment at lines 124--124
+[][][][][] 
  []
 
 ) (./sections/methodology.tex (./figures/architecture.tex)
@@ -990,156 +965,109 @@ Underfull \hbox (badness 4378) in paragraph at lines 29--34
  []
 
 [3{/home/sharaths/.TinyTeX/texmf-dist/fonts/enc/dvips/lm/lm-mathex.enc}] (./figures/efe_pipeline.tex) (./figures/circuit_flow.tex))
-Underfull \hbox (badness 4303) in paragraph at lines 176--129
+Underfull \hbox (badness 4303) in paragraph at lines 176--130
 []\T1/lmr/m/n/10 (+20) The \T1/lmtt/m/n/10 feature_intervention \T1/lmr/m/n/10 (+20) API cor-rectly prop-a-
  []
 
 (./sections/experimental_setup.tex
-Underfull \hbox (badness 3118) in paragraph at lines 3--8
-\T1/lmr/m/n/10 (+20) 2304-dim, 8 heads. Transcoders from Gem-maS-cope
+Underfull \hbox (badness 10000) in paragraph at lines 5--8
+[]\T1/lmr/bx/n/10 (+20) Gemma-2-2B \T1/lmr/m/n/10 (+20) [[][]27[][]]: 26 lay-ers, 2304-dim,
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 5--8
+\T1/lmr/m/n/10 (+20) 8 heads. Transcoders from Gem-maS-cope
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 8--11
+[]\T1/lmr/bx/n/10 (+20) Llama-3.2-1B \T1/lmr/m/n/10 (+20) [[][]33[][]]: 16 lay-ers, 2048-dim,
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 8--11
+\T1/lmr/m/n/10 (+20) 32 heads with GQA. Transcoders from
  []
 
 [4]
-Underfull \hbox (badness 1874) in paragraph at lines 57--59
+Underfull \hbox (badness 1874) in paragraph at lines 83--85
 []\T1/lmr/bx/n/10 (+20) Oracle ef-fi-ciency: $[]\OML/lmm/m/it/10 =[] \OMS/lmsy/m/n/10 ^^B
  []
 
 )
-Underfull \hbox (badness 10000) in paragraph at lines 88--134
+Underfull \hbox (badness 10000) in paragraph at lines 114--135
 []\T1/lmr/m/n/10 (+20) All code is avail-able at [][]$https : / / github . com /
  []
 
-(./sections/results.tex
-Overfull \hbox (38.21097pt too wide) in paragraph at lines 15--26
- [][] 
+
+Underfull \hbox (badness 10000) in paragraph at lines 114--135
+\T1/lmtt/m/n/10 --experiment ioi|steering|multistep|domain|all\T1/lmr/m/n/10 (+20) .
  []
 
+
+Underfull \hbox (badness 5036) in paragraph at lines 114--135
+\T1/lmr/m/n/10 (+20) Docker im-ages are pro-vided for the DGX Spark
+ []
+
+(./sections/results.tex
 Package microtype Info: Character `029' is missing
 (microtype)             in font `T1/lmr/m/sc/9'.
 (microtype)             Ignoring protrusion settings for this character.
-(./figures/cumulative_kl.tex) (./figures/ioi_comparison.tex
-Package pgfplots info on input line 20: Using 'lua backend=false' for axis: x coord trafo unsupported.
-) [5] (./figures/steering_heatmap.tex
-Package pgfplots info on input line 16: Using 'lua backend=false' for axis: ymode=log unsupported (yet).
-)
-Underfull \hbox (badness 3525) in paragraph at lines 113--115
+ (./figures/cumulative_kl.tex
+
+Package pgfplots Warning: Axis range for axis y is approximately empty; enlarging it (it is [0.0:0.0]) on input line 26.
+
+ [warning /pgfplots/warning/approx empty range enlarged]
+) (./figures/ioi_comparison.tex
+Package pgfplots info on input line 26: Using 'lua backend=false' for axis: x coord trafo unsupported.
+) (./figures/steering_heatmap.tex
+
+Package pgfplots Warning: Axis range for axis y is approximately empty; enlarging it (it is [0.0:0.0]) on input line 24.
+
+ [warning /pgfplots/warning/approx empty range enlarged]
+) [5]
+Underfull \hbox (badness 3525) in paragraph at lines 116--118
 []\T1/lmr/m/n/10 (+20) Attribution graph gen-er-a-tion takes $[]\OT1/lmr/m/n/10 (+20) 18$\T1/lmr/m/n/10 (+20) s; each
  []
 
 (./figures/layer_distribution.tex
 Package pgfplots info on input line 21: Using 'lua backend=false' for axis: x coord trafo unsupported.
-)
-Overfull \hbox (28.56697pt too wide) in paragraph at lines 201--210
- [][] 
- []
-
-[6]) (./sections/discussion.tex
-Underfull \hbox (badness 2057) in paragraph at lines 52--56
-\T1/lmr/m/n/10 (+20) 3.2-1B was not com-pleted due to transcoder avail-
- []
-
-[7]) (./sections/conclusion.tex) (./sections/appendix.tex (/home/sharaths/.TinyTeX/texmf-dist/tex/latex/listings/lstlang1.sty
+) [6] (./figures/domain_layers.tex
+Package pgfplots info on input line 23: Using 'lua backend=false' for axis: x coord trafo unsupported.
+) [7]) (./sections/discussion.tex) [8] (./sections/conclusion.tex) (./sections/appendix.tex (/home/sharaths/.TinyTeX/texmf-dist/tex/latex/listings/lstlang1.sty
 File: lstlang1.sty 2025/11/14 1.11b listings language file
 ) (/home/sharaths/.TinyTeX/texmf-dist/tex/latex/listings/lstlang1.sty
 File: lstlang1.sty 2025/11/14 1.11b listings language file
 )
 Package hyperref Info: bookmark level for unknown lstlisting defaults to 0 on input line 65.
- [8]
-Underfull \hbox (badness 6893) in paragraph at lines 124--124
-[]|\T1/lmr/m/n/9 (+20) Assumed \T1/lmtt/m/n/9 prune_result.graph
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 124--124
-\T1/lmr/m/n/9 (+20) ex-ists; \T1/lmtt/m/n/9 PruneResult \T1/lmr/m/n/9 (+20) is a
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 124--124
-\T1/lmr/m/n/9 (+20) named-tu-ple with \T1/lmtt/m/n/9 node_mask
- []
-
-
-Underfull \hbox (badness 3039) in paragraph at lines 124--124
-\T1/lmtt/m/n/9 ReplacementModel \T1/lmr/m/n/9 (+20) in-her-its di-
- []
-
-
-Underfull \hbox (badness 3179) in paragraph at lines 124--124
-\T1/lmr/m/n/9 (+20) ual stream hooks in-stead of
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 124--124
-[]|\T1/lmr/m/n/9 (+20) Replaced with
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 124--124
-\T1/lmtt/m/n/9 feature_intervention \T1/lmr/m/n/9 (+20) API
- []
-
-
-Overfull \hbox (19.45546pt too wide) in paragraph at lines 124--124
-[]|\T1/lmtt/m/n/9 _generate_prediction_test_data()
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 124--124
-\T1/lmr/m/n/9 (+20) used \T1/lmtt/m/n/9 np.random.beta() \T1/lmr/m/n/9 (+20) and
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 124--124
-[]|\T1/lmr/m/n/9 (+20) Removed; re-placed with
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 124--124
-\T1/lmr/m/n/9 (+20) real mea-sure-ments from
- []
-
-
-Underfull \hbox (badness 4940) in paragraph at lines 124--124
-[]|\T1/lmr/m/n/9 (+20) Replaced POMDP with cus-
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 143--146
+ [9]
+Underfull \hbox (badness 10000) in paragraph at lines 134--137
 []\T1/lmr/bx/n/10 (+20) Random seed: \T1/lmr/m/n/10 (+20) Ran-dom base-lines use
  []
 
 ) (./paper.bbl
 Underfull \hbox (badness 10000) in paragraph at lines 56--58
-\T1/lmr/m/n/8 (+20) 34e1dbe95d34d7ebaf99b9bcaeb5b2be-[]Abstract-[]Conference .
+\T1/lmr/m/n/8 (+20) ^^\les / paper / 2023 / hash / 34e1dbe95d34d7ebaf99b9bcaeb5b2be -[]
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 96--98
-\T1/lmr/m/n/8 (+20) / / www . alignmentforum . org / posts / u6KXXmKFbXfWzoAXn /
- []
-
-
-Overfull \hbox (0.63759pt too wide) in paragraph at lines 106--108
-\T1/lmr/m/n/8 (-20) ``Causal scrub-bing: a method for rig-or-ously test-ing in-ter-pretabil-ity
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 106--108
-\T1/lmr/m/n/8 (+20) / / www . alignmentforum . org / posts / JvZhhzycHu2Yd57RN /
- []
-
-
-Underfull \hbox (badness 1577) in paragraph at lines 111--113
-\T1/lmr/m/n/8 (+20) in GPT,'' vol. 35, 2022. [On-line]. Avail-able:
+Underfull \hbox (badness 10000) in paragraph at lines 101--103
+\T1/lmr/m/n/8 (+20) u6KXXmKFbXfWzoAXn / a -[] circuit -[] for -[] python -[] docstrings -[] in -[]
  []
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 111--113
-\T1/lmr/m/n/8 (+20) 6f1d43d5a82a37e89b0665b33bf3a182-[]Abstract-[]Conference .
+\T1/lmr/m/n/8 (+20) posts / JvZhhzycHu2Yd57RN / causal -[] scrubbing -[] a -[] method -[] for -[]
  []
 
-[9]) [10] (./paper.aux)
+
+Underfull \hbox (badness 10000) in paragraph at lines 116--118
+\T1/lmr/m/n/8 (+20) ^^\les / paper / 2022 / hash / 6f1d43d5a82a37e89b0665b33bf3a182 -[]
+ []
+
+[10]) [11
+
+] (./paper.aux)
  ***********
 LaTeX2e <2025-11-01>
 L3 programming layer <2026-01-19>
@@ -1149,21 +1077,21 @@ L3 programming layer <2026-01-19>
 LaTeX Font Warning: Some font shapes were not available, defaults substituted.
 
 Package rerunfilecheck Info: File `paper.out' has not changed.
-(rerunfilecheck)             Checksum: BB1B69E88E30FB1BF64379942338735B;7527.
+(rerunfilecheck)             Checksum: 811740CEBF9F7E986A9D1FB7D5B36600;8545.
  ) 
 Here is how much of TeX's memory you used:
- 41269 strings out of 469514
- 924682 string characters out of 5470586
- 1649270 words of memory out of 5000000
- 68755 multiletter control sequences out of 15000+600000
- 875629 words of font info for 345 fonts, out of 8000000 for 9000
+ 41279 strings out of 469514
+ 924540 string characters out of 5470586
+ 1645074 words of memory out of 5000000
+ 68734 multiletter control sequences out of 15000+600000
+ 874250 words of font info for 356 fonts, out of 8000000 for 9000
  14 hyphenation exceptions out of 8191
- 84i,19n,104p,1002b,2352s stack positions out of 10000i,1000n,20000p,200000b,200000s
-</home/sharaths/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmbx10.pfb></home/sharaths/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmbx8.pfb></home/sharaths/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmbx9.pfb></home/sharaths/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmbxi10.pfb></home/sharaths/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmcsc10.pfb></home/sharaths/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmex10.pfb></home/sharaths/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmmi10.pfb></home/sharaths/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmmi5.pfb></home/sharaths/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmmi6.pfb></home/sharaths/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmmi7.pfb></home/sharaths/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmmi8.pfb></home/sharaths/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmmi9.pfb></home/sharaths/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmmib10.pfb></home/sharaths/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmr10.pfb></home/sharaths/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmr12.pfb></home/sharaths/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmr17.pfb></home/sharaths/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmr5.pfb></home/sharaths/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmr6.pfb></home/sharaths/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmr7.pfb></home/sharaths/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmr8.pfb></home/sharaths/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmr9.pfb></home/sharaths/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmri10.pfb></home/sharaths/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmri12.pfb></home/sharaths/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmri8.pfb></home/sharaths/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmsy10.pfb></home/sharaths/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmsy5.pfb></home/sharaths/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmsy6.pfb></home/sharaths/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmsy7.pfb></home/sharaths/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmsy8.pfb></home/sharaths/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmsy9.pfb></home/sharaths/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmtk10.pfb></home/sharaths/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmtt10.pfb></home/sharaths/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmtt8.pfb></home/sharaths/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmtt9.pfb></home/sharaths/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmtti10.pfb></home/sharaths/.TinyTeX/texmf-dist/fonts/type1/public/amsfonts/symbols/msbm10.pfb>
-Output written on paper.pdf (10 pages, 723179 bytes).
+ 84i,19n,104p,1002b,2360s stack positions out of 10000i,1000n,20000p,200000b,200000s
+</home/sharaths/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmbx10.pfb></home/sharaths/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmbx8.pfb></home/sharaths/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmbx9.pfb></home/sharaths/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmbxi10.pfb></home/sharaths/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmcsc10.pfb></home/sharaths/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmex10.pfb></home/sharaths/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmmi10.pfb></home/sharaths/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmmi5.pfb></home/sharaths/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmmi7.pfb></home/sharaths/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmmi8.pfb></home/sharaths/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmmi9.pfb></home/sharaths/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmmib10.pfb></home/sharaths/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmr10.pfb></home/sharaths/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmr12.pfb></home/sharaths/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmr17.pfb></home/sharaths/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmr5.pfb></home/sharaths/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmr7.pfb></home/sharaths/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmr8.pfb></home/sharaths/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmr9.pfb></home/sharaths/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmri10.pfb></home/sharaths/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmri7.pfb></home/sharaths/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmri8.pfb></home/sharaths/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmsy10.pfb></home/sharaths/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmsy5.pfb></home/sharaths/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmsy7.pfb></home/sharaths/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmsy8.pfb></home/sharaths/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmsy9.pfb></home/sharaths/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmtk10.pfb></home/sharaths/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmtt10.pfb></home/sharaths/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmtt8.pfb></home/sharaths/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmtt9.pfb></home/sharaths/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmtti10.pfb></home/sharaths/.TinyTeX/texmf-dist/fonts/type1/public/amsfonts/symbols/msbm10.pfb>
+Output written on paper.pdf (11 pages, 704608 bytes).
 PDF statistics:
- 654 PDF objects out of 1000 (max. 8388607)
- 555 compressed objects within 6 object streams
- 132 named destinations out of 1000 (max. 500000)
- 68949 words of extra memory for PDF output out of 74296 (max. 10000000)
+ 679 PDF objects out of 1000 (max. 8388607)
+ 586 compressed objects within 6 object streams
+ 139 named destinations out of 1000 (max. 500000)
+ 67453 words of extra memory for PDF output out of 74296 (max. 10000000)
 

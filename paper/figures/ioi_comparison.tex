@@ -1,34 +1,39 @@
-% figures/ioi_comparison.tex -- IOI Oracle Efficiency bar chart
+% Auto-generated from experiment results. Do not edit manually.
 \begin{tikzpicture}
 \begin{axis}[
     ybar,
-    width=0.95\columnwidth,
+    width=\columnwidth,
     height=5cm,
-    bar width=14pt,
-    enlarge x limits=0.25,
+    bar width=8pt,
     ylabel={Oracle Efficiency (\%)},
     symbolic x coords={Random, Greedy, AI Selector},
     xtick=data,
+    x tick label style={font=\scriptsize},
+    y tick label style={font=\scriptsize},
+    ylabel style={font=\scriptsize},
+    legend style={
+        font=\scriptsize,
+        at={(0.5,-0.2)},
+        anchor=north,
+        legend columns=2
+    },
     ymin=0, ymax=100,
-    ytick={0,20,40,60,80,100},
+    enlarge x limits=0.25,
     nodes near coords,
-    nodes near coords align={vertical},
-    every node near coord/.append style={font=\scriptsize},
-    legend style={at={(0.97,0.97)}, anchor=north east, font=\scriptsize},
-    ymajorgrids=true,
-    grid style=dashed,
+    nodes near coords style={font=\tiny},
+    every node near coord/.append style={/pgf/number format/fixed,
+        /pgf/number format/precision=1},
 ]
 
-% IOI task
 \addplot[fill=blue!40, draw=blue!60] coordinates {
-    (Random, 54.7) (Greedy, 66.9) (AI Selector, 74.4)
+    (Random, 56.2) (Greedy, 66.9) (AI Selector, 74.4)
 };
 
-% Multi-step task
 \addplot[fill=red!40, draw=red!60] coordinates {
-    (Random, 54.6) (Greedy, 79.4) (AI Selector, 78.4)
+    (Random, 49.6) (Greedy, 79.4) (AI Selector, 78.4)
 };
 
 \legend{IOI, Multi-step}
+
 \end{axis}
 \end{tikzpicture}

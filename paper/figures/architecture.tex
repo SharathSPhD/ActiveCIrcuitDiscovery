@@ -1,33 +1,33 @@
 % figures/architecture.tex -- System architecture diagram (TikZ)
-% Updated to reflect current ActiveInferenceSelector architecture
+% Compact layout for IEEE single-column
 
 \begin{tikzpicture}[
-    font=\small,
-    node distance = 0.9cm and 1.5cm,
+    font=\scriptsize,
+    node distance = 0.55cm and 0.8cm,
     box/.style = {
         rectangle, draw=black!70, fill=blue!8,
-        rounded corners=3pt, minimum width=2.6cm, minimum height=0.7cm,
-        align=center, line width=0.5pt
+        rounded corners=2pt, minimum width=2.0cm, minimum height=0.55cm,
+        align=center, line width=0.4pt
     },
     redbox/.style = {
         rectangle, draw=red!60!black, fill=red!8,
-        rounded corners=3pt, minimum width=2.6cm, minimum height=0.7cm,
-        align=center, line width=0.5pt
+        rounded corners=2pt, minimum width=2.0cm, minimum height=0.55cm,
+        align=center, line width=0.4pt
     },
     greenbox/.style = {
         rectangle, draw=green!50!black, fill=green!8,
-        rounded corners=3pt, minimum width=2.6cm, minimum height=0.7cm,
-        align=center, line width=0.5pt
+        rounded corners=2pt, minimum width=2.0cm, minimum height=0.55cm,
+        align=center, line width=0.4pt
     },
     greybox/.style = {
         rectangle, draw=black!40, fill=black!4,
-        rounded corners=3pt, minimum width=2.6cm, minimum height=0.7cm,
-        align=center, line width=0.5pt
+        rounded corners=2pt, minimum width=2.0cm, minimum height=0.55cm,
+        align=center, line width=0.4pt
     },
-    arr/.style = {-{Latex[length=2mm]}, thick, draw=black!60},
-    darr/.style = {{Latex[length=2mm]}-{Latex[length=2mm]}, thick, draw=black!40, dashed},
+    arr/.style = {-{Latex[length=1.5mm]}, semithick, draw=black!60},
+    darr/.style = {{Latex[length=1.5mm]}-{Latex[length=1.5mm]}, semithick, draw=black!40, dashed},
     groupbox/.style = {
-        draw=black!30, dashed, fill=none, rounded corners=6pt, inner sep=6pt
+        draw=black!30, dashed, fill=none, rounded corners=4pt, inner sep=4pt
     }
 ]
 
@@ -35,34 +35,34 @@
 \node[box] (prompt) {Prompt $x$};
 
 % ---- Attribution column ----
-\node[greybox, below=0.7cm of prompt] (model) {Gemma-2-2B\\+ Transcoders};
-\node[greybox, below=0.6cm of model] (eap) {Edge Attribution\\Patching (EAP)};
-\node[greybox, below=0.6cm of eap] (prune) {Prune graph\\(node/edge masks)};
-\node[greybox, below=0.6cm of prune] (candidates) {Candidate features\\$\{(l_i, p_i, f_i)\}$};
+\node[greybox, below=0.5cm of prompt] (model) {Gemma-2-2B\\+ Transcoders};
+\node[greybox, below=0.45cm of model] (eap) {EAP};
+\node[greybox, below=0.45cm of eap] (prune) {Prune graph};
+\node[greybox, below=0.45cm of prune] (candidates) {Candidates\\$\{(l_i, p_i, f_i)\}$};
 
 % ---- AI Selector column (right) ----
-\node[redbox, right=2.4cm of model] (importance) {Graph importance\\$\text{imp}(i)$};
-\node[redbox, below=0.6cm of importance] (scoring) {Score = pragmatic\\+ epistemic};
-\node[redbox, below=0.6cm of scoring] (select) {Select $i^*$\\$= \arg\max$ score};
-\node[redbox, below=0.6cm of select] (intervene) {Ablate via\\\texttt{feature\_intervention}};
-\node[redbox, below=0.6cm of intervene] (update) {Update $u(i)$,\\layer prior $\lambda_\ell$};
+\node[redbox, right=1.6cm of model] (importance) {Graph imp.\\$\text{imp}(i)$};
+\node[redbox, below=0.45cm of importance] (scoring) {Score = prag.\\+ epist.};
+\node[redbox, below=0.45cm of scoring] (select) {Select $i^*$};
+\node[redbox, below=0.45cm of select] (intervene) {Ablate via\\$\texttt{feat\_interv.}$};
+\node[redbox, below=0.45cm of intervene] (update) {Update $u(i)$,\\$\lambda_\ell$};
 
 % ---- Output column ----
-\node[greenbox, below=0.7cm of candidates, xshift=3.0cm] (kl) {KL divergence\\measurements};
-\node[greenbox, below=0.5cm of kl] (ranking) {Feature causal\\ranking};
+\node[greenbox, below=0.5cm of candidates, xshift=1.8cm] (kl) {KL measurements};
+\node[greenbox, below=0.35cm of kl] (ranking) {Feature ranking};
 
 % ---- Labels ----
-\node[above=0.1cm of importance, font=\footnotesize\itshape, text=red!70!black]
+\node[above=0.05cm of importance, font=\tiny\itshape, text=red!70!black]
     {Active Inference Selector};
 
 % ---- Grouping boxes ----
 \begin{scope}[on background layer]
   \node[groupbox, fit=(model)(eap)(prune)(candidates),
-        label={[font=\scriptsize, text=black!50]above:\texttt{circuit-tracer} pipeline}] {};
+        label={[font=\tiny, text=black!50]above:\texttt{circuit-tracer}}] {};
   \node[groupbox, draw=red!40, fit=(importance)(scoring)(select)(intervene)(update),
-        label={[font=\scriptsize, text=red!60!black]above:Uncertainty-weighted loop}] {};
+        label={[font=\tiny, text=red!60!black]above:Uncertainty loop}] {};
   \node[groupbox, draw=green!40, fit=(kl)(ranking),
-        label={[font=\scriptsize, text=green!60!black]above:Outputs}] {};
+        label={[font=\tiny, text=green!60!black]above:Outputs}] {};
 \end{scope}
 
 % ---- Arrows ----
@@ -71,26 +71,22 @@
 \draw[arr] (eap) -- (prune);
 \draw[arr] (prune) -- (candidates);
 
-% candidates -> importance (initialise)
-\draw[arr] (candidates.east) -- ++(0.4,0) |- (importance.west)
-    node[midway, above, font=\scriptsize]{init};
+\draw[arr] (candidates.east) -- ++(0.3,0) |- (importance.west)
+    node[midway, above, font=\tiny]{init};
 
-% Selector loop
 \draw[arr] (importance) -- (scoring);
 \draw[arr] (scoring) -- (select);
 \draw[arr] (select) -- (intervene);
-\draw[arr] (intervene.west) -- ++(-0.5,0) |- (model.east)
-    node[pos=0.3, right, font=\scriptsize]{$(l,p,f,0)$};
+\draw[arr] (intervene.west) -- ++(-0.35,0) |- (model.east)
+    node[pos=0.3, right, font=\tiny]{$(l,p,f,0)$};
 \draw[arr] (intervene) -- (update);
-\draw[arr] (update.north) -- ++(0, 0.15) -| (scoring.south east)
-    node[pos=0.1, right, font=\scriptsize]{$\lambda_\ell, u(i)$};
+\draw[arr] (update.north) -- ++(0, 0.1) -| (scoring.south east)
+    node[pos=0.1, right, font=\tiny]{$\lambda_\ell, u(i)$};
 
-% Convergence check
-\draw[darr] (update.east) -- ++(0.5,0)
-    node[right, font=\scriptsize]{budget?};
+\draw[darr] (update.east) -- ++(0.3,0)
+    node[right, font=\tiny]{budget?};
 
-% Output arrows
-\draw[arr] (update.south) -- ++(0,-0.3) -| (kl.north);
+\draw[arr] (update.south) -- ++(0,-0.2) -| (kl.north);
 \draw[arr] (kl) -- (ranking);
 
 \end{tikzpicture}

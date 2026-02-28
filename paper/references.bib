@@ -1,5 +1,6 @@
 % references.bib -- ActiveCircuitDiscovery IEEE paper
 % All entries correspond to real, published or preprinted work.
+% Verified February 2026.
 
 @article{Friston2010,
   author    = {Karl J. Friston},
@@ -35,36 +36,13 @@
   doi       = {10.1016/j.jmp.2020.102447}
 }
 
-@article{Parr2022,
+@book{Parr2022,
   author    = {Thomas Parr and Giovanni Pezzulo and Karl J. Friston},
   title     = {Active Inference: The Free Energy Principle in Mind, Brain, and Behavior},
   publisher = {MIT Press},
   year      = {2022},
   address   = {Cambridge, MA},
   isbn      = {9780262045353}
-}
-
-@article{Millidge2021,
-  author    = {Beren Millidge and Alexander Tschantz and Anil K. Seth and Christopher L. Buckley},
-  title     = {On the relationship between predictive coding and backpropagation},
-  journal   = {PLOS ONE},
-  volume    = {17},
-  number    = {3},
-  pages     = {e0266023},
-  year      = {2022},
-  doi       = {10.1371/journal.pone.0266023}
-}
-
-@inproceedings{Hesp2021,
-  author    = {Casper Hesp and Ryan Smith and Thomas Parr and Micah Allen
-               and Karl J. Friston and Maxwell J. D. Ramstead},
-  title     = {Deeply Felt Affect: The Emergence of Valence in Deep Active Inference},
-  booktitle = {Neural Computation},
-  volume    = {33},
-  number    = {2},
-  pages     = {398--446},
-  year      = {2021},
-  doi       = {10.1162/neco_a_01341}
 }
 
 @article{Elhage2021,
@@ -146,7 +124,7 @@
   url       = {https://arxiv.org/abs/2307.09458}
 }
 
-@article{Hanna2023,
+@inproceedings{Hanna2023,
   author    = {Michael Hanna and Ollie Liu and Alexandre Variengien},
   title     = {How does {GPT}-2 compute greater-than? Interpreting mathematical
                abilities in a pre-trained language model},
@@ -164,7 +142,7 @@
   url       = {https://www.alignmentforum.org/posts/u6KXXmKFbXfWzoAXn/a-circuit-for-python-docstrings-in-a-4-layer-attention-only}
 }
 
-@article{Meng2022,
+@inproceedings{Meng2022,
   author    = {Kevin Meng and David Bau and Alex Andonian and Yonatan Belinkov},
   title     = {{ROME}: Locating and Editing Factual Associations in {GPT}},
   booktitle = {Advances in Neural Information Processing Systems ({NeurIPS})},
@@ -173,42 +151,55 @@
   url       = {https://proceedings.neurips.cc/paper_files/paper/2022/hash/6f1d43d5a82a37e89b0665b33bf3a182-Abstract-Conference.html}
 }
 
-@inproceedings{Nanda2022,
+@misc{nanda2022transformerlens,
   author    = {Neel Nanda and Joseph Bloom},
   title     = {{TransformerLens}: A Library for Mechanistic Interpretability of
                {GPT}-Style Language Models},
   year      = {2022},
-  url       = {https://github.com/neelnanda-io/TransformerLens}
+  url       = {https://github.com/TransformerMechInterp/TransformerLens},
+  note      = {GitHub repository}
 }
 
 @article{Lindsey2025,
   author    = {Jack Lindsey and Wes Gurnee and Emmanuel Ameisen and Brian Chen
                and Adam Jermyn and Nicholas L. Turner and Craig Citro and David Hershey
-               and Adly Templeton and and Trenton Bricken and and Amanda Askell
-               and Evan Hubinger and Jared Kaplan and Jacob Steinhardt and Christopher Olah
-               and Tom Henighan},
-  title     = {Biology of a large language model},
+               and Adly Templeton and Trenton Bricken and Amanda Askell
+               and Evan Hubinger and Jared Kaplan and Jacob Steinhardt
+               and Christopher Olah and Tom Henighan},
+  title     = {On the biology of a large language model},
   journal   = {Transformer Circuits Thread},
   year      = {2025},
   url       = {https://transformer-circuits.pub/2025/attribution-graphs/biology.html}
 }
 
-@article{Anthropic2025CT,
-  author    = {{Anthropic}},
-  title     = {circuit-tracer: A Library for Attribution Graph Construction},
-  journal   = {GitHub Repository},
+@article{Ameisen2025,
+  author    = {Emmanuel Ameisen and Jack Lindsey and Adam Jermyn and Wes Gurnee
+               and Nicholas L. Turner and Brian Chen and Craig Citro
+               and David Hershey and Adly Templeton and Trenton Bricken
+               and Tom Henighan and Christopher Olah},
+  title     = {Circuit Tracing: Revealing Computational Graphs in Language Models},
+  journal   = {Transformer Circuits Thread},
   year      = {2025},
-  url       = {https://github.com/safety-research/circuit-tracer}
+  url       = {https://transformer-circuits.pub/2025/attribution-graphs/methods.html}
 }
 
-@inproceedings{Bloom2024,
-  author    = {Joseph Bloom and Curt Tigges and David Chanin and Zhenyi Lu
-               and Hoagy Cunningham and Yeu-Tong Lau and Tim Lawson
-               and Cem Anil and Robert Huben and Logan Riggs and Eoin Farrell
-               and Morgan McGuire and Suzanne Petryk and Wes Gurnee and Neel Nanda},
-  title     = {{SAELens}: A Library for Training and Analyzing Sparse Autoencoders},
+@misc{Anthropic2025CT,
+  author    = {Michael Hanna and Mateusz Piotrowski and Emmanuel Ameisen
+               and Jack Lindsey},
+  title     = {circuit-tracer: Open-Source Circuit Tracing Tools},
+  year      = {2025},
+  url       = {https://github.com/decoderesearch/circuit-tracer},
+  note      = {GitHub repository, released by Anthropic Fellows and Decode Research}
+}
+
+@article{marks2024sparse,
+  author    = {Samuel Marks and Can Rager and Eric J. Michaud and Yonatan Belinkov
+               and David Bau and Aaron Mueller},
+  title     = {Sparse Feature Circuits: Discovering and Editing Interpretable Causal
+               Graphs in Language Models},
+  journal   = {arXiv preprint arXiv:2403.19647},
   year      = {2024},
-  url       = {https://github.com/jbloomAus/SAELens}
+  url       = {https://arxiv.org/abs/2403.19647}
 }
 
 @article{Conmy2024,
@@ -249,7 +240,7 @@
   url       = {https://openai.com/research/language-unsupervised}
 }
 
-@article{Pearl2009,
+@book{Pearl2009,
   author    = {Judea Pearl},
   title     = {Causality: Models, Reasoning and Inference},
   publisher = {Cambridge University Press},
@@ -258,7 +249,7 @@
   isbn      = {9780521895606}
 }
 
-@article{Geiger2021,
+@inproceedings{Geiger2021,
   author    = {Atticus Geiger and Hanson Lu and Thomas Icard and Christopher Potts},
   title     = {Causal Abstractions of Neural Networks},
   booktitle = {Advances in Neural Information Processing Systems ({NeurIPS})},
@@ -310,7 +301,7 @@
   doi       = {10.23915/distill.00024}
 }
 
-@inproceedings{Hubinger2019,
+@article{Hubinger2019,
   author    = {Evan Hubinger and Chris van Merwijk and Vladimir Mikulik
                and Joar Skalse and Scott Garrabrant},
   title     = {Risks from Learned Optimization in Advanced Machine Learning Systems},
@@ -327,7 +318,7 @@
   url       = {https://arxiv.org/abs/2404.14082}
 }
 
-@inproceedings{Baydin2018,
+@article{Baydin2018,
   author    = {Atilim Gunes Baydin and Barak A. Pearlmutter and Alexey Andreyevich Radul
                and Jeffrey Mark Siskind},
   title     = {Automatic Differentiation in Machine Learning: a Survey},
@@ -339,7 +330,7 @@
   url       = {https://jmlr.org/papers/v18/17-468.html}
 }
 
-@article{Nanda2023Grokking,
+@inproceedings{Nanda2023Grokking,
   author    = {Neel Nanda and Lawrence Chan and Tom Lieberum and Jess Smith
                and Jacob Steinhardt},
   title     = {Progress measures for grokking via mechanistic interpretability},
@@ -370,7 +361,7 @@
   doi       = {10.1080/17588928.2015.1020053}
 }
 
-@article{MacKay2003,
+@book{MacKay2003,
   author    = {David J. C. MacKay},
   title     = {Information Theory, Inference, and Learning Algorithms},
   publisher = {Cambridge University Press},
@@ -390,17 +381,6 @@
   volume    = {32},
   year      = {2019},
   url       = {https://proceedings.neurips.cc/paper/2019/hash/bdbca288fee7f92f2bfa9f7012727740-Abstract.html}
-}
-
-@article{Dockes2023,
-  author    = {J{\'e}r{\^o}me Dockès and Bertrand Thirion},
-  title     = {Active inference and curiosity-driven exploration for goal-directed
-               attention},
-  journal   = {NeuroImage},
-  volume    = {267},
-  pages     = {119876},
-  year      = {2023},
-  doi       = {10.1016/j.neuroimage.2022.119876}
 }
 
 @article{Templeton2024,
@@ -425,36 +405,6 @@
   url       = {https://arxiv.org/abs/2402.12201}
 }
 
-@article{marks2024sparse,
-  author    = {Samuel Marks and Can Rager and Eric J. Michaud and Yonatan Belinkov
-               and David Bau and Aaron Mueller},
-  title     = {Sparse Feature Circuits: Discovering and Editing Interpretable Causal
-               Graphs in Language Models},
-  journal   = {arXiv preprint arXiv:2403.19647},
-  year      = {2024},
-  url       = {https://arxiv.org/abs/2403.19647}
-}
-
-@misc{nanda2022transformerlens,
-  author    = {Neel Nanda and Joseph Bloom},
-  title     = {{TransformerLens}: A Library for Mechanistic Interpretability of
-               {GPT}-Style Language Models},
-  year      = {2022},
-  url       = {https://github.com/neelnanda-io/TransformerLens},
-  note      = {GitHub repository}
-}
-
-@article{wang2022interpretability,
-  author    = {Kevin Wang and Alexandre Variengien and Arthur Conmy and Buck Shlegeris
-               and Jacob Steinhardt},
-  title     = {Interpretability in the Wild: a Circuit for Indirect Object
-               Identification in {GPT}-2 Small},
-  booktitle = {Proceedings of the International Conference on Learning Representations
-               ({ICLR})},
-  year      = {2023},
-  url       = {https://openreview.net/forum?id=NpsVSN6o4ul}
-}
-
 @article{team2024gemma,
   author    = {{Gemma Team} and Thomas Mesnard and Cassidy Hardin and Robert Dadashi
                and Surya Bhupatiraju and Shreya Pathak and Laurent Sifre
@@ -464,4 +414,12 @@
   journal   = {arXiv preprint arXiv:2403.08295},
   year      = {2024},
   url       = {https://arxiv.org/abs/2403.08295}
+}
+
+@article{Dubey2024llama,
+  author    = {Abhimanyu Dubey and Abhinav Jauhri and Abhinav Pandey and others},
+  title     = {The {Llama}~3 Herd of Models},
+  journal   = {arXiv preprint arXiv:2407.21783},
+  year      = {2024},
+  url       = {https://arxiv.org/abs/2407.21783}
 }

@@ -11,56 +11,46 @@ Database file #1: references.bib
 -- IEEEtran.bst version 1.14 (2015/08/26) by Michael Shell.
 -- http://www.michaelshell.org/tex/ieeetran/bibtex/
 -- See the "IEEEtran_bst_HOWTO.pdf" manual for usage information.
-Warning--empty journal in Hanna2023
-Warning--empty journal in Nanda2023Grokking
-Warning--empty journal in Parr2022
-Warning--empty journal in Pearl2009
-Warning--empty journal in Geiger2021
-Warning--empty journal in Meng2022
-Warning--empty journal in MacKay2003
-Warning--empty journal in wang2022interpretability
-Warning--empty booktitle in Hubinger2019
 
 Done.
 You've used 34 entries,
             4087 wiz_defined-function locations,
-            1023 strings with 16206 characters,
-and the built_in function-call counts, 21714 in all, are:
-= -- 1533
-> -- 970
-< -- 37
-+ -- 475
-- -- 230
-* -- 1135
-:= -- 3485
+            1028 strings with 16573 characters,
+and the built_in function-call counts, 22531 in all, are:
+= -- 1578
+> -- 997
+< -- 40
++ -- 487
+- -- 236
+* -- 1166
+:= -- 3558
 add.period$ -- 68
 call.type$ -- 34
-change.case$ -- 35
-chr.to.int$ -- 63
-cite$ -- 43
-duplicate$ -- 1639
-empty$ -- 1706
-format.name$ -- 260
-if$ -- 4868
+change.case$ -- 34
+chr.to.int$ -- 72
+cite$ -- 34
+duplicate$ -- 1686
+empty$ -- 1852
+format.name$ -- 267
+if$ -- 5109
 int.to.chr$ -- 0
 int.to.str$ -- 34
-missing$ -- 392
+missing$ -- 408
 newline$ -- 175
 num.names$ -- 34
-pop$ -- 1075
+pop$ -- 1115
 preamble$ -- 1
 purify$ -- 0
 quote$ -- 2
-skip$ -- 1580
+skip$ -- 1657
 stack$ -- 0
-substring$ -- 194
-swap$ -- 1123
+substring$ -- 201
+swap$ -- 1165
 text.length$ -- 16
 text.prefix$ -- 0
 top$ -- 5
 type$ -- 34
-warning$ -- 9
-while$ -- 47
+warning$ -- 0
+while$ -- 48
 width$ -- 36
-write$ -- 376
-(There were 9 warnings)
+write$ -- 382

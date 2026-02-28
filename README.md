@@ -1,8 +1,8 @@
 # Active Circuit Discovery
 
-[![Open In Colab - Circuit Discovery](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/SharathSPhD/ActiveCircuitDiscovery/blob/main/notebooks/01_circuit_discovery_gemma.ipynb)
-[![Open In Colab - Active Inference Demo](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/SharathSPhD/ActiveCircuitDiscovery/blob/main/notebooks/02_active_inference_demo.ipynb)
-[![Open In Colab - Feature Steering](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/SharathSPhD/ActiveCircuitDiscovery/blob/main/notebooks/03_reproduce_biology_paper.ipynb)
+[![Open In Colab - Circuit Discovery](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/SharathSPhD/ActiveCIrcuitDiscovery/blob/main/notebooks/01_circuit_discovery_gemma.ipynb)
+[![Open In Colab - Active Inference Demo](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/SharathSPhD/ActiveCIrcuitDiscovery/blob/main/notebooks/02_active_inference_demo.ipynb)
+[![Open In Colab - Feature Steering](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/SharathSPhD/ActiveCIrcuitDiscovery/blob/main/notebooks/03_reproduce_biology_paper.ipynb)
 
 **Active Inference-guided circuit discovery for mechanistic interpretability in Large Language Models.**
 
@@ -46,8 +46,8 @@ Prompt → Gemma-2-2B → circuit-tracer (EAP + GemmaScope Transcoders)
 ### Local (DGX Spark / GPU machine)
 
 ```bash
-git clone https://github.com/SharathSPhD/ActiveCircuitDiscovery.git
-cd ActiveCircuitDiscovery
+git clone https://github.com/SharathSPhD/ActiveCIrcuitDiscovery.git
+cd ActiveCIrcuitDiscovery
 python -m venv .venv
 source .venv/bin/activate
 
@@ -112,7 +112,7 @@ ls results/*.json
 ## Project Structure
 
 ```
-ActiveCircuitDiscovery/
+ActiveCIrcuitDiscovery/
 ├── src/
 │   ├── experiments/
 │   │   └── run_real_experiments.py    # Main experiment runner

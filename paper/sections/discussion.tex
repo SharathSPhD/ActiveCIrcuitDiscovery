@@ -4,10 +4,10 @@
 
 The \ACD{} selector demonstrates that combining graph-structural priors
 with uncertainty-weighted exploration consistently outperforms random
-feature selection for circuit discovery. The 36--44\% improvement over
-random selection, validated across two distinct benchmarks, confirms that
-the exploration--exploitation trade-off is material for efficient
-intervention allocation.
+feature selection for circuit discovery. The 32--44\% improvement over
+random selection, validated across two model architectures and four
+evaluation settings, confirms that the exploration--exploitation
+trade-off is material for efficient intervention allocation.
 
 The active inference inspiration is evident in the scoring function
 (Eq.~\ref{eq:score}): the pragmatic term (graph importance weighted by
@@ -24,15 +24,33 @@ A notable finding is the task-dependent layer distribution of causally
 important features. IOI circuits concentrate in late layers (24--25),
 consistent with prior work identifying name-mover attention heads in
 the final transformer layers~\cite{Wang2022}. In contrast, multi-step
-reasoning features concentrate in early layers (0--8), suggesting that
-transitive inference relies on entity-binding and input-processing
-computations before the model's later layers perform output selection.
+reasoning and logic features concentrate in early layers (0--8),
+suggesting that transitive inference relies on entity-binding and
+input-processing computations before later output selection.
+
+The multi-domain benchmark (\cref{fig:domain_layers}) extends this
+finding across five cognitive categories.  Geography and history
+prompts show late-layer dominance (consistent with factual recall from
+stored knowledge), while mathematics and logic prompts peak in early
+layers (consistent with syntactic pattern matching).  Science prompts
+show a more uniform distribution, reflecting a mix of factual recall
+and compositional reasoning.
 
 This finding has implications for circuit discovery methodology: a
 selector that does not explore early layers will miss critical features
 for reasoning tasks, while one that does not focus on late layers will
 miss output-critical features. The \ACD{} selector's layer prior
 mechanism naturally adapts to both patterns.
+
+\subsection{Cross-Model Generality}
+
+Replicating the evaluation on Llama-3.2-1B~\cite{Dubey2024llama}
+confirms that the \ACD{} framework is not architecture-specific.
+Despite Llama's smaller depth (16 layers vs.\ 26), the selector
+achieves 71--75\% oracle efficiency with 32--40\% improvement over
+random, compared to 74--78\% and 36--44\% on Gemma.  The modest
+reduction is expected: fewer layers compress the layer-prior search
+space, reducing the scope for the epistemic exploration term.
 
 \subsection{Limitations}
 
@@ -43,22 +61,14 @@ epistemic bonus provides less differentiation when there is less
 distributional diversity. This suggests that the exploration term is most
 valuable for circuits with distributed importance across many layers.
 
-\textbf{Limited prompt sets.}  The current evaluation uses 5 IOI prompts
-and 3 multi-step reasoning prompts.  Statistical significance tests
-require $n \geq 30$ prompts for reliable $p$-values.  The efficiency
-improvements are consistent across prompts but not yet statistically
-validated.
-
-\textbf{Single model.}  Cross-architecture validation on Llama-3.2-1B
-was not completed due to transcoder availability constraints.  The
-framework's reliance on the \texttt{feature\_intervention} API ties it
-to models with trained transcoders.
+\textbf{Limited prompt sets.}  The current evaluation uses 5 IOI prompts,
+3 multi-step prompts, and 10 multi-domain prompts.  Statistical
+significance tests require $n \geq 30$ prompts for reliable $p$-values.
 
 \textbf{Mount Everest non-response.}  The Mount Everest steering
 experiment showed no prediction changes at any multiplier, suggesting
 that some concepts are encoded in a distributed fashion that is robust
-to single-feature interventions.  This highlights a limitation of
-single-feature steering as a measure of causal controllability.
+to single-feature interventions.
 
 \textbf{Single-step planning.}  The current selector considers only
 one-step-ahead scoring.  Multi-step planning, where the selector
@@ -72,6 +82,7 @@ for AI safety: if internal computations can be audited as circuits, it
 becomes possible to verify that models are not relying on undesirable
 reasoning shortcuts~\cite{Hubinger2019,Bereska2024}.  The \ACD{} framework
 contributes by providing an efficient, uncertainty-aware discovery tool
-that scales to production-size models (2B+ parameters).  The finding that
-circuit structure is task-dependent underscores the need for systematic,
-multi-benchmark evaluation in any interpretability audit.
+that scales to production-size models (2B+ parameters) and generalises
+across architectures.  The finding that circuit structure is
+task-dependent underscores the need for systematic, multi-benchmark,
+multi-model evaluation in any interpretability audit.

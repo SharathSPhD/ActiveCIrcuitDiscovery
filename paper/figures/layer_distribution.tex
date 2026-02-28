@@ -7,7 +7,7 @@
     bar width=14pt,
     enlarge x limits=0.25,
     ylabel={Fraction of top-10 features},
-    symbolic x coords={Early (L0--L8), Mid (L9--L17), Late (L18--L25)},
+    symbolic x coords={Early, Mid, Late},
     xtick=data,
     x tick label style={font=\scriptsize},
     ymin=0, ymax=1.0,
@@ -22,14 +22,13 @@
 
 % IOI (late-layer dominant: top features in L24, L25, L6, L8)
 \addplot[fill=blue!40, draw=blue!60] coordinates {
-    (Early (L0--L8), 0.30) (Mid (L9--L17), 0.0) (Late (L18--L25), 0.70)
+    (Early, 0.30) (Mid, 0.0) (Late, 0.70)
 };
 
-% Multi-step (early-layer dominant: L0-L7 features dominate)
 \addplot[fill=red!40, draw=red!60] coordinates {
-    (Early (L0--L8), 0.77) (Mid (L9--L17), 0.10) (Late (L18--L25), 0.13)
+    (Early, 0.77) (Mid, 0.10) (Late, 0.13)
 };
 
-\legend{IOI (indirect object), Multi-step reasoning}
+\legend{IOI, Multi-step}
 \end{axis}
 \end{tikzpicture}
