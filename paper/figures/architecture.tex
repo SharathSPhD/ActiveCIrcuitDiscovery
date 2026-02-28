@@ -1,0 +1,99 @@
+% figures/architecture.tex -- System architecture diagram (TikZ)
+% Rendered as \input{figures/architecture} inside a figure environment
+
+\begin{tikzpicture}[
+    font=\small,
+    node distance = 0.9cm and 1.5cm,
+    box/.style = {
+        rectangle, draw=black!70, fill=blue!8,
+        rounded corners=3pt, minimum width=2.6cm, minimum height=0.7cm,
+        align=center, line width=0.5pt
+    },
+    redbox/.style = {
+        rectangle, draw=red!60!black, fill=red!8,
+        rounded corners=3pt, minimum width=2.6cm, minimum height=0.7cm,
+        align=center, line width=0.5pt
+    },
+    greenbox/.style = {
+        rectangle, draw=green!50!black, fill=green!8,
+        rounded corners=3pt, minimum width=2.6cm, minimum height=0.7cm,
+        align=center, line width=0.5pt
+    },
+    greybox/.style = {
+        rectangle, draw=black!40, fill=black!4,
+        rounded corners=3pt, minimum width=2.6cm, minimum height=0.7cm,
+        align=center, line width=0.5pt
+    },
+    arr/.style = {-{Latex[length=2mm]}, thick, draw=black!60},
+    darr/.style = {{Latex[length=2mm]}-{Latex[length=2mm]}, thick, draw=black!40, dashed},
+    groupbox/.style = {
+        draw=black!30, dashed, fill=none, rounded corners=6pt, inner sep=6pt
+    }
+]
+
+% ---- Input ----
+\node[box] (prompt) {Prompt $x$};
+
+% ---- LLM column ----
+\node[greybox, below=0.7cm of prompt] (tlens) {TransformerLens\\\texttt{HookedTransformer}};
+\node[greybox, below=0.6cm of tlens] (cache) {Residual stream\\cache $\{\vect{h}_l\}$};
+\node[greybox, below=0.6cm of cache] (saelens) {SAE-Lens\\\texttt{SAE.from\_pretrained}};
+\node[greybox, below=0.6cm of saelens] (features) {Active features\\$\mathcal{F}(x)$};
+
+% ---- AI Agent column (right) ----
+\node[redbox, right=2.4cm of tlens] (beliefs) {Belief state\\$q(\vect{s}_t)$};
+\node[redbox, below=0.6cm of beliefs] (efe) {\EFE\ selection\\Eq.~(\ref*{eq:efe_approx})};
+\node[redbox, below=0.6cm of efe] (action) {Intervention\\$(l^*,k^*,u^*)$};
+\node[redbox, below=0.6cm of action] (observe) {Observe\\$o_t$, $\delta_t$};
+\node[redbox, below=0.6cm of observe] (update) {Belief update\\Eq.~(\ref*{eq:belief_update})};
+
+% ---- Output column ----
+\node[greenbox, below=0.7cm of features, xshift=3.0cm] (circuit) {Circuit $\mathcal{C}$};
+\node[greenbox, below=0.5cm of circuit] (graph) {Attribution\\graph $G$};
+\node[greenbox, below=0.5cm of graph] (preds) {Predictions $\mathcal{P}$};
+
+% ---- pymdp label ----
+\node[above=0.1cm of beliefs, font=\footnotesize\itshape, text=red!70!black]
+    {\pymdp\ Agent};
+
+% ---- Grouping boxes ----
+\begin{scope}[on background layer]
+  \node[groupbox, fit=(tlens)(cache)(saelens)(features),
+        label={[font=\scriptsize, text=black!50]above:LLM + SAE pipeline}] {};
+  \node[groupbox, draw=red!40, fit=(beliefs)(efe)(action)(observe)(update),
+        label={[font=\scriptsize, text=red!60!black]above:Active Inference loop}] {};
+  \node[groupbox, draw=green!40, fit=(circuit)(graph)(preds),
+        label={[font=\scriptsize, text=green!60!black]above:Outputs}] {};
+\end{scope}
+
+% ---- Arrows ----
+\draw[arr] (prompt) -- (tlens);
+\draw[arr] (tlens) -- (cache);
+\draw[arr] (cache) -- (saelens);
+\draw[arr] (saelens) -- (features);
+
+% features -> beliefs (initialise)
+\draw[arr] (features.east) -- ++(0.4,0) |- (beliefs.west)
+    node[midway, above, font=\scriptsize]{init};
+
+% EFE loop
+\draw[arr] (beliefs) -- (efe);
+\draw[arr] (efe) -- (action);
+\draw[arr] (action.west) -- ++(-0.5,0) |- (cache.east)
+    node[pos=0.3, right, font=\scriptsize]{intervene};
+\draw[arr] (cache.east) -- ++(0.5,0) |- (observe.west)
+    node[pos=0.5, right, font=\scriptsize]{$o_t$};
+\draw[arr] (observe) -- (update);
+\draw[arr] (update.north) -- ++(0, 0.15) -| (beliefs.south)
+    node[pos=0.1, right, font=\scriptsize]{$q_{t+1}$};
+
+% Convergence check
+\draw[darr] (update.east) -- ++(0.5,0)
+    node[right, font=\scriptsize]{converged?};
+
+% Output arrows
+\draw[arr] (update.south) -- ++(0,-0.3) -| (circuit.north);
+\draw[arr] (circuit) -- (graph);
+\draw[arr] (graph) -- (preds);
+
+\end{tikzpicture}

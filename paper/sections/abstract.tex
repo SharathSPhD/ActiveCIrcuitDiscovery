@@ -1,0 +1,27 @@
+Mechanistic interpretability seeks to understand the internal computational structures of
+large language models (LLMs) through the identification of circuits: sparse subgraphs of
+components whose collective computation explains a model behaviour. Existing automated
+circuit discovery methods, notably Automated Circuit Discovery (\ACDC) and Edge
+Attribution Patching (\EAP), rely on exhaustive or gradient-ranked search over possible
+interventions, incurring costs that grow combinatorially with model depth and width.
+This paper introduces Active Circuit Discovery (\ACD), a framework that reframes
+circuit discovery as a partially observable decision process and employs the Expected
+Free Energy (\EFE) minimisation principle from computational neuroscience to direct
+intervention selection. An Active Inference agent, implemented with the \pymdp\
+discrete-state library, maintains a probabilistic belief state over candidate circuit
+nodes and selects the ablation or activation-patching intervention predicted to yield
+the greatest epistemic gain per computational budget. The agent's generative model
+encodes the transformer's residual stream decomposition through Sparse Autoencoder
+(SAE) features loaded via SAE-Lens, and the resulting attribution graph is constructed
+with TransformerLens hooks. Three research questions drive evaluation: (RQ1) whether
+Active Inference belief updating corresponds measurably to empirical intervention
+effects, (RQ2) whether EFE-guided selection reduces the number of interventions
+required relative to random, gradient, and exhaustive baselines, and (RQ3) whether the
+framework generates testable, empirically validable predictions about circuit behaviour.
+Preliminary implementation on GPT-2 Small using the canonical Golden Gate Bridge
+factual-completion task establishes the full end-to-end pipeline and characterises
+the conditions under which each research question can be addressed. An honest
+assessment of current results, open methodological challenges, and the path toward
+rigorous validation on standard mechanistic interpretability benchmarks are reported.
+The framework, together with a Docker container targeting the NVIDIA DGX Spark
+platform, is released as an open-source research artifact.

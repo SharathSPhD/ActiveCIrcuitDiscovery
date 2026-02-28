@@ -1,0 +1,124 @@
+% ---- discussion.tex ----
+
+\subsection{Theoretical Contributions and Significance}
+
+The Active Inference framing of circuit discovery offers several conceptual
+contributions beyond its immediate empirical scope. First, it provides a principled
+normative basis for intervention selection that connects the practice of mechanistic
+interpretability to a broader computational theory of intelligence. Prior work has
+noted qualitative similarities between transformer attention mechanisms and the
+precision-weighted prediction error minimisation described by Active
+Inference~\cite{Sun2024,Millidge2021}, but no prior work has embedded this connection
+within an executable circuit discovery procedure.
+
+Second, the \EFE\ decomposition into epistemic and pragmatic value provides a
+principled mechanism for balancing exploration and exploitation during circuit analysis.
+In the early stages of investigation, when uncertainty about feature importance is
+high, the epistemic term dominates and the agent explores broadly. As uncertainty
+resolves, the pragmatic term dominates and the agent focuses interventions on the most
+promising candidate features. This mirrors the scientific method applied to
+interpretability: broad initial exploration followed by targeted hypothesis testing.
+
+Third, the generative model $(\mat{A}, \mat{B})$ can serve as a formalised hypothesis
+about circuit structure that can be communicated, inspected, and updated.
+The observation model $\mat{A}$ encodes the researcher's prior expectation of how
+feature importance maps to intervention effects; discrepancies between this prior and
+observed data (captured in the Dirichlet update, Eq.~\ref{eq:param_learning}) provide
+a quantitative measure of how surprising the circuit structure was relative to prior
+beliefs.
+
+\subsection{Implementation Lessons}
+
+The pilot execution revealed failure modes that are instructive beyond this specific
+project.
+
+\textbf{Silent API failures propagate.} The SAE loading failure caused all subsequent
+analyses to operate on random projections without raising an exception. This pattern,
+where a try/except block silently falls back to a randomised baseline when a real
+computation fails, is a common source of invalid results in machine learning research.
+The fix adopted here is to (1) log the failure explicitly with a warning that includes
+the expected API format, (2) distinguish between ``no valid SAE available for this
+model'' and ``SAE load failed due to API error'', and (3) include a configuration flag
+\texttt{require\_sae: true} that causes the experiment to abort rather than proceed
+with random fallbacks when SAE loading fails.
+
+\textbf{Statistical validity requires sufficient sample sizes.} The attempt to compute
+Pearson correlation at $n=1$ demonstrates the importance of separating the metric
+accumulation phase from the metric computation phase. The corrected design accumulates
+all intervention results in a list and computes the Spearman correlation only at
+the end of the experiment, when at least $n \geq 20$ samples are available for a
+reliable estimate~\cite{MacKay2003}.
+
+\textbf{Rapid timing is a red flag.} The 3.49-second runtime for 10 test cases, each
+nominally requiring up to 20 model forward passes, should have flagged an error state
+immediately. Instrumenting experiments with sanity checks on elapsed time relative to
+expected forward-pass cost provides an early-warning indicator of silent failures.
+
+\subsection{Limitations}
+
+Several limitations of the current \ACD\ framework constrain the interpretation of
+results and the generalisability of findings.
+
+\textbf{Single model, single task.} The current evaluation targets GPT-2 Small on a
+single factual completion task. Journal-quality evaluation requires at minimum two
+model sizes (e.g.\ GPT-2 Medium and Pythia-1B), two task families (factual recall and
+syntactic generalisation), and comparison with a manually validated circuit on the IOI
+task~\cite{Wang2022,Conmy2023}.
+
+\textbf{Discrete state-space approximation.} The \pymdp\ implementation discretises
+feature importance into a categorical state space of size $N+1$. Real feature
+importances are continuous and can interact non-linearly. The discretisation introduces
+approximation error that may degrade the quality of the \EFE\ estimate, particularly
+when feature activation distributions are heavy-tailed, as is common for SAE features.
+
+\textbf{Observation model initialisation.} The initial observation model $\mat{A}$ is
+set heuristically from activation magnitudes. A mis-specified $\mat{A}$ will produce
+incorrect \EFE\ scores in early iterations, potentially wasting interventions before
+sufficient data is available to correct the model. Alternative initialisations, such
+as those derived from gradient-based attribution scores, could improve early-stage
+efficiency.
+
+\textbf{Single-step planning horizon.} The current policy search considers only
+single-step interventions ($T_\text{horizon} = 1$). Extending to multi-step planning
+would allow the agent to reason about sequences of interventions that collectively
+resolve uncertainty more efficiently than any single intervention, at the cost of
+increased computational complexity proportional to the number of features to the power
+of the planning horizon.
+
+\subsection{Path to Full Validation}
+
+Full validation of the three research questions requires the following steps, which
+constitute the immediate future work for this project.
+
+First, the five identified failure modes (F1--F5) must be verified as fully fixed in
+end-to-end execution on a GPU environment with working SAE downloads. This requires
+running the corrected codebase, confirming that more than zero interventions are
+executed, and inspecting the timing to confirm that forward passes are occurring.
+
+Second, the corrected pipeline should be run on the full Golden Gate Bridge prompt set
+(five templates, at least ten repetitions each) with $T = 20$ interventions per input.
+The Spearman correlation, efficiency improvement, and prediction validation results
+should be reported against the thresholds specified in Section~\ref{sec:setup}.
+
+Third, the evaluation should be extended to the IOI task~\cite{Wang2022}, for which
+a ground-truth circuit is available. This enables RQ1 to be evaluated as the
+correlation between the \ACD\ posterior importance vector and the known causal
+importance of each component in the IOI circuit.
+
+Fourth, the three prediction classes (Section~\ref{sec:predictions}) should be
+empirically tested by (1) measuring attention entropy at the predicted circuit layer,
+(2) confirming or falsifying the transitivity prediction by ablating pairs of features,
+and (3) comparing the layer-specificity profile of EFE scores with the layer-importance
+profile from ROME causal tracing~\cite{Meng2022}.
+
+\subsection{Broader Implications for AI Safety}
+
+Mechanistic interpretability is increasingly recognised as a potential foundation for
+AI safety: if the internal computations of a model can be audited as circuits, it
+becomes possible in principle to verify that the model is not relying on undesirable
+reasoning shortcuts or learned optimisation targets that diverge from human
+values~\cite{Hubinger2019,Bereska2024}. The \ACD\ framework contributes to this
+programme by providing an efficient, uncertainty-aware discovery tool that can scale
+to larger models and more complex circuits. The Active Inference framing additionally
+suggests a view of the model itself as an agent with beliefs and preferences, which
+may inform future work on value alignment through interpretability.

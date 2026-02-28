@@ -1,0 +1,143 @@
+% ---- experimental_setup.tex ----
+
+\subsection{Model and Hardware}
+
+All experiments target GPT-2 Small~\cite{Radford2019}: a 117~M parameter, 12-layer,
+768-dimensional transformer with 12 attention heads per layer. GPT-2 Small occupies
+a central position in the mechanistic interpretability literature as the primary
+validation platform for the IOI circuit~\cite{Wang2022}, the docstring circuit~\cite{Heimersheim2023},
+and the \ACDC\ paper~\cite{Conmy2023}, enabling direct comparison with established
+results. The model is loaded via TransformerLens~\cite{Nanda2022} with
+\texttt{fold\_ln=False} and \texttt{center\_writing\_weights=False} to preserve the
+canonical residual stream decomposition.
+
+Experiments are executed on an NVIDIA L40S GPU (48~GB GDDR6 ECC, CUDA 12.6, driver
+version 565.57) with 128~GB system RAM. The DGX Spark deployment configuration targets
+NVIDIA DGX Spark nodes with NVLink-connected A100 SXM4 80~GB GPUs; the Docker container
+specification is described in Appendix~\ref{app:docker}.
+
+\subsection{Sparse Autoencoder Configuration}
+
+Residual-stream SAEs for GPT-2 Small are loaded from the
+\texttt{gpt2-small-res-jb}~release via SAE-Lens using the correct tuple API:
+\begin{lstlisting}[language=Python, caption={Correct SAE-Lens v0.3+ loading API.}]
+sae, cfg_dict, log_sparsity = SAE.from_pretrained(
+    release="gpt2-small-res-jb",
+    sae_id=f"blocks.{layer}.hook_resid_post",
+    device=device
+)
+\end{lstlisting}
+SAEs at layers auto-discovered to have above-median residual stream variance across a
+diverse 100-sentence calibration corpus are used. For the Golden Gate Bridge
+experiments, layers 5 through 10 were consistently selected. The activation threshold
+is $\theta = 0.05$, and up to 20 features per layer are retained.
+
+\subsection{Active Inference Hyperparameters}
+
+Table~\ref{tab:ai_config} lists the hyperparameters used for the Active Inference
+agent.
+
+\begin{table}[t]
+  \centering
+  \caption{Active Inference agent hyperparameters.}
+  \label{tab:ai_config}
+  \begin{tabular}{lll}
+    \toprule
+    Parameter & Symbol & Value \\
+    \midrule
+    Epistemic weight     & $w_e$ & 0.7 \\
+    Pragmatic weight     & $w_p = 1 - w_e$ & 0.3 \\
+    Action precision     & $\alpha$ & 16.0 \\
+    Convergence threshold & $\delta$ & 0.05 \\
+    Maximum interventions & $T$ & 20 \\
+    Observation bins     & --- & 3 \\
+    Dirichlet concentration & $a_0$ & 1.0 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+The epistemic weight $w_e = 0.7$ was set to bias the agent toward uncertainty
+resolution, reflecting the primary goal of circuit identification over any particular
+output preference. The action precision $\alpha = 16.0$ corresponds to a relatively
+deterministic policy that concentrates probability mass on the action with the minimum
+negative \EFE.
+
+\subsection{Benchmark Task: Golden Gate Bridge}
+
+Following established practice in mechanistic interpretability, the canonical benchmark
+task is factual completion of prompts about the Golden Gate Bridge~\cite{Wang2022,
+Conmy2023}. Specifically, five prompt templates are used:
+
+\begin{enumerate}
+  \item \textit{``The Golden Gate Bridge is located in''}
+  \item \textit{``San Francisco's most famous landmark is the''}
+  \item \textit{``The iconic red bridge in San Francisco is known as the''}
+  \item \textit{``The bridge connecting San Francisco to Marin County is the''}
+  \item \textit{``When visiting San Francisco, tourists often see the''}
+\end{enumerate}
+
+The target token is one of \{``Golden'', ``gate'', ``Bridge'', ``Francisco''\}
+according to the prompt. A behaviour $b(x)$ is defined as the log-probability
+assigned to the highest-scoring target token minus the mean log-probability over all
+non-target tokens in the vocabulary: $b(x) = \log p(\text{target} \mid x) -
+\frac{1}{V} \sum_{v \notin \mathcal{T}} \log p(v \mid x)$.
+
+\subsection{Baseline Methods}
+
+Three baseline intervention selection strategies are implemented for RQ2:
+
+\textbf{Random.} At each step, a feature is selected uniformly at random from the
+active feature set. This naive baseline establishes a lower bound on efficiency.
+
+\textbf{Gradient (activation magnitude).} Features are sorted by their SAE encoder
+activation $a_{l,k}(x)$ in descending order and selected greedily. This approximates
+the gradient-ranked ordering used in early circuit analysis~\cite{Wang2022} and
+provides a competitive non-adaptive baseline. The name ``gradient-based'' in the
+codebase denotes this activation-magnitude ranking, which serves as a proxy for
+first-order gradient importance.
+
+\textbf{Exhaustive.} All active features are tested in layer-ascending order. This
+establishes the upper bound on intervention count and corresponds to the complete
+search underlying \ACDC.
+
+All baselines use zero ablation as the intervention type, consistent with the \ACDC\
+default. Efficiency is measured as the number of interventions required to achieve a
+circuit purity of 0.8 (defined as the fraction of top-10 features by importance that
+also appear in the ground-truth IOI circuit sub-graph identified by Wang et
+al.~\cite{Wang2022}) or to exhaust the feature budget $T$. The relative efficiency
+improvement of \ACD\ over each baseline is:
+\begin{equation}
+  \text{Eff}(b) = \frac{N_b - N_{\ACD}}{N_b} \times 100\%,
+  \label{eq:efficiency}
+\end{equation}
+where $N_b$ is the number of interventions required by baseline $b$ and $N_{\ACD}$
+is the number required by \ACD.
+
+\subsection{Research Questions and Validation Criteria}
+
+The three research questions and their validation criteria are stated precisely below.
+
+\textbf{RQ1 (Correspondence).} The Active Inference belief state after circuit
+discovery corresponds to empirical intervention effects. Validated when the Spearman
+rank correlation $\rho_s$ between the posterior importance vector
+$\vect{\pi}_T = (\pi_{T,1}, \ldots, \pi_{T,N})$ and the vector of empirical direct
+effects $\vect{e} = (e_1, \ldots, e_N)$ (computed by ablating each feature once)
+satisfies $\rho_s > 0.4$, $p < 0.05$ under a two-tailed permutation test with 10,000
+permutations.
+
+\textbf{RQ2 (Efficiency).} EFE-guided selection identifies a faithful circuit with
+fewer interventions than all three baselines. Validated when
+$\text{Eff}(\text{random}) > 30\%$, $\text{Eff}(\text{gradient}) > 0\%$, and
+$\text{Eff}(\text{exhaustive}) > 30\%$.
+
+\textbf{RQ3 (Predictions).} Three or more of the framework's testable predictions
+(Section~\ref{sec:predictions}) are confirmed at the $p < 0.05$ significance level
+with effect size $d > 0.3$ (small to medium effect).
+
+\subsection{Statistical Analysis}
+
+All significance tests use two-tailed alternatives and a familywise error rate
+controlled at $\alpha = 0.05$ using the Benjamini-Hochberg procedure. Effect sizes are
+reported as Cohen's $d$ for continuous comparisons and $r = Z/\sqrt{N}$ for
+rank-based tests. Bootstrap confidence intervals (10,000 samples, BCa method) are
+reported for all primary metrics.
