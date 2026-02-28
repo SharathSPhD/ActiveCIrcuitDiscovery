@@ -1,0 +1,73 @@
+# DGX Spark / H100 / GB200 optimised experiment configuration
+# Target hardware: NVIDIA DGX Spark (2× GB200 / or H100 80 GB SXM)
+
+model:
+  name: "gpt2-small"           # Start here; swap for pythia-1b / pythia-6.9b
+  device: "cuda"
+  # For multi-GPU (larger models):
+  # name: "EleutherAI/pythia-6.9b"
+  # multi_gpu: true
+  max_context_length: 1024
+  fold_ln: false
+  center_writing_weights: false
+
+sae:
+  enabled: true
+  auto_discover_layers: true
+  activation_threshold: 0.02       # Lower threshold → richer feature set
+  max_features_per_layer: 50       # More features with 80 GB VRAM
+  include_error_nodes: true
+  max_graph_nodes: 500
+  layer_search_range: [0, -1]      # Search all layers
+  calibration_inputs_path: "data/calibration_corpus.txt"
+
+active_inference:
+  epistemic_weight: 0.7
+  exploration_weight: 0.6
+  max_interventions: 50            # More interventions on DGX
+  convergence_threshold: 0.05      # KL-divergence threshold
+  use_pymdp: true
+  learning_rate: 0.01
+
+research_questions:
+  rq1_correspondence_target: 70.0  # Spearman ρ > 0.4 → ~70% correspondence
+  rq2_efficiency_target: 30.0      # 30% fewer interventions than baselines
+  rq3_predictions_target: 3        # ≥3 validated predictions
+
+statistical_validation:
+  alpha: 0.05
+  bootstrap_samples: 10000
+  min_sample_size: 20
+  multiple_comparisons_correction: "holm"   # holm, bonferroni, or bh
+
+experiment:
+  name: "dgx_spark_active_circuit_discovery"
+  output_dir: "results/dgx_spark"
+  save_intermediate: true
+  log_level: "INFO"
+  use_wandb: false                 # Set true and provide WANDB_API_KEY env var
+  wandb_project: "active-circuit-discovery"
+  profile_memory: true
+  save_attention_patterns: true
+  random_seed: 42
+
+visualization:
+  save_html: true
+  save_pdf: true
+  save_png: true
+  interactive_dashboard: true
+  circuit_vis_backend: "circuitsvis"
+
+benchmark:
+  run_ioi_task: true
+  run_greater_than_task: false     # Implement in experiments/greater_than.py
+  compare_with_acdc: false
+  compare_with_eap: false
+
+# Test inputs for Golden Gate Bridge canonical experiment
+test_inputs:
+  - "The Golden Gate Bridge is located in"
+  - "San Francisco's most famous landmark is the"
+  - "The bridge connecting San Francisco to Marin County is called the"
+  - "When visiting California, tourists often see the iconic"
+  - "The famous red suspension bridge in San Francisco is known as the"

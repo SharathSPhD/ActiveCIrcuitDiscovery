@@ -247,64 +247,74 @@ class ActiveInferenceAgent(IActiveInferenceAgent):
         
         return correspondence
     
-    def generate_predictions(self) -> List[NovelPrediction]:
-        """Generate novel predictions from current beliefs."""
+    def generate_predictions(self,
+                           attribution_graph: Optional['AttributionGraph'] = None
+                           ) -> List[NovelPrediction]:
+        """Generate novel predictions from current beliefs and attribution graph."""
         logger.info("Generating novel predictions from Active Inference beliefs")
-        
+
         if self.belief_state is None:
             logger.warning("No belief state available for prediction generation")
             return []
-        
-        # Import here to avoid circular imports
+
         from core.prediction_system import EnhancedPredictionGenerator
-        from core.data_structures import AttributionGraph
-        
-        # Create a mock attribution graph from current beliefs
-        mock_graph = self._create_mock_attribution_graph()
-        
-        # Generate predictions using the enhanced system
+        from core.data_structures import AttributionGraph, GraphNode, GraphEdge
+
+        # Use provided real attribution graph; build a belief-derived one only as fallback
+        if attribution_graph is not None:
+            graph = attribution_graph
+        else:
+            graph = self._build_belief_attribution_graph()
+
         prediction_generator = EnhancedPredictionGenerator()
         predictions = prediction_generator.generate_circuit_predictions(
-            self.belief_state, mock_graph
+            self.belief_state, graph
         )
-        
-        # Store predictions
+
         self.novel_predictions.extend(predictions)
-        
         logger.info(f"Generated {len(predictions)} novel predictions")
         return predictions
     
-    def check_convergence(self, threshold: float = 0.15) -> bool:
-        """Check if beliefs have converged."""
+    def check_convergence(self, threshold: float = 0.05) -> bool:
+        """Check convergence via KL divergence between successive belief distributions."""
         if len(self.intervention_history) < 3:
             return False
-        
-        # Check if recent belief changes are below threshold
-        recent_changes = []
-        for i in range(len(self.intervention_history) - 2):
-            old_intervention = self.intervention_history[i]
-            new_intervention = self.intervention_history[i + 1]
-            
-            old_feature_id = old_intervention.target_feature.feature_id
-            new_feature_id = new_intervention.target_feature.feature_id
-            
-            if (old_feature_id in self.belief_state.feature_importances and 
-                new_feature_id in self.belief_state.feature_importances):
-                
-                old_importance = self.belief_state.feature_importances[old_feature_id]
-                new_importance = self.belief_state.feature_importances[new_feature_id]
-                change = abs(new_importance - old_importance)
-                recent_changes.append(change)
-        
-        if not recent_changes:
+
+        # Initialise belief history tracker if absent
+        if not hasattr(self, '_belief_history'):
+            self._belief_history: List[np.ndarray] = []
+
+        if not self.belief_state.feature_importances:
             return False
-        
-        avg_change = np.mean(recent_changes)
-        converged = avg_change < threshold
-        
+
+        current_beliefs = np.array(list(self.belief_state.feature_importances.values()),
+                                   dtype=np.float64)
+        total = current_beliefs.sum()
+        if total < 1e-16:
+            return False
+        current_beliefs = current_beliefs / total + 1e-16  # normalise + smooth
+
+        self._belief_history.append(current_beliefs.copy())
+
+        if len(self._belief_history) < 2:
+            return False
+
+        prev = self._belief_history[-2]
+        curr = self._belief_history[-1]
+
+        # Align lengths (feature set may grow between updates)
+        min_len = min(len(prev), len(curr))
+        prev_aligned = prev[:min_len] / (prev[:min_len].sum() + 1e-16)
+        curr_aligned = curr[:min_len] / (curr[:min_len].sum() + 1e-16)
+
+        # Symmetric KL divergence
+        kl_fwd = float(np.sum(curr_aligned * np.log(curr_aligned / (prev_aligned + 1e-16))))
+        kl_bwd = float(np.sum(prev_aligned * np.log(prev_aligned / (curr_aligned + 1e-16))))
+        sym_kl = 0.5 * (kl_fwd + kl_bwd)
+
+        converged = sym_kl < threshold
         if converged:
-            logger.info(f"Beliefs converged: average change {avg_change:.3f} < threshold {threshold}")
-        
+            logger.info(f"Beliefs converged: symmetric KL {sym_kl:.5f} < threshold {threshold}")
         return converged
     
     def _update_connection_beliefs(self, intervention_result: InterventionResult):
@@ -361,75 +371,70 @@ class ActiveInferenceAgent(IActiveInferenceAgent):
             logger.warning(f"PyMDP Agent creation failed: {e}")
             self.pymdp_agent = None
     
-    def _generate_policies(self) -> List[List[int]]:
-        """Generate policy space for intervention selection."""
-        # Simple policies: single-step actions
-        policies = []
-        for action in range(self.action_space_size):
-            policies.append([action])  # Single-step policy
-        
-        # Add some multi-step policies for exploration
-        policies.append([0, 1])  # Ablate then patch
-        policies.append([1, 0])  # Patch then ablate
-        policies.append([2, 0])  # Mean ablate then full ablate
-        
+    def _generate_policies(self) -> np.ndarray:
+        """Generate policy array in pymdp format: shape (n_policies, policy_len, n_factors)."""
+        # pymdp expects shape (n_policies, T, n_factors) where T = planning horizon
+        # For single-step policies: T=1, n_factors=1
+        policies = np.array([[a] for a in range(self.action_space_size)],
+                            dtype=int).reshape(self.action_space_size, 1, 1)
         return policies
     
     def _update_pymdp_beliefs(self, intervention_result: InterventionResult):
-        """Update pymdp belief state using proper variational message passing."""
+        """Update pymdp belief state using correct variational message passing API."""
         if not self.use_pymdp or self.pymdp_agent is None:
             return
-        
+
         try:
-            # Create observation from intervention result
-            observation = self._intervention_to_observation(intervention_result)
-            
-            # Perform full Active Inference update cycle
-            # 1. Infer states (posterior over hidden states)
-            self.pymdp_agent.infer_states(observation)
-            
-            # 2. Infer policies (expected free energy calculation) 
-            self.pymdp_agent.infer_policies()
-            
-            # 3. Update model parameters (learning)
-            self.pymdp_agent.update_A(observation)
-            
-            # 4. Update our belief state with pymdp posteriors
-            if hasattr(self.pymdp_agent, 'qs') and len(self.pymdp_agent.qs) > 0:
-                self.belief_state.qs = self.pymdp_agent.qs[0].copy()  # First factor
-                
-                # Update feature importances based on posterior
-                for i, feature_id in enumerate(self.belief_state.feature_importances.keys()):
+            # pymdp expects list of integer observation indices, one per modality
+            obs_idx = self._intervention_to_obs_idx(intervention_result)
+            observations = [obs_idx]  # List[int], length = n_modalities
+
+            # 1. Infer posterior over hidden states
+            qs = self.pymdp_agent.infer_states(observations)
+
+            # 2. Compute expected free energy and policy posterior
+            q_pi, efe = self.pymdp_agent.infer_policies()
+
+            # 3. Parameter learning — use update_likelihood_dirichlet (pymdp v0.0.1 API)
+            if hasattr(self.pymdp_agent, 'update_likelihood_dirichlet'):
+                self.pymdp_agent.update_likelihood_dirichlet(qs, observations)
+
+            # 4. Sync our belief state with pymdp posteriors
+            if qs and len(qs) > 0:
+                self.belief_state.qs = np.array(qs[0]).copy()
+
+                # Map posterior states to feature importances
+                feature_ids = list(self.belief_state.feature_importances.keys())
+                for i, feature_id in enumerate(feature_ids):
                     if i < len(self.belief_state.qs):
-                        # Map posterior belief to importance
-                        importance = self.belief_state.qs[i]
-                        self.belief_state.feature_importances[feature_id] = importance
-            
-            # Extract precision information for uncertainty
+                        self.belief_state.feature_importances[feature_id] = float(
+                            self.belief_state.qs[i]
+                        )
+
+            # 5. Extract precision for uncertainty update
             if hasattr(self.pymdp_agent, 'gamma') and self.pymdp_agent.gamma is not None:
-                avg_precision = np.mean(self.pymdp_agent.gamma)
-                # Update uncertainty inversely to precision
+                avg_precision = float(np.mean(self.pymdp_agent.gamma))
                 for feature_id in self.belief_state.uncertainty.keys():
-                    self.belief_state.uncertainty[feature_id] = max(0.1, 1.0 / (1.0 + avg_precision))
-                    
+                    self.belief_state.uncertainty[feature_id] = max(
+                        0.05, 1.0 / (1.0 + avg_precision)
+                    )
+
         except Exception as e:
             logger.warning(f"PyMDP belief update failed: {e}")
-    
-    def _intervention_to_observation(self, intervention_result: InterventionResult) -> np.ndarray:
-        """Convert intervention result to pymdp observation."""
-        # Simple encoding: effect size discretized
-        effect_size = intervention_result.effect_size
-        
-        if effect_size > 0.7:
-            obs_idx = 2  # High effect
-        elif effect_size > 0.3:
-            obs_idx = 1  # Medium effect
+
+    def _intervention_to_obs_idx(self, intervention_result: InterventionResult) -> int:
+        """Convert intervention effect size to discrete observation index for pymdp."""
+        effect = intervention_result.effect_size
+        if effect > 0.7:
+            return 2  # High effect
+        elif effect > 0.3:
+            return 1  # Medium effect
         else:
-            obs_idx = 0  # Low effect
-        
-        observation = np.zeros(3)
-        observation[obs_idx] = 1.0
-        return observation
+            return 0  # Low effect
+    
+    def _intervention_to_observation(self, intervention_result: InterventionResult) -> int:
+        """Convert intervention result to pymdp observation index (kept for compatibility)."""
+        return self._intervention_to_obs_idx(intervention_result)
     
     def _calculate_correspondence_metrics(self, intervention_result: InterventionResult) -> CorrespondenceMetrics:
         """Calculate correspondence between AI beliefs and circuit behavior."""
@@ -464,60 +469,47 @@ class ActiveInferenceAgent(IActiveInferenceAgent):
         
         return max(0.0, min(1.0, overall_confidence))
     
-    def _create_mock_attribution_graph(self) -> 'AttributionGraph':
-        """Create mock attribution graph from beliefs for prediction generation."""
+    def _build_belief_attribution_graph(self) -> 'AttributionGraph':
+        """Build attribution graph from current belief state (fallback when no real graph available)."""
         from core.data_structures import AttributionGraph, GraphNode, GraphEdge
-        
-        # Create nodes from feature beliefs
-        nodes = {}
-        for i, (feature_id, importance) in enumerate(self.belief_state.feature_importances.items()):
-            # Create mock SAE feature
-            mock_feature = type('MockFeature', (), {
-                'feature_id': feature_id,
-                'layer': feature_id // 100,  # Simple layer assignment
-                'max_activation': importance,
-                'activation_threshold': 0.1,
-                'description': f"Feature {feature_id}",
-                'examples': []
-            })()
-            
-            nodes[i] = GraphNode(
-                node_id=f"feature_{feature_id}_layer_{feature_id // 100}",
-                layer=feature_id // 100,
+
+        nodes: List[GraphNode] = []
+        for feature_id, importance in self.belief_state.feature_importances.items():
+            # Use intervention history to infer layer for each feature_id
+            layer = 0
+            for result in self.intervention_history:
+                if result.target_feature.feature_id == feature_id:
+                    layer = result.target_feature.layer
+                    break
+
+            nodes.append(GraphNode(
+                node_id=f"feature_{feature_id}_layer_{layer}",
+                layer=layer,
                 feature_id=feature_id,
                 importance=importance,
-                description=f"Feature {feature_id}",
-            )
-        
-        # Create edges from connection beliefs
-        edges = {}
+                description=f"Feature {feature_id} (layer {layer})"
+            ))
+
+        # Build edges from strong connection beliefs only
+        node_id_map = {n.feature_id: n.node_id for n in nodes}
+        edges: List[GraphEdge] = []
         for (source_id, target_id), belief in self.belief_state.connection_beliefs.items():
-            if belief > 0.5:  # Only strong connections
-                # Find node indices
-                source_idx = None
-                target_idx = None
-                for idx, node in nodes.items():
-                    if node.feature.feature_id == source_id:
-                        source_idx = idx
-                    elif node.feature.feature_id == target_id:
-                        target_idx = idx
-                
-                if source_idx is not None and target_idx is not None:
-                    edges[(source_idx, target_idx)] = GraphEdge(
-                    source_id=f"feature_{source_id}_layer_{source_id // 100}",
-                    target_id=f"feature_{target_id}_layer_{target_id // 100}",
+            if belief > 0.5 and source_id in node_id_map and target_id in node_id_map:
+                edges.append(GraphEdge(
+                    source_id=node_id_map[source_id],
+                    target_id=node_id_map[target_id],
                     weight=belief,
                     confidence=belief,
-                    edge_type="predicted"
-                )
-        
+                    edge_type="predicted_connection"
+                ))
+
         return AttributionGraph(
-            input_text="mock_input",
-            nodes=list(nodes.values()),
-            edges=list(edges.values()),
-            target_output="mock_output",
+            input_text="belief_derived",
+            nodes=nodes,
+            edges=edges,
+            target_output="",
             confidence=self.belief_state.confidence,
-            metadata={'mock': True}
+            metadata={'source': 'belief_state', 'real_graph': False}
         )
     
     def _create_empty_correspondence(self) -> CorrespondenceMetrics:

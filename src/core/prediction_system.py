@@ -161,15 +161,18 @@ class FeatureInteractionPredictor(PredictionGenerator):
     def _predict_hierarchical_information_flow(self, belief_state: BeliefState,
                                              circuit_graph: AttributionGraph) -> NovelPrediction:
         """Predict hierarchical information flow patterns."""
-        
+
         # Analyze circuit graph structure for hierarchical patterns
+        # nodes is a List[GraphNode], edges is a List[GraphEdge]
         if circuit_graph.nodes:
-            # Calculate average node connectivity as proxy for hierarchy
             connectivity_scores = []
-            for node_id, node in circuit_graph.nodes.items():
-                in_degree, out_degree = circuit_graph.get_node_degree(node_id)
+            for node in circuit_graph.nodes:
+                in_degree = sum(1 for e in circuit_graph.edges
+                                if e.target_id == node.node_id)
+                out_degree = sum(1 for e in circuit_graph.edges
+                                 if e.source_id == node.node_id)
                 connectivity_scores.append(in_degree + out_degree)
-            
+
             avg_connectivity = np.mean(connectivity_scores) if connectivity_scores else 1.0
             hierarchy_strength = min(1.0, avg_connectivity / 5.0)
         else:
@@ -240,8 +243,9 @@ class FailureModePredictor(PredictionGenerator):
         """Predict prediction error cascade failures."""
         
         # Analyze graph connectivity for cascade potential
+        # edges is a List[GraphEdge]; access .weight attribute
         if circuit_graph.edges:
-            edge_weights = list(circuit_graph.edges.values())
+            edge_weights = [e.weight for e in circuit_graph.edges]
             strong_edges = sum(1 for w in edge_weights if abs(w) > 0.5)
             cascade_potential = strong_edges / len(edge_weights) if edge_weights else 0
         else:
