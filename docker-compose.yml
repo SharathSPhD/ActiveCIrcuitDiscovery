@@ -1,0 +1,58 @@
+version: "3.8"
+
+services:
+  active-circuit-discovery:
+    build:
+      context: .
+      dockerfile: Dockerfile.dgx-spark
+    image: active-circuit-discovery:latest
+    container_name: acd-experiments
+    runtime: nvidia
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - HF_TOKEN=${HF_TOKEN}
+      - WANDB_API_KEY=${WANDB_API_KEY:-}
+      - CUDA_VISIBLE_DEVICES=0
+    volumes:
+      - ./results:/workspace/results
+      - ./notebooks:/workspace/notebooks
+      - hf-cache:/workspace/.cache/huggingface
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    shm_size: "16gb"
+    command: python -m src.experiments.run_real_experiments
+
+  jupyter:
+    build:
+      context: .
+      dockerfile: Dockerfile.dgx-spark
+    image: active-circuit-discovery:latest
+    container_name: acd-jupyter
+    runtime: nvidia
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - HF_TOKEN=${HF_TOKEN}
+      - CUDA_VISIBLE_DEVICES=0
+    ports:
+      - "8888:8888"
+    volumes:
+      - ./results:/workspace/results
+      - ./notebooks:/workspace/notebooks
+      - hf-cache:/workspace/.cache/huggingface
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    shm_size: "16gb"
+    command: jupyter notebook --ip=0.0.0.0 --port=8888 --no-browser --allow-root
+
+volumes:
+  hf-cache:

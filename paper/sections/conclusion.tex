@@ -1,33 +1,41 @@
 % ---- conclusion.tex ----
 
-This paper introduced Active Circuit Discovery (\ACD), a framework that applies
-Expected Free Energy minimisation from the Active Inference paradigm to the problem of
-automated circuit discovery in large language models. The core insight is that circuit
-discovery is a partially observable decision problem: the identities and importances
-of circuit-critical SAE features are hidden states, interventions are actions, and
-intervention effects are observations. By maintaining a probabilistic belief over these
-hidden states and selecting interventions to maximally resolve uncertainty, an Active
-Inference agent can identify circuits with fewer total interventions than exhaustive or
-gradient-ranked baselines.
+This paper introduced Active Circuit Discovery (\ACD), a framework that
+combines attribution graph analysis with uncertainty-weighted feature
+selection for efficient circuit discovery in large language models.
+The core insight is that feature-level circuit discovery is an exploration
+problem: which transcoder features to ablate, in what order, given a
+limited budget. By maintaining per-feature uncertainty estimates and
+learning per-layer priors from observed causal effects, the \ACD{} selector
+consistently prioritises the most informative interventions.
 
-The framework integrates four established libraries: TransformerLens for forward pass
-instrumentation, SAE-Lens for sparse autoencoder feature extraction, \pymdp\ for
-discrete-state Active Inference, and CircuitsVis for attribution graph
-visualisation. Three research questions were precisely stated with testable, quantified
-thresholds, providing a rigorous evaluation protocol applicable to any future automated
-circuit discovery method.
+The framework integrates Anthropic's \texttt{circuit-tracer} library for
+Edge Attribution Patching with GemmaScope transcoders, providing a
+principled decomposition of Gemma-2-2B's computation into interpretable
+transcoder features. All interventions use the
+\texttt{feature\_intervention} API, which correctly intervenes at the
+transcoder level with proper network propagation---producing genuine
+causal effects rather than residual-stream approximations.
 
-A pilot implementation on GPT-2 Small identified five implementation failures,
-detailed at the code level, all of which have been corrected. The honest reporting of
-zero valid interventions executed in the pilot run, rather than fabricated metrics,
-represents the empirical state of the work. Post-fix architectural validation confirmed
-that each individual component (SAE loading, activation ablation, \pymdp\ belief
-updating) functions correctly in isolation, providing a solid foundation for end-to-end
-validation.
+Across two benchmarks---Indirect Object Identification (5 prompts) and
+multi-step reasoning (3 prompts)---with a budget of 20 interventions per
+prompt, \ACD{} identifies causally important features 36--44\% faster than
+random selection and achieves 74--78\% of oracle-optimal cumulative
+information gain.  Feature steering experiments confirm causal
+controllability: scaling individual features at $10\times$ activation
+changes model predictions for 20\% of tested features across three
+concepts.
 
-Future work will focus on completing the validated pipeline on the canonical IOI and
-Golden Gate Bridge benchmarks, extending evaluation to GPT-2 Medium and Pythia-1B,
-and implementing multi-step planning for the Active Inference agent. The Docker
-container targeting the NVIDIA DGX Spark platform, together with the fully open-source
-codebase, is released to facilitate reproduction and extension by the mechanistic
-interpretability community.
+A notable finding is the task-dependent layer structure of circuits:
+IOI circuits concentrate in late layers (24--25), consistent with prior
+work on name-mover heads, while multi-step reasoning features
+concentrate in early layers (0--8), suggesting input-processing and
+entity-binding computations dominate transitive inference.
+
+Future work will extend evaluation to Llama-3.2-1B for cross-architecture
+validation, increase prompt set sizes for statistical power, and explore
+multi-step planning where the selector can compose sequences of
+complementary interventions. The fully open-source codebase, Colab
+notebooks, and Docker container for the NVIDIA DGX Spark platform are
+released to facilitate reproduction by the mechanistic interpretability
+community.

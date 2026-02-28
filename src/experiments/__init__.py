@@ -1,8 +1,2 @@
-# YorK_RP Experiments Module
-"""Experiment runners and orchestration."""
-
-from .runner import YorKExperimentRunner
-
-__all__ = [
-    'YorKExperimentRunner'
-]
+# Experiments Module
+"""Experiment runners: use run_real_experiments.py for canonical pipeline."""

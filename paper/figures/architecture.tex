@@ -1,5 +1,5 @@
 % figures/architecture.tex -- System architecture diagram (TikZ)
-% Rendered as \input{figures/architecture} inside a figure environment
+% Updated to reflect current ActiveInferenceSelector architecture
 
 \begin{tikzpicture}[
     font=\small,
@@ -34,66 +34,63 @@
 % ---- Input ----
 \node[box] (prompt) {Prompt $x$};
 
-% ---- LLM column ----
-\node[greybox, below=0.7cm of prompt] (tlens) {TransformerLens\\\texttt{HookedTransformer}};
-\node[greybox, below=0.6cm of tlens] (cache) {Residual stream\\cache $\{\vect{h}_l\}$};
-\node[greybox, below=0.6cm of cache] (saelens) {SAE-Lens\\\texttt{SAE.from\_pretrained}};
-\node[greybox, below=0.6cm of saelens] (features) {Active features\\$\mathcal{F}(x)$};
+% ---- Attribution column ----
+\node[greybox, below=0.7cm of prompt] (model) {Gemma-2-2B\\+ Transcoders};
+\node[greybox, below=0.6cm of model] (eap) {Edge Attribution\\Patching (EAP)};
+\node[greybox, below=0.6cm of eap] (prune) {Prune graph\\(node/edge masks)};
+\node[greybox, below=0.6cm of prune] (candidates) {Candidate features\\$\{(l_i, p_i, f_i)\}$};
 
-% ---- AI Agent column (right) ----
-\node[redbox, right=2.4cm of tlens] (beliefs) {Belief state\\$q(\vect{s}_t)$};
-\node[redbox, below=0.6cm of beliefs] (efe) {\EFE\ selection\\Eq.~(\ref*{eq:efe_approx})};
-\node[redbox, below=0.6cm of efe] (action) {Intervention\\$(l^*,k^*,u^*)$};
-\node[redbox, below=0.6cm of action] (observe) {Observe\\$o_t$, $\delta_t$};
-\node[redbox, below=0.6cm of observe] (update) {Belief update\\Eq.~(\ref*{eq:belief_update})};
+% ---- AI Selector column (right) ----
+\node[redbox, right=2.4cm of model] (importance) {Graph importance\\$\text{imp}(i)$};
+\node[redbox, below=0.6cm of importance] (scoring) {Score = pragmatic\\+ epistemic};
+\node[redbox, below=0.6cm of scoring] (select) {Select $i^*$\\$= \arg\max$ score};
+\node[redbox, below=0.6cm of select] (intervene) {Ablate via\\\texttt{feature\_intervention}};
+\node[redbox, below=0.6cm of intervene] (update) {Update $u(i)$,\\layer prior $\lambda_\ell$};
 
 % ---- Output column ----
-\node[greenbox, below=0.7cm of features, xshift=3.0cm] (circuit) {Circuit $\mathcal{C}$};
-\node[greenbox, below=0.5cm of circuit] (graph) {Attribution\\graph $G$};
-\node[greenbox, below=0.5cm of graph] (preds) {Predictions $\mathcal{P}$};
+\node[greenbox, below=0.7cm of candidates, xshift=3.0cm] (kl) {KL divergence\\measurements};
+\node[greenbox, below=0.5cm of kl] (ranking) {Feature causal\\ranking};
 
-% ---- pymdp label ----
-\node[above=0.1cm of beliefs, font=\footnotesize\itshape, text=red!70!black]
-    {\pymdp\ Agent};
+% ---- Labels ----
+\node[above=0.1cm of importance, font=\footnotesize\itshape, text=red!70!black]
+    {Active Inference Selector};
 
 % ---- Grouping boxes ----
 \begin{scope}[on background layer]
-  \node[groupbox, fit=(tlens)(cache)(saelens)(features),
-        label={[font=\scriptsize, text=black!50]above:LLM + SAE pipeline}] {};
-  \node[groupbox, draw=red!40, fit=(beliefs)(efe)(action)(observe)(update),
-        label={[font=\scriptsize, text=red!60!black]above:Active Inference loop}] {};
-  \node[groupbox, draw=green!40, fit=(circuit)(graph)(preds),
+  \node[groupbox, fit=(model)(eap)(prune)(candidates),
+        label={[font=\scriptsize, text=black!50]above:\texttt{circuit-tracer} pipeline}] {};
+  \node[groupbox, draw=red!40, fit=(importance)(scoring)(select)(intervene)(update),
+        label={[font=\scriptsize, text=red!60!black]above:Uncertainty-weighted loop}] {};
+  \node[groupbox, draw=green!40, fit=(kl)(ranking),
         label={[font=\scriptsize, text=green!60!black]above:Outputs}] {};
 \end{scope}
 
 % ---- Arrows ----
-\draw[arr] (prompt) -- (tlens);
-\draw[arr] (tlens) -- (cache);
-\draw[arr] (cache) -- (saelens);
-\draw[arr] (saelens) -- (features);
+\draw[arr] (prompt) -- (model);
+\draw[arr] (model) -- (eap);
+\draw[arr] (eap) -- (prune);
+\draw[arr] (prune) -- (candidates);
 
-% features -> beliefs (initialise)
-\draw[arr] (features.east) -- ++(0.4,0) |- (beliefs.west)
+% candidates -> importance (initialise)
+\draw[arr] (candidates.east) -- ++(0.4,0) |- (importance.west)
     node[midway, above, font=\scriptsize]{init};
 
-% EFE loop
-\draw[arr] (beliefs) -- (efe);
-\draw[arr] (efe) -- (action);
-\draw[arr] (action.west) -- ++(-0.5,0) |- (cache.east)
-    node[pos=0.3, right, font=\scriptsize]{intervene};
-\draw[arr] (cache.east) -- ++(0.5,0) |- (observe.west)
-    node[pos=0.5, right, font=\scriptsize]{$o_t$};
-\draw[arr] (observe) -- (update);
-\draw[arr] (update.north) -- ++(0, 0.15) -| (beliefs.south)
-    node[pos=0.1, right, font=\scriptsize]{$q_{t+1}$};
+% Selector loop
+\draw[arr] (importance) -- (scoring);
+\draw[arr] (scoring) -- (select);
+\draw[arr] (select) -- (intervene);
+\draw[arr] (intervene.west) -- ++(-0.5,0) |- (model.east)
+    node[pos=0.3, right, font=\scriptsize]{$(l,p,f,0)$};
+\draw[arr] (intervene) -- (update);
+\draw[arr] (update.north) -- ++(0, 0.15) -| (scoring.south east)
+    node[pos=0.1, right, font=\scriptsize]{$\lambda_\ell, u(i)$};
 
 % Convergence check
 \draw[darr] (update.east) -- ++(0.5,0)
-    node[right, font=\scriptsize]{converged?};
+    node[right, font=\scriptsize]{budget?};
 
 % Output arrows
-\draw[arr] (update.south) -- ++(0,-0.3) -| (circuit.north);
-\draw[arr] (circuit) -- (graph);
-\draw[arr] (graph) -- (preds);
+\draw[arr] (update.south) -- ++(0,-0.3) -| (kl.north);
+\draw[arr] (kl) -- (ranking);
 
 \end{tikzpicture}

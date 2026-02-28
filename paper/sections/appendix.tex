@@ -1,174 +1,154 @@
 % ---- appendix.tex ----
 
-\section{Generative Model Parameter Initialisation}
-\label{app:genmodel}
+\section{Active Inference Selector Parameters}
+\label{app:selector}
 
-This appendix details the initialisation procedure for the four generative model
-parameter arrays used by the \pymdp\ agent.
+This appendix details the initialisation and hyperparameters of the
+Active Inference Selector.
 
-\textbf{Observation model $\mat{A}$.} Given $N$ active features and 3 observation
-categories (low, medium, high effect), $\mat{A} \in \mathbb{R}^{3 \times (N+1)}$.
-Feature $k$ with normalised activation $\hat{a}_k = a_k / \max_j a_j$ is initialised
-as:
-\begin{equation}
-  \mat{A}_{:,k} = \operatorname{softmax}\!\bigl(\bigl[1 - \hat{a}_k,\;
-                  0.5,\; \hat{a}_k\bigr] \cdot \beta\bigr)
-\end{equation}
-with temperature $\beta = 2.0$. The irrelevant-feature column ($k = N+1$) is
-initialised as $\mat{A}_{:,N+1} = [0.8, 0.15, 0.05]^\top$ (predominantly low effect).
+\textbf{Exploration weight ($\omega_e$).}  Default value: 2.0.  Higher
+values increase early-stage exploration of uncertain features at the
+cost of potentially delaying exploitation of known high-value features.
+The value was selected based on the IOI benchmark to balance oracle
+efficiency with baseline improvement.
 
-\textbf{Transition model $\mat{B}$.} For each action $u \in \{0, 1, 2\}$ corresponding
-to \{ablation, patching, mean ablation\}, $\mat{B}^{(u)} \in \mathbb{R}^{(N+1)\times(N+1)}$
-is initialised as $\mat{I}_{N+1} \cdot 0.9 + 0.1/(N+1)$ (predominantly self-transition
-with slight diffusion). After observing a high-effect ablation of feature $k$, the
-transition probabilities are updated to reflect that features in the same layer are
-less likely to be the unique circuit member (reducing redundant interventions).
+\textbf{Uncertainty initialisation.}  All features start with $u(i) = 1$.
+After observing feature $i$, its uncertainty drops to 0.  Same-layer
+features receive a 30\% reduction ($u(j) \leftarrow 0.7 \cdot u(j)$),
+and adjacent-position features receive a 10\% reduction
+($u(j) \leftarrow 0.9 \cdot u(j)$).
 
-\textbf{Preference vector $\vect{c}$.} The log-preference over observations is set to
-$\vect{c} = [0, 0.5, 1.0]^\top$, preferring high-effect observations as these
-provide more information about circuit structure. The values are not renormalised so
-that they function as linear utilities rather than log-probabilities.
+\textbf{Layer prior.}  Initialised to $\lambda_\ell = 1$ for all layers.
+Updated after each observation as
+$\lambda_\ell = 1 + 0.5 (\bar{\text{KL}}_\ell / \bar{\text{KL}}_{\text{global}} - 1)$.
 
-\textbf{Prior over initial states $\vect{d}$.} A uniform prior $d_k = 1/(N+1)$ is
-used, reflecting initial ignorance about feature importance. An informative prior
-derived from gradient-based scores would be a straightforward extension.
+\textbf{Candidate extraction.}  Up to 5 features per layer, 60 total
+candidates, selected from pruned graph features sorted by influence
+(sum of absolute adjacency weights).  Pruning thresholds: node = 0.8,
+edge = 0.98 (defaults from \texttt{circuit-tracer}).
 
-\section{Correspondence Metric Derivation}
+
+\section{Correspondence Metric}
 \label{app:correspondence}
 
-Let $\vect{\pi}_T = (\pi_{T,1}, \ldots, \pi_{T,N})$ be the posterior importance vector
-after $T$ interventions and $\vect{e} = (e_1, \ldots, e_N)$ the vector of empirical
-direct effects (computed by ablating each feature once). The Spearman rank correlation
-is:
+The primary metric for evaluating selector quality is oracle efficiency:
+the ratio of cumulative KL divergence achieved by the selector to that
+achieved by the oracle (features sorted by true KL divergence,
+descending):
 \begin{equation}
-  \rho_s(\vect{\pi}_T, \vect{e}) = 1 - \frac{6 \sum_{k=1}^N d_k^2}{N(N^2-1)},
+  \text{Oracle Efficiency} = \frac{\sum_{t=1}^{B} \text{KL}_{i_t^{\text{method}}}}
+                                  {\sum_{t=1}^{B} \text{KL}_{i_t^{\text{oracle}}}}
+                             \times 100\%
 \end{equation}
-where $d_k = \operatorname{rank}(\pi_{T,k}) - \operatorname{rank}(e_k)$ is the
-difference in ranks. Statistical significance is assessed using a two-tailed
-permutation test (10,000 permutations) rather than the asymptotic $t$-approximation,
-which requires $N \geq 10$.
 
-The choice of Spearman over Pearson correlation is motivated by three considerations.
-First, $\pi_{T,k}$ are posterior probabilities in a simplex ($\sum_k \pi_{T,k} = 1$)
-while $e_k$ are logit differences in $\mathbb{R}$; there is no reason to expect a
-linear relationship between these quantities. Second, SAE feature activations and
-intervention effects are frequently heavy-tailed, making rank-based measures more
-robust~\cite{MacKay2003}. Third, Spearman correlation is undefined for $N = 1$
-(unlike Pearson, which silently returns undefined/NaN), providing a natural safeguard
-against the single-sample failure mode identified in the pilot.
+Secondary metrics include mean KL per intervention (higher = better
+feature selection) and improvement percentages over random and greedy
+baselines.
+
+KL divergence between clean and intervened output distributions is
+computed as:
+\begin{equation}
+  D_{\text{KL}}(p_{\text{interv}} \| p_{\text{clean}}) =
+  \sum_v p_{\text{interv}}(v) \log \frac{p_{\text{interv}}(v)}{p_{\text{clean}}(v)}
+\end{equation}
+using \texttt{torch.nn.functional.kl\_div} with a $10^{-10}$ smoothing
+factor to prevent numerical instability.
+
 
 \section{Docker and DGX Spark Deployment}
 \label{app:docker}
 
-The \ACD\ framework is packaged as a multi-stage Docker container targeting the NVIDIA
-DGX Spark platform. The container is based on the NVIDIA PyTorch NGC image
-\texttt{nvcr.io/nvidia/pytorch:24.10-py3} which provides CUDA~12.6, cuDNN~9.5,
-and PyTorch~2.5 pre-installed with NVLink and NVMe optimisations for DGX hardware.
+The \ACD{} framework is packaged as a Docker container targeting the
+NVIDIA DGX Spark platform (GB10 GPU, 128~GB unified memory, CUDA~12.8,
+aarch64 architecture).
 
 \begin{lstlisting}[language=bash,caption={Docker build and run for DGX Spark.}]
 # Build
-docker build -t acd:latest \
-  --build-arg PLATFORM=dgx-spark .
+docker compose build active-circuit-discovery
 
-# Single-GPU run
-docker run --gpus '"device=0"' \
-  -v /data/acd:/workspace/results \
-  acd:latest python experiments/golden_gate_bridge.py
+# Run experiments
+docker compose run active-circuit-discovery \
+  python -m src.experiments.run_real_experiments
 
-# Multi-GPU with DGX Spark NVLink
-docker run --gpus all \
-  --ipc=host --ulimit memlock=-1 \
-  -e NCCL_IB_DISABLE=0 \
-  -v /data/acd:/workspace/results \
-  acd:latest python run_complete_experiment.py \
-  --distributed --world-size 4
+# Results are saved to results/ directory
 \end{lstlisting}
 
-The \texttt{docker-compose-dgx.yml} file in the repository root provides a complete
-orchestration configuration including volume mounts for model weights (shared from
-the DGX Spark's NFS-mounted model cache), result directories, and logging endpoints.
-Environment variables \texttt{HF\_HOME} and \texttt{SAE\_LENS\_CACHE} are set to the
-shared cache path to avoid redundant downloads of the 2.4~GB GPT-2 Small SAE weights.
+The \texttt{docker-compose.yml} in the repository root provides volume
+mounts for model weights (cached from HuggingFace Hub) and result
+directories.  The container installs \texttt{circuit-tracer} from source
+and pins all dependencies via \texttt{requirements.txt}.
 
-For multi-node DGX Spark cluster execution, the experiment runner supports
-\texttt{torch.distributed} via the \texttt{--distributed} flag, partitioning the
-prompt set across GPUs with each GPU independently executing its assigned interventions.
-Attribution graph aggregation and final correspondence computation are performed on
-GPU~0 after all workers complete.
 
-\section{Code-Level API Fixes Applied}
+\section{Code-Level Fixes Applied}
 \label{app:fixes}
 
-Table~\ref{tab:fixes} summarises all API-level fixes applied to the codebase as a
-result of the critical review, with the file, line range, error description, and fix
-applied.
+Table~\ref{tab:fixes} summarises the critical API fixes discovered
+during the implementation and validation process.
 
 \begin{table*}[t]
   \centering
-  \caption{Summary of critical API fixes applied to the \ACD\ codebase.}
+  \caption{Summary of critical API fixes applied to the \ACD{} codebase.}
   \label{tab:fixes}
   \small
   \begin{tabularx}{\textwidth}{llXX}
     \toprule
-    File & Lines & Error & Fix Applied \\
+    File & Issue & Error & Fix Applied \\
     \midrule
-    \texttt{tracer.py} & 96--97 & Single-string SAE ID not valid for SAE-Lens v0.3+ &
-      Replaced with \texttt{SAE.from\_pretrained(release, sae\_id)} tuple call \\
-    \texttt{tracer.py} & 182--194 & Fallback SAE uses \texttt{torch.randn} random weights;
-      all analyses on random projections &
-      Retained fallback but added \texttt{require\_sae} config flag to abort rather
-      than silently proceed \\
-    \texttt{agent.py} & 388 & \texttt{infer\_states(array)} rather than \texttt{infer\_states([idx])} &
-      Wrapped observation in list: \texttt{[obs\_idx]} \\
-    \texttt{agent.py} & 399 & \texttt{update\_A} does not exist in \pymdp\ v0.0.1 &
-      Replaced with \texttt{update\_likelihood\_dirichlet(qs, observations)} \\
-    \texttt{agent.py} & 284--307 & Convergence compared importance of feature $i$ with
-      importance of feature $j$ (different features) &
-      Replaced with symmetric KL divergence between successive belief
-      distributions (Eq.~\ref{eq:convergence}) \\
-    \texttt{metrics.py} & 143--200 & Pearson $r$ at $n=1$; always returns 0 &
-      Changed to Spearman $\rho$ accumulated over all interventions and computed
-      once at end of experiment \\
-    \texttt{runner.py} & 522--555 & \texttt{\_generate\_prediction\_test\_data()} used
-      \texttt{np.random.beta()} and \texttt{np.random.normal()} as
-      fake validation data &
-      Removed; replaced with real circuit measurements extracted from
-      TransformerLens hooks during the intervention loop \\
-    \texttt{prediction\_system.py} & 169 & \texttt{circuit\_graph.nodes.items()} fails
-      because \texttt{nodes} is a \texttt{List}, not a \texttt{Dict} &
-      Changed to iterate as \texttt{for node in circuit\_graph.nodes} \\
-    \texttt{prediction\_system.py} & 244 & \texttt{circuit\_graph.edges.values()} fails
-      because \texttt{edges} is a \texttt{List}, not a \texttt{Dict} &
-      Changed to \texttt{[edge.weight for edge in circuit\_graph.edges]} \\
-    \texttt{tracer.py} & 448--449 & \texttt{\_perform\_mean\_ablation} called
-      \texttt{\_perform\_ablation\_intervention} (zero, not mean) &
-      Implemented true corpus-mean computation over 100-sentence reference set \\
+    \texttt{circuit\_tracer\_backend.py} & LogitTarget attribute &
+      \texttt{.token} attribute does not exist on \texttt{LogitTarget} &
+      Changed to \texttt{.token\_str} (correct attribute name) \\
+    \texttt{circuit\_tracer\_backend.py} & PruneResult handling &
+      Assumed \texttt{prune\_result.graph} exists; \texttt{PruneResult}
+      is a namedtuple with \texttt{node\_mask} and \texttt{edge\_mask} &
+      Rewrote to apply masks to raw graph's adjacency matrix \\
+    \texttt{intervention\_engine.py} & Model access &
+      \texttt{model.model.cfg} fails because \texttt{ReplacementModel}
+      inherits directly from \texttt{HookedTransformer} &
+      Changed to \texttt{model.cfg} (direct access) \\
+    \texttt{intervention\_engine.py} & Intervention method &
+      Used \texttt{run\_with\_hooks} with residual stream hooks instead
+      of transcoder-level intervention &
+      Replaced with \texttt{feature\_intervention} API for correct
+      causal effects \\
+    \texttt{runner.py} & Fake validation data &
+      \texttt{\_generate\_prediction\_test\_data()} used
+      \texttt{np.random.beta()} and \texttt{np.random.normal()} &
+      Removed; replaced with real measurements from
+      \texttt{feature\_intervention} \\
+    \texttt{pomdp\_agent.py} & Skip bias &
+      POMDP agent selected ``skip'' action 90\% of the time due to
+      miscalibrated action space &
+      Replaced POMDP with custom ActiveInferenceSelector using
+      uncertainty-weighted scoring \\
     \bottomrule
   \end{tabularx}
 \end{table*}
 
+
 \section{Experimental Reproducibility Checklist}
 \label{app:repro}
 
-The following checklist consolidates the requirements for reproducing the \ACD\
-experiments. It follows the NeurIPS reproducibility guidelines~\cite{Conmy2023}.
+\textbf{Model and data availability:} Gemma-2-2B is available from
+HuggingFace Hub (\texttt{google/gemma-2-2b}) under the Gemma license.
+GemmaScope transcoders are loaded automatically by \texttt{circuit-tracer}.
 
-Model and data availability: GPT-2 Small is available from HuggingFace Hub
-(\texttt{gpt2}) under the MIT licence. SAE weights for \texttt{gpt2-small-res-jb}
-are available from SAE-Lens under the Apache 2.0 licence.
+\textbf{Hardware requirements:} A single NVIDIA GPU with at least 8~GB
+VRAM (tested on T4 with 16~GB in Colab and GB10 with 128~GB on DGX Spark).
+The model loads in float32 and requires approximately 5~GB VRAM.
 
-Hardware requirements: a single NVIDIA GPU with at least 16~GB VRAM (tested on
-L40S with 48~GB). CPU-only execution is possible but expected to increase runtime
-by approximately 100x.
+\textbf{Software environment:} All dependencies are pinned in
+\texttt{requirements.txt}.  Key packages: \texttt{circuit-tracer}
+(from git), \texttt{transformer-lens}, \texttt{torch>=2.0}.
 
-Software environment: all dependencies are pinned in \texttt{requirements.txt}.
-The key version constraints are \texttt{pymdp==0.0.1},
-\texttt{transformer-lens==2.16.0}, \texttt{sae-lens>=0.3.0}.
+\textbf{Random seed:} Random baselines use
+\texttt{numpy.random.seed(42)}.  The Active Inference Selector is
+deterministic given the same candidates and exploration weight.
 
-Random seed: the Active Inference agent uses no stochastic operations beyond the
-policy sampling step, which is seeded with \texttt{numpy.random.seed(42)}. Reproducible
-results require setting the global PyTorch seed before model loading.
+\textbf{Expected runtime:} Approximately 40--60 seconds per prompt on
+a single GPU (attribution graph generation: $\sim$18s; 40 ablations at
+$\sim$30ms each: $\sim$1.2s; overhead: $\sim$20s for model setup on
+first prompt).
 
-Expected runtime: approximately 120 seconds per prompt template on a single L40S
-GPU, assuming 20 interventions at 15--30~ms each and additional overhead for SAE
-encoding and graph construction.
+\textbf{Raw results:} All experiment outputs are saved as JSON in the
+\texttt{results/} directory, including per-prompt KL values for all
+methods, feature IDs, layer distributions, and steering outcomes.

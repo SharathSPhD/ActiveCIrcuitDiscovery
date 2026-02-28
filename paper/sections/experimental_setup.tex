@@ -1,143 +1,94 @@
-% ---- experimental_setup.tex ----
+\subsection{Models and Hardware}
 
-\subsection{Model and Hardware}
+We evaluate \ACD{} on Gemma-2-2B~\cite{team2024gemma}: 26 layers,
+2304-dim, 8 heads.  Transcoders from GemmaScope
+(\texttt{mwhanna/gemma-scope-transcoders}) provide sparse feature
+decomposition via the \texttt{circuit-tracer} library with the
+TransformerLens backend.
 
-All experiments target GPT-2 Small~\cite{Radford2019}: a 117~M parameter, 12-layer,
-768-dimensional transformer with 12 attention heads per layer. GPT-2 Small occupies
-a central position in the mechanistic interpretability literature as the primary
-validation platform for the IOI circuit~\cite{Wang2022}, the docstring circuit~\cite{Heimersheim2023},
-and the \ACDC\ paper~\cite{Conmy2023}, enabling direct comparison with established
-results. The model is loaded via TransformerLens~\cite{Nanda2022} with
-\texttt{fold\_ln=False} and \texttt{center\_writing\_weights=False} to preserve the
-canonical residual stream decomposition.
+Experiments run on an NVIDIA DGX Spark with GB10 GPU (128\,GB unified
+memory, CUDA 12.8, aarch64).  Colab notebooks reproduce results on a
+free T4 GPU.
 
-Experiments are executed on an NVIDIA L40S GPU (48~GB GDDR6 ECC, CUDA 12.6, driver
-version 565.57) with 128~GB system RAM. The DGX Spark deployment configuration targets
-NVIDIA DGX Spark nodes with NVLink-connected A100 SXM4 80~GB GPUs; the Docker container
-specification is described in Appendix~\ref{app:docker}.
+\subsection{Benchmarks}
 
-\subsection{Sparse Autoencoder Configuration}
+\subsubsection{IOI Circuit Recovery}
 
-Residual-stream SAEs for GPT-2 Small are loaded from the
-\texttt{gpt2-small-res-jb}~release via SAE-Lens using the correct tuple API:
-\begin{lstlisting}[language=Python, caption={Correct SAE-Lens v0.3+ loading API.}]
-sae, cfg_dict, log_sparsity = SAE.from_pretrained(
-    release="gpt2-small-res-jb",
-    sae_id=f"blocks.{layer}.hook_resid_post",
-    device=device
-)
-\end{lstlisting}
-SAEs at layers auto-discovered to have above-median residual stream variance across a
-diverse 100-sentence calibration corpus are used. For the Golden Gate Bridge
-experiments, layers 5 through 10 were consistently selected. The activation threshold
-is $\theta = 0.05$, and up to 20 features per layer are retained.
+The Indirect Object Identification task~\cite{wang2022interpretability}
+tests whether the agent can identify features causally responsible for
+predicting the indirect object.  We use 5 prompts of the form
+``When [A] and [B] went to the store, [A] gave the bag to \_\_''
+where the correct prediction is [B].  For each prompt, we measure the
+KL divergence caused by ablating each candidate feature via the
+\texttt{feature\_intervention} API, which correctly intervenes at the
+transcoder level with proper network propagation.
 
-\subsection{Active Inference Hyperparameters}
+\subsubsection{Feature Steering}
 
-Table~\ref{tab:ai_config} lists the hyperparameters used for the Active Inference
-agent.
+Three concept prompts (Golden Gate Bridge, Eiffel Tower, Mount Everest).
+For each, we identify the top 10 features by graph importance and scale
+their activations at multipliers $m \in \{0, 2, 5, 10\}$.  We measure
+the KL divergence and whether the model's top prediction changes.
 
-\begin{table}[t]
-  \centering
-  \caption{Active Inference agent hyperparameters.}
-  \label{tab:ai_config}
-  \begin{tabular}{lll}
-    \toprule
-    Parameter & Symbol & Value \\
-    \midrule
-    Epistemic weight     & $w_e$ & 0.7 \\
-    Pragmatic weight     & $w_p = 1 - w_e$ & 0.3 \\
-    Action precision     & $\alpha$ & 16.0 \\
-    Convergence threshold & $\delta$ & 0.05 \\
-    Maximum interventions & $T$ & 20 \\
-    Observation bins     & --- & 3 \\
-    Dirichlet concentration & $a_0$ & 1.0 \\
-    \bottomrule
-  \end{tabular}
-\end{table}
+\subsection{Baselines}
 
-The epistemic weight $w_e = 0.7$ was set to bias the agent toward uncertainty
-resolution, reflecting the primary goal of circuit identification over any particular
-output preference. The action precision $\alpha = 16.0$ corresponds to a relatively
-deterministic policy that concentrates probability mass on the action with the minimum
-negative \EFE.
+\begin{itemize}
+\item \textbf{Random:} Select features uniformly at random (10 trials).
+\item \textbf{Greedy:} Select features in descending order of graph
+  node influence (sum of absolute adjacency weights).
+\item \textbf{Oracle:} Select features in descending order of
+  true KL divergence (upper bound requiring all ablations).
+\end{itemize}
 
-\subsection{Benchmark Task: Golden Gate Bridge}
+All methods use the same \texttt{feature\_intervention} API and
+KL divergence metric.  Budgets are fixed at $B=20$ interventions
+per prompt.
 
-Following established practice in mechanistic interpretability, the canonical benchmark
-task is factual completion of prompts about the Golden Gate Bridge~\cite{Wang2022,
-Conmy2023}. Specifically, five prompt templates are used:
+\subsection{Metrics}
 
+\begin{itemize}
+\item \textbf{Mean KL per intervention:}  Average KL divergence across
+  selected features.  Higher values indicate the method finds more
+  causally important features.
+
+\item \textbf{Cumulative KL:}  Total information gained over the
+  budget.  Compared against oracle to compute efficiency.
+
+\item \textbf{Oracle efficiency:}  $\text{Cum.~KL} / \text{Oracle~Cum.~KL}
+  \times 100\%$.  Measures how close a method is to optimal.
+
+\item \textbf{Prediction change rate:}  Fraction of steering
+  experiments where the model's top-1 prediction changes.
+\end{itemize}
+
+\subsection{Active Inference Selector}
+
+The \ACD{} selector combines graph-structural importance with
+uncertainty-weighted exploration.  For each candidate feature $i$:
+\[
+  \text{score}(i) = \underbrace{\text{imp}(i) \cdot \lambda_{\ell(i)}}_{\text{pragmatic}}
+  + \underbrace{u(i) \cdot \omega_e}_{\text{epistemic}}
+\]
+where $\text{imp}(i)$ is the normalized graph influence,
+$\lambda_{\ell}$ is a learned per-layer prior updated after each
+observation, $u(i)$ is the uncertainty (initialized to 1, reduced
+after observation), and $\omega_e = 2.0$ is the exploration weight.
+
+After ablating feature $i$ and observing KL divergence:
 \begin{enumerate}
-  \item \textit{``The Golden Gate Bridge is located in''}
-  \item \textit{``San Francisco's most famous landmark is the''}
-  \item \textit{``The iconic red bridge in San Francisco is known as the''}
-  \item \textit{``The bridge connecting San Francisco to Marin County is the''}
-  \item \textit{``When visiting San Francisco, tourists often see the''}
+\item $u(i) \leftarrow 0$ (observed feature has no remaining uncertainty).
+\item Same-layer features: $u(j) \leftarrow 0.7 \cdot u(j)$ (partial
+  uncertainty reduction by transfer).
+\item Layer prior $\lambda_\ell$ is updated based on the ratio of
+  layer-average KL to global-average KL.
 \end{enumerate}
 
-The target token is one of \{``Golden'', ``gate'', ``Bridge'', ``Francisco''\}
-according to the prompt. A behaviour $b(x)$ is defined as the log-probability
-assigned to the highest-scoring target token minus the mean log-probability over all
-non-target tokens in the vocabulary: $b(x) = \log p(\text{target} \mid x) -
-\frac{1}{V} \sum_{v \notin \mathcal{T}} \log p(v \mid x)$.
+\subsection{Reproducibility}
 
-\subsection{Baseline Methods}
-
-Three baseline intervention selection strategies are implemented for RQ2:
-
-\textbf{Random.} At each step, a feature is selected uniformly at random from the
-active feature set. This naive baseline establishes a lower bound on efficiency.
-
-\textbf{Gradient (activation magnitude).} Features are sorted by their SAE encoder
-activation $a_{l,k}(x)$ in descending order and selected greedily. This approximates
-the gradient-ranked ordering used in early circuit analysis~\cite{Wang2022} and
-provides a competitive non-adaptive baseline. The name ``gradient-based'' in the
-codebase denotes this activation-magnitude ranking, which serves as a proxy for
-first-order gradient importance.
-
-\textbf{Exhaustive.} All active features are tested in layer-ascending order. This
-establishes the upper bound on intervention count and corresponds to the complete
-search underlying \ACDC.
-
-All baselines use zero ablation as the intervention type, consistent with the \ACDC\
-default. Efficiency is measured as the number of interventions required to achieve a
-circuit purity of 0.8 (defined as the fraction of top-10 features by importance that
-also appear in the ground-truth IOI circuit sub-graph identified by Wang et
-al.~\cite{Wang2022}) or to exhaust the feature budget $T$. The relative efficiency
-improvement of \ACD\ over each baseline is:
-\begin{equation}
-  \text{Eff}(b) = \frac{N_b - N_{\ACD}}{N_b} \times 100\%,
-  \label{eq:efficiency}
-\end{equation}
-where $N_b$ is the number of interventions required by baseline $b$ and $N_{\ACD}$
-is the number required by \ACD.
-
-\subsection{Research Questions and Validation Criteria}
-
-The three research questions and their validation criteria are stated precisely below.
-
-\textbf{RQ1 (Correspondence).} The Active Inference belief state after circuit
-discovery corresponds to empirical intervention effects. Validated when the Spearman
-rank correlation $\rho_s$ between the posterior importance vector
-$\vect{\pi}_T = (\pi_{T,1}, \ldots, \pi_{T,N})$ and the vector of empirical direct
-effects $\vect{e} = (e_1, \ldots, e_N)$ (computed by ablating each feature once)
-satisfies $\rho_s > 0.4$, $p < 0.05$ under a two-tailed permutation test with 10,000
-permutations.
-
-\textbf{RQ2 (Efficiency).} EFE-guided selection identifies a faithful circuit with
-fewer interventions than all three baselines. Validated when
-$\text{Eff}(\text{random}) > 30\%$, $\text{Eff}(\text{gradient}) > 0\%$, and
-$\text{Eff}(\text{exhaustive}) > 30\%$.
-
-\textbf{RQ3 (Predictions).} Three or more of the framework's testable predictions
-(Section~\ref{sec:predictions}) are confirmed at the $p < 0.05$ significance level
-with effect size $d > 0.3$ (small to medium effect).
-
-\subsection{Statistical Analysis}
-
-All significance tests use two-tailed alternatives and a familywise error rate
-controlled at $\alpha = 0.05$ using the Benjamini-Hochberg procedure. Effect sizes are
-reported as Cohen's $d$ for continuous comparisons and $r = Z/\sqrt{N}$ for
-rank-based tests. Bootstrap confidence intervals (10,000 samples, BCa method) are
-reported for all primary metrics.
+All code is available at
+\url{https://github.com/SharathSPhD/ActiveCircuitDiscovery}.
+A Colab notebook reproduces the main experiments on a free T4 GPU.
+Docker images are provided for the DGX Spark environment.  All
+results derive from real model activations via the
+\texttt{feature\_intervention} API---no synthetic or fabricated data.
+Raw experiment outputs are stored in \texttt{results/} as JSON.

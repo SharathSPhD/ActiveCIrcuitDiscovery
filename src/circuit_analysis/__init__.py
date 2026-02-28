@@ -1,8 +1,6 @@
-# YorK_RP Circuit Analysis Module
-"""Circuit discovery and analysis components."""
+# Circuit Analysis Module
+"""Circuit discovery via circuit-tracer attribution graphs."""
 
-from .tracer import CircuitTracer
+from .circuit_tracer_backend import CircuitTracerBackend
 
-__all__ = [
-    'CircuitTracer'
-]
+__all__ = ['CircuitTracerBackend']

@@ -68,5 +68,22 @@ update.md
 gaps*.md
 IMPLEMENT*.md
 ENHANCEMENTS*.md
-# Virtual environment (outside project)
+# Virtual environments
 ../project_venv/
+.venv/
+
+# Archived legacy code
+archive/
+
+# Docs (except orchestration doc kept in repo root)
+docs/
+
+# LaTeX auxiliary files
+paper/*.aux
+paper/*.bbl
+paper/*.blg
+paper/*.log
+paper/*.out
+paper/*.toc
+paper/*.lot
+paper/*.lof

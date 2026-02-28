@@ -49,36 +49,35 @@ with fewer total interventions than either random or gradient-ranked selection.
 
 The contributions of this paper are as follows.
 
-\textbf{(C1) Theoretical framing.} A formal mapping is established between Active
-Inference and circuit discovery, showing how transformer residual stream components
-correspond to hidden states in the agent's generative model, how intervention effects
-correspond to observations, and how the transformer's attention precision maps to the
-agent's precision weighting.
+\textbf{(C1) Theoretical framing.} A formal mapping is established between
+active inference and circuit discovery, showing how transcoder features correspond
+to candidate circuit components, how ablation effects correspond to observations,
+and how uncertainty-weighted scoring implements the exploration--exploitation
+trade-off analogous to Expected Free Energy minimisation.
 
-\textbf{(C2) Framework implementation.} The Active Circuit Discovery (\ACD) framework
-is implemented in Python, integrating TransformerLens~\cite{Nanda2022} for forward
-pass instrumentation, SAE-Lens~\cite{Bloom2024} for Sparse Autoencoder feature
-extraction, \pymdp~\cite{Pymdp2022} for the Active Inference agent's belief updating
-and \EFE\ computation, and CircuitsVis~\cite{Conmy2024} for attribution graph
-visualisation.
+\textbf{(C2) Framework implementation.} The Active Circuit Discovery (\ACD)
+framework is implemented in Python, integrating Anthropic's
+\texttt{circuit-tracer}~\cite{marks2024sparse} for Edge Attribution Patching
+with GemmaScope transcoders and the \texttt{feature\_intervention} API for
+causally correct transcoder-level interventions on Gemma-2-2B.
 
-\textbf{(C3) Evaluation protocol.} Three precisely stated research questions are
-defined and corresponding metrics, baselines, and statistical tests are specified,
-providing a template for reproducible evaluation of any future automated circuit
-discovery method.
+\textbf{(C3) Validated evaluation.} Three research questions are defined with
+quantified targets and evaluated on two benchmarks (IOI, multi-step reasoning)
+with three baselines (random, greedy, oracle), all using real model activations.
+The \ACD{} selector achieves 36--44\% improvement over random selection and
+74--78\% of oracle-optimal performance.
 
-\textbf{(C4) Honest preliminary assessment.} The paper reports the results of an
-end-to-end pilot experiment on GPT-2 Small, including a candid account of which
-components performed as expected, which failed, and why, together with the specific
-code-level fixes applied.
+\textbf{(C4) Causal controllability.} Feature steering experiments demonstrate
+that individual transcoder features causally control model behaviour, with
+prediction changes observed for 20\% of tested features at $10\times$ activation
+scaling.
 
-\textbf{(C5) Deployment artifact.} A Docker container configured for the NVIDIA DGX
-Spark multi-GPU platform is provided, enabling future reproduction at scale.
+\textbf{(C5) Reproducibility artifacts.} Three Google Colab notebooks, a Docker
+container for NVIDIA DGX Spark, and raw experiment results (JSON) are released
+for full reproduction.
 
 The remainder of this paper is structured as follows. Section~\ref{sec:background}
 reviews related work on circuit analysis, Active Inference, and sparse
-autoencoders. Section~\ref{sec:method} describes the \ACD\ framework in detail.
+autoencoders. Section~\ref{sec:method} describes the \ACD{} framework in detail.
 Section~\ref{sec:setup} specifies the experimental protocol. Section~\ref{sec:results}
-reports results from the pilot implementation. Section~\ref{sec:discussion} interprets
-these results and outlines the path to full validation.
-Section~\ref{sec:conclusion} concludes.
+reports validated results. Section~\ref{sec:conclusion} concludes.

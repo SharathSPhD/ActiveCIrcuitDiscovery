@@ -50,12 +50,14 @@ this approach to a one-layer MLP with 4,096-dimensional activations, recovering 
 units~\cite{Bricken2023}. Templeton et al.\ extended the analysis to SAE features in
 Claude models, recovering structured emotional and semantic concepts~\cite{Templeton2024}.
 
-SAE-Lens~\cite{Bloom2024} provides pre-trained SAE weights and a standardised API for
-loading, querying, and applying SAEs to arbitrary residual stream activations. For
-GPT-2 Small, the \texttt{gpt2-small-res-jb} release provides residual-stream SAEs at
-every layer, trained on the Pile corpus. He et al.\ showed that using SAE features as
-the unit of circuit analysis significantly improves circuit faithfulness compared to
-attention-head-level analysis~\cite{He2024}.
+Anthropic's \texttt{circuit-tracer} library~\cite{marks2024sparse} provides
+an end-to-end pipeline for feature-level attribution: transcoders decompose
+MLP activations into sparse features, and Edge Attribution Patching
+constructs a directed graph of feature interactions.  The
+\texttt{feature\_intervention} API then allows causally correct ablation
+and steering of individual transcoder features with proper network
+propagation.  GemmaScope~\cite{team2024gemma} provides pre-trained
+transcoders for Google's Gemma-2 model family.
 
 \subsection{Active Inference and Expected Free Energy}
 
@@ -82,12 +84,12 @@ epistemic value measures expected information gain (uncertainty reduction). Poli
 selected according to a Boltzmann distribution over negative \EFE\ values.
 
 Parr et al.\ provide a comprehensive treatment of Active Inference as a model of
-cognition~\cite{Parr2022}. Heins et al.\ implement discrete-state Active Inference
-in the \pymdp\ Python library~\cite{Pymdp2022}, which provides matrix-based
-generative models $(\mat{A}, \mat{B}, \mat{C}, \mat{D})$ representing the observation
-model, transition model, log-preference vector, and prior over initial states
-respectively. Tschantz et al.\ demonstrated that \EFE\ minimisation recovers
-reinforcement learning in the limit of pure pragmatic value~\cite{Tschantz2020}.
+cognition~\cite{Parr2022}. Tschantz et al.\ demonstrated that \EFE\ minimisation
+recovers reinforcement learning in the limit of pure pragmatic
+value~\cite{Tschantz2020}.  In practice, the full \EFE\ decomposition can be
+approximated by lightweight scoring functions that combine exploitation
+(known value) with exploration (uncertainty reduction), which we adopt in this
+work.
 
 Sun et al.\ explored the conceptual alignment between Active Inference and neural network
 interpretability, arguing that attention mechanisms implement a form of precision-weighted

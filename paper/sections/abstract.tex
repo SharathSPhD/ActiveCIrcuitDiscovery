@@ -1,27 +1,26 @@
-Mechanistic interpretability seeks to understand the internal computational structures of
-large language models (LLMs) through the identification of circuits: sparse subgraphs of
-components whose collective computation explains a model behaviour. Existing automated
-circuit discovery methods, notably Automated Circuit Discovery (\ACDC) and Edge
-Attribution Patching (\EAP), rely on exhaustive or gradient-ranked search over possible
-interventions, incurring costs that grow combinatorially with model depth and width.
-This paper introduces Active Circuit Discovery (\ACD), a framework that reframes
-circuit discovery as a partially observable decision process and employs the Expected
-Free Energy (\EFE) minimisation principle from computational neuroscience to direct
-intervention selection. An Active Inference agent, implemented with the \pymdp\
-discrete-state library, maintains a probabilistic belief state over candidate circuit
-nodes and selects the ablation or activation-patching intervention predicted to yield
-the greatest epistemic gain per computational budget. The agent's generative model
-encodes the transformer's residual stream decomposition through Sparse Autoencoder
-(SAE) features loaded via SAE-Lens, and the resulting attribution graph is constructed
-with TransformerLens hooks. Three research questions drive evaluation: (RQ1) whether
-Active Inference belief updating corresponds measurably to empirical intervention
-effects, (RQ2) whether EFE-guided selection reduces the number of interventions
-required relative to random, gradient, and exhaustive baselines, and (RQ3) whether the
-framework generates testable, empirically validable predictions about circuit behaviour.
-Preliminary implementation on GPT-2 Small using the canonical Golden Gate Bridge
-factual-completion task establishes the full end-to-end pipeline and characterises
-the conditions under which each research question can be addressed. An honest
-assessment of current results, open methodological challenges, and the path toward
-rigorous validation on standard mechanistic interpretability benchmarks are reported.
-The framework, together with a Docker container targeting the NVIDIA DGX Spark
-platform, is released as an open-source research artifact.
+Mechanistic interpretability seeks to reverse-engineer the computational
+circuits within large language models (LLMs), yet current methods rely on
+exhaustive or heuristic search over exponentially many feature
+interactions. We introduce \emph{Active Circuit Discovery} (\ACD{}), a
+framework that combines attribution graph analysis with active
+inference--inspired feature selection for efficient circuit discovery.
+Our approach integrates Anthropic's \texttt{circuit-tracer} library as
+the attribution graph backend, using Edge Attribution Patching with
+GemmaScope transcoders to identify ${\sim}12{,}000$ active transcoder
+features per prompt in Gemma-2-2B. An uncertainty-weighted selector then
+balances exploitation (graph-structural importance) with exploration
+(per-feature uncertainty reduction) to prioritise the most informative
+feature-level interventions. Across two benchmarks---Indirect Object Identification (IOI, 5 prompts)
+and multi-step reasoning (3 prompts)---with a budget of 20 ablation
+interventions per prompt, \ACD{} identifies causally important features
+36--44\% faster than random selection and achieves 74--78\% of
+oracle-optimal cumulative information gain.
+Feature steering experiments confirm causal controllability: scaling
+individual transcoder features at $10\times$ activation changes model
+predictions for 20\% of tested features (KL divergences up to 1.06).
+Multi-step reasoning reveals that causally important features concentrate
+in early layers (0--8), contrasting with IOI circuits that peak in late
+layers (24--25).
+All experiments use real model activations via the
+\texttt{feature\_intervention} API with no synthetic or fabricated data.
+Code, notebooks, and experiment results are publicly available.

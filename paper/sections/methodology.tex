@@ -1,264 +1,179 @@
-% ---- methodology.tex ----
+This section formalises the \ACD{} framework, detailing the attribution
+graph backend, the active inference-inspired feature selector, and the
+intervention engine.
 
-This section presents the Active Circuit Discovery (\ACD) framework in full detail.
-Figure~\ref{fig:architecture} provides an overview of the end-to-end pipeline.
+\subsection{Architecture Overview}
 
 \begin{figure}[t]
-  \centering
-  \input{figures/architecture}
-  \caption{Overview of the \ACD\ framework. The outer loop applies the
-           Active Inference agent; the inner loop performs interventions
-           via TransformerLens and SAE-Lens. Belief state $q(\vect{s})$ is
-           updated after each intervention observation.}
-  \label{fig:architecture}
+\centering
+\resizebox{\columnwidth}{!}{%
+\input{figures/architecture}%
+}
+\caption{System architecture of \ACD{}. The \texttt{circuit-tracer}
+  pipeline (left) extracts candidate features via EAP and pruning.
+  The Active Inference Selector (right) iteratively scores, selects,
+  and ablates features using an uncertainty-weighted strategy.}
+\label{fig:architecture}
 \end{figure}
 
-\subsection{Formal Problem Statement}
+\ACD{} consists of three layers:
 
-Let $\mathcal{M}$ be a transformer LLM with $L$ layers. Given a prompt $x$ and a
-target behaviour $b$ (e.g.\ the probability mass assigned to a correct completion
-token), the circuit discovery problem is to find the minimal set
-$\mathcal{C} \subseteq \mathcal{N}$ of model components (nodes in the computational
-graph $\mathcal{N}$) such that ablating all components outside $\mathcal{C}$ does not
-significantly reduce $b$~\cite{Wang2022,Conmy2023}.
+\begin{enumerate}
+\item \textbf{Attribution Graph Backend.} Anthropic's
+  \texttt{circuit-tracer} library~\cite{marks2024sparse} generates
+  attribution graphs via Edge Attribution Patching (EAP) with GemmaScope
+  transcoders for Gemma-2-2B.  The graph contains active transcoder
+  features, an adjacency matrix encoding feature interactions, and
+  activation values.
 
-In the SAE feature representation, each node corresponds to a latent direction
-$\vect{f}_{l,k} \in \mathbb{R}^d$ in the residual stream at layer $l$, where $k$
-indexes over the $K_l$ features learned by the SAE at that layer. The feature is
-``active'' on prompt $x$ if its SAE encoder activation exceeds a threshold
-$\theta > 0$:
-\begin{equation}
-  a_{l,k}(x) = \operatorname{ReLU}\!\bigl(\mat{W}_e^{(l)} \vect{h}_l(x) + \vect{b}_e^{(l)}\bigr)_k
-  \;\geq\; \theta,
-  \label{eq:sae_activation}
-\end{equation}
-where $\vect{h}_l(x)$ is the residual stream at layer $l$ and position
-corresponding to the last token of $x$, and $\mat{W}_e^{(l)}$, $\vect{b}_e^{(l)}$
-are the SAE encoder weights and bias.
+\item \textbf{Active Inference Selector.}  An uncertainty-weighted
+  scoring function selects the next feature to intervene on, combining
+  graph-structural importance (exploitation) with per-feature uncertainty
+  (exploration).  Per-layer priors are learned online from observed
+  causal effects.
 
-The set of active features across all layers is denoted
-$\mathcal{F}(x) = \{(l,k) : a_{l,k}(x) \geq \theta\}$. The goal is to identify
-the subset $\mathcal{C}(x) \subseteq \mathcal{F}(x)$ that is causally sufficient for
-behaviour $b$.
+\item \textbf{Intervention Engine.}  Executes feature-level ablations
+  and steering via the \texttt{feature\_intervention} API, which
+  intervenes at the transcoder level with proper network propagation
+  through the underlying TransformerLens~\cite{nanda2022transformerlens}
+  model.
+\end{enumerate}
 
-\subsection{Generative Model and State Space}
-\label{sec:genmodel}
 
-The Active Inference agent maintains a generative model
-$p(\vect{o}, \vect{s}) = p(\vect{o} \mid \vect{s})\, p(\vect{s})$ over:
+\subsection{Candidate Feature Extraction}
+
+Given a prompt, the attribution graph backend produces:
 \begin{itemize}
-  \item \textit{Hidden states} $\vect{s}$: a categorical distribution over the
-        $N$ active features, representing beliefs about feature importance for
-        the circuit. The state space has dimension $N + 1$ (including an
-        ``irrelevant feature'' state).
-  \item \textit{Observations} $\vect{o}$: the discretised effect size of an
-        intervention, mapped to one of three categories: \{low, medium, high\},
-        corresponding to effect sizes below 0.3, between 0.3 and 0.7, and
-        above 0.7 standard deviations of the logit difference, respectively.
-  \item \textit{Actions} $\vect{u}$: the choice of intervention type from
-        \{\texttt{ablation}, \texttt{activation\_patching}, \texttt{mean\_ablation}\}.
+\item Active features $\{(l_i, p_i, f_i)\}$ where $l$ is layer, $p$
+  is token position, and $f$ is feature index.
+\item Adjacency matrix $\mat{W} \in \mathbb{R}^{n \times n}$ encoding
+  feature-to-feature attribution weights.
+\item Activation values $\vect{a} \in \mathbb{R}^n$.
 \end{itemize}
 
-The generative model parameters are:
-\begin{align}
-  \mat{A} &\in \mathbb{R}^{3 \times (N+1)}, \quad \mat{A}_{ok} = p(o \mid s = k), \\
-  \mat{B} &\in \mathbb{R}^{(N+1) \times (N+1) \times 3}, \quad \mat{B}_{k'ku} = p(s' = k' \mid s = k, u), \\
-  \vect{c} &\in \mathbb{R}^{3}, \quad c_o = \log p(o), \\
-  \vect{d} &\in \mathbb{R}^{N+1}, \quad d_k = p(s_0 = k),
-\end{align}
-where $\mat{A}$ encodes how feature importance determines intervention effects,
-$\mat{B}$ encodes how beliefs transition as interventions eliminate candidates,
-$\vect{c}$ encodes the preference for high-effect (informative) observations, and
-$\vect{d}$ encodes the uniform prior over initial feature importance.
-
-The observation model $\mat{A}$ is initialised as follows: features with high initial
-activation (above the 75th percentile of $\{a_{l,k}\}$) are assigned a higher
-probability of producing high-effect observations; features with low initial activation
-are assigned a higher probability of low-effect observations. This encoding captures
-the prior expectation that highly active features are more likely to be circuit
-members.
-
-\subsection{Expected Free Energy Computation}
-\label{sec:efe}
-
-Given the current belief $q(\vect{s}_t) = \operatorname{Cat}(\vect{\pi}_t)$ and a
-candidate feature $(l, k)$ to intervene on under action $u$, the Expected Free Energy
-is computed as:
-\begin{align}
-  \EFE(l,k,u) &= \underbrace{-\sum_o \hat{p}(o) \log \hat{p}(o)}_{\text{epistemic}}
-                + \underbrace{\vect{c}^\top \hat{\vect{p}}(o)}_{\text{pragmatic}}
-  \label{eq:efe_approx}
-\end{align}
-where $\hat{p}(o) = \sum_k \mat{A}_{ok}\, \pi_{t,k}$ is the predictive distribution
-over observations under the current beliefs. The epistemic term is the Shannon entropy
-of the predictive observation distribution: interventions on features for which the
-agent is most uncertain about the outcome contribute most to epistemic value. The
-pragmatic term reflects the agent's preference for high-effect observations.
-
-Figure~\ref{fig:efe_pipeline} illustrates this computation. In the \pymdp\
-implementation, the full \EFE\ is computed via:
+The graph is pruned to retain features with influence above a threshold
+(default 80\%).  Each retained feature $i$ receives a normalised
+importance score:
 \begin{equation}
-  \EFE(\pi) = \mathbb{H}[p(\vect{o}_\tau \mid \pi)] -
-              \E[\mathbb{H}[p(\vect{o}_\tau \mid \vect{s}_\tau)]] +
-              \E[\vect{c}^\top \log \hat{\vect{p}}(\vect{o}_\tau \mid \pi)],
-  \label{eq:efe_full}
+  \text{imp}(i) = \frac{\sum_j |W_{ij}| + \sum_j |W_{ji}|}
+                       {\max_k \left(\sum_j |W_{kj}| + \sum_j |W_{jk}|\right)}
 \end{equation}
-where the first two terms together form the mutual information between states and
-observations (epistemic value), and the third term is the expected log-preference
-(pragmatic value)~\cite{DaCosta2020,Friston2015}.
+
+Candidates are sampled across layers (up to $k$ per layer) to ensure
+diversity.
+
+
+\subsection{Active Inference Selector}
 
 \begin{figure}[t]
-  \centering
-  \input{figures/efe_pipeline}
-  \caption{Computation graph for Expected Free Energy ($\EFE$). Shaded nodes are
-           computed quantities; white nodes are generative model parameters.
-           The agent selects the feature-intervention pair that minimises $-\EFE$.}
-  \label{fig:efe_pipeline}
+\centering
+\resizebox{\columnwidth}{!}{%
+\input{figures/efe_pipeline}%
+}
+\caption{Scoring function pipeline. Each candidate receives a pragmatic
+  score (graph importance $\times$ layer prior) and an epistemic bonus
+  (exploration weight $\times$ uncertainty). After ablation, the
+  uncertainty is zeroed and the layer prior is updated based on
+  observed KL divergence.}
+\label{fig:scoring}
 \end{figure}
 
-\subsection{Belief Updating and Correspondence Measurement}
-\label{sec:belief_update}
-
-After executing intervention $(l,k,u)$ and observing effect category $o_t$, the agent
-updates its belief state via Bayesian filtering (variational message passing in
-\pymdp):
-\begin{align}
-  q(\vect{s}_{t+1}) &= \softmax\!\left(\log \vect{d} + \sum_{s}\log\mat{A}_{\cdot,s}\, q(s_t) + \log \mat{B}_{\cdot,s_t,u_t}\right).
-  \label{eq:belief_update}
-\end{align}
-Observation model parameters are updated online via a Dirichlet prior
-$\mat{A}^{(a)}$ (concentration parameter $a_0 = 1$):
+The selector scores each unobserved candidate feature $i$ as:
 \begin{equation}
-  \mat{A}^{(a)}_{o,k} \mathrel{+}= q(s_t = k) \cdot \mathbf{1}[o_t = o],
-  \label{eq:param_learning}
+\label{eq:score}
+  \text{score}(i) = \underbrace{\text{imp}(i) \cdot \lambda_{\ell(i)}}_{\text{pragmatic}}
+  + \underbrace{u(i) \cdot \omega_e}_{\text{epistemic}}
 \end{equation}
-allowing the agent to refine its expectation of how feature importance maps to
-intervention effects as the experiment progresses.
 
-\textbf{Correspondence metric.} The primary correspondence measure (RQ1) is the
-Spearman rank correlation between the vector of feature importance scores derived from
-the agent's belief state $\{d_k = \pi_{T,k}\}_{k=1}^N$ and the vector of empirical
-direct effect magnitudes $\{e_k = |\Delta \text{logit}(k)|\}_{k=1}^N$ obtained by
-ablating each feature once and measuring the change in the target token logit. Unlike
-Pearson correlation, Spearman correlation is robust to monotone nonlinearity and does
-not require the two quantities to be on the same scale. A threshold of
-$\rho_s > 0.4$, $p < 0.05$ is required to declare correspondence for RQ1.
+where:
+\begin{itemize}
+\item $\text{imp}(i) \in [0, 1]$ is the normalised graph influence.
+\item $\lambda_\ell$ is a learned per-layer prior, initialised to 1.
+\item $u(i) \in [0, 1]$ is the feature uncertainty, initialised to 1.
+\item $\omega_e > 0$ is the exploration weight (default 2.0).
+\end{itemize}
 
-\subsection{Intervention Protocol}
-\label{sec:intervention}
+The feature with the highest score is selected:
+$i^* = \arg\max_{i \notin \mathcal{O}} \text{score}(i)$.
 
-Three intervention types are implemented, following the causal scrubbing
-taxonomy~\cite{Chan2022}:
 
-\textbf{Zero ablation.} The SAE feature activation at position $(l,k)$ is set to
-zero by subtracting the feature's contribution from the residual stream:
-$\tilde{\vect{h}}_l = \vect{h}_l - a_{l,k}\, \vect{f}_{l,k}$,
-where $\vect{f}_{l,k}$ is the SAE decoder direction. The model is then rerun
-from layer $l$ onwards with the modified residual stream, and the change in the target
-logit is recorded.
+\subsection{Belief Updating}
 
-\textbf{Mean ablation.} The feature activation is replaced by its mean over a
-100-sentence reference corpus $\mathcal{D}_\text{ref}$ drawn from the Pile:
-$\tilde{a}_{l,k} = \mathbb{E}_{x \sim \mathcal{D}_\text{ref}}[a_{l,k}(x)]$.
-This preserves the typical contribution of the feature while removing its
-input-specific component, providing a more conservative causal estimate than zero
-ablation~\cite{Chan2022,Conmy2023}.
+After ablating feature $i^*$ and observing the KL divergence
+$\text{KL}_{i^*}$, the selector updates its state:
 
-\textbf{Activation patching.} The residual stream at layer $l$ from a clean forward
-pass on a corrupted input $\tilde{x}$ (constructed by replacing named geographic
-entities) is used in place of the clean stream. Formally:
-$\vect{h}_l^{\text{patch}} = \vect{h}_l(\tilde{x}) + (\vect{h}_l(x) - \vect{h}_l(\tilde{x})) \cdot a_{l,k}(x) / \norm{\vect{h}_l(x)}$.
-This enables attribution of output differences to specific layers~\cite{Wang2022}.
+\begin{enumerate}
+\item \textbf{Uncertainty reduction.}
+  $u(i^*) \leftarrow 0$ (fully observed).
+  For all features $j$ in the same layer:
+  $u(j) \leftarrow 0.7 \cdot u(j)$ (partial transfer).
+  For all features $j$ at adjacent positions:
+  $u(j) \leftarrow 0.9 \cdot u(j)$.
 
-\subsection{Attribution Graph Construction}
-\label{sec:attribution_graph}
+\item \textbf{Layer prior update.}
+  Let $\bar{\text{KL}}_\ell$ be the running mean KL for layer $\ell$ and
+  $\bar{\text{KL}}_{\text{global}}$ be the overall mean.  Then:
+  \begin{equation}
+    \lambda_\ell \leftarrow 1 + 0.5 \left(
+      \frac{\bar{\text{KL}}_\ell}{\bar{\text{KL}}_{\text{global}}} - 1
+    \right)
+  \end{equation}
+  This upweights layers whose features have high causal impact and
+  downweights uninformative layers.
+\end{enumerate}
 
-After completing the Active Inference loop, \ACD\ constructs an attribution graph
-$G = (V, E)$ where each node $v \in V$ corresponds to an active SAE feature and each
-directed edge $(v_i, v_j) \in E$ is weighted by the partial correlation between the
-ablation effect of feature $i$ and the change in feature $j$'s activation. This
-follows the edge attribution paradigm of~\cite{Syed2023} adapted to the SAE feature
-basis. The graph is rendered using the \texttt{circuit-tracer}~\cite{Anthropic2025CT}
-and CircuitsVis~\cite{Conmy2024} libraries, which produce interactive HTML
-visualisations of node importances and edge weights.
+The pragmatic--epistemic decomposition in~\cref{eq:score} mirrors the
+Expected Free Energy decomposition in active
+inference~\cite{Friston2015,DaCosta2020}: the pragmatic term drives
+exploitation of known high-value features, while the epistemic term
+drives exploration of uncertain features.  Unlike a full POMDP agent,
+the selector operates in a bandit-like setting where each feature is
+intervened on at most once, making the scoring function a lightweight
+but effective approximation.
 
-\subsection{Novel Prediction Generation}
-\label{sec:predictions}
 
-A key capability of the Active Inference framing is its ability to generate testable
-predictions from the learned generative model. Three prediction classes are
-instantiated:
+\subsection{Intervention Engine}
 
-\textbf{Precision-weighted attention.} The agent's precision estimate
-$\gamma = 1/\bar{\sigma}^2$, where $\bar{\sigma}^2$ is the mean posterior uncertainty
-over feature importances, is predicted to correlate positively with the mean attention
-entropy across heads in the identified circuit layer. Higher precision corresponds to
-lower uncertainty, which the Active Inference framework links to sharper (lower
-entropy) attention patterns~\cite{Friston2017}.
+\begin{figure}[t]
+\centering
+\resizebox{0.85\columnwidth}{!}{%
+\input{figures/circuit_flow}%
+}
+\caption{Flow of a single intervention step. The selector scores
+  candidates, selects the best, ablates it via
+  \texttt{feature\_intervention}, and updates its uncertainty and
+  layer prior based on the observed KL divergence.}
+\label{fig:flow}
+\end{figure}
 
-\textbf{Feature interaction transitivity.} If the belief state assigns high
-connection probability $p_{\text{conn}}(i,j) > 0.5$ and $p_{\text{conn}}(j,k) > 0.5$,
-the framework predicts that ablating feature $i$ will indirectly reduce the activation
-of feature $k$ by at least $0.2\,\sigma$ of its baseline distribution. This is a
-directional prediction derivable from the $\mat{B}$ matrix structure.
+The intervention engine implements two manipulation types via the
+\texttt{feature\_intervention} API:
 
-\textbf{Layer-specificity of circuit membership.} The EFE scores across layers are
-predicted to follow a layer-dependent profile consistent with the residual stream
-decomposition: early layers ($l < L/3$) should contribute to token-level syntax
-features while middle and late layers ($l \geq L/3$) carry semantic content relevant
-to factual completion~\cite{Meng2022,Elhage2021}.
-
-Each prediction is formally stated with a testable hypothesis, a measurement
-procedure, a significance threshold, and an expected effect size, enabling empirical
-validation as described in Section~\ref{sec:setup}.
-
-\subsection{Algorithm}
-\label{sec:algorithm}
-
-Algorithm~\ref{alg:acd} presents the complete \ACD\ procedure.
-
-\begin{algorithm}[t]
-  \caption{Active Circuit Discovery (\ACD)}
-  \label{alg:acd}
-  \begin{algorithmic}[1]
-    \Input Prompt $x$, LLM $\mathcal{M}$, SAE set $\{\mathcal{S}_l\}_{l=1}^L$,
-           threshold $\theta$, budget $T$
-    \Output Circuit $\mathcal{C}$, belief state $q_T(\vect{s})$,
-           attribution graph $G$, predictions $\mathcal{P}$
-    \State $\mathcal{F}(x) \gets \{(l,k): a_{l,k}(x) \geq \theta\}$
-           \Comment{Find active SAE features (Eq.~\ref{eq:sae_activation})}
-    \State Initialise $\mat{A}, \mat{B}, \vect{c}, \vect{d}$ from $\mathcal{F}(x)$
-    \State $q_0(\vect{s}) \gets \operatorname{Cat}(\vect{d} / \sum \vect{d})$
-           \Comment{Uniform prior over features}
-    \For{$t = 1, \ldots, T$}
-      \For{each feature $(l,k)$ and action $u$}
-        \State $\EFE(l,k,u) \gets$ compute via Eq.~\ref{eq:efe_approx}
-      \EndFor
-      \State $(l^*, k^*, u^*) \gets \arg\min_{l,k,u} -\EFE(l,k,u)$
-      \State $o_t, \delta_t \gets$ \Call{Intervene}{$\mathcal{M}, x, l^*, k^*, u^*$}
-             \Comment{Real forward pass}
-      \State $q_t(\vect{s}) \gets$ update via Eq.~\ref{eq:belief_update}
-      \State Update $\mat{A}^{(a)}$ via Eq.~\ref{eq:param_learning}
-      \If{\Call{Converged}{$q_{t-1}, q_t$}}
-            \Comment{Symmetric KL $< \delta$}
-        \State \textbf{break}
-      \EndIf
-    \EndFor
-    \State $\mathcal{C} \gets \{(l,k): \pi_{T,k} > 0.5\}$
-           \Comment{High posterior importance}
-    \State $G \gets$ \Call{BuildAttributionGraph}{$\mathcal{C}, x$}
-    \State $\mathcal{P} \gets$ \Call{GeneratePredictions}{$q_T, G$}
-    \State \Return $\mathcal{C}, q_T, G, \mathcal{P}$
-  \end{algorithmic}
-\end{algorithm}
-
-Convergence is declared when the symmetric KL divergence between successive belief
-distributions falls below $\delta = 0.05$:
+\textbf{Ablation:} Sets transcoder feature $(l, p, f)$ to zero:
 \begin{equation}
-  D_{\text{JS}}\!\left(q_{t-1}\,\|\,q_t\right)
-  = \tfrac{1}{2}\KL{q_{t-1}}{q_t} + \tfrac{1}{2}\KL{q_t}{q_{t-1}} < \delta.
-  \label{eq:convergence}
+  \text{logits}_{\text{abl}} = \text{feature\_intervention}(\text{prompt},
+  [(l, p, f, 0)])
 \end{equation}
-This replaces the previous pairwise feature comparison used in early versions of the
-codebase, which computed differences between the importances of two distinct features
-rather than tracking the evolution of the belief distribution itself.
+
+\textbf{Feature Steering:} Scales activation by multiplier $m$:
+\begin{equation}
+  \text{logits}_{\text{steer}} = \text{feature\_intervention}(\text{prompt},
+  [(l, p, f, a_i \cdot m)])
+\end{equation}
+
+where $a_i$ is the clean activation value of feature $i$.
+
+Effect is measured via KL divergence between the clean and intervened
+output distributions:
+\begin{equation}
+  \text{KL}_i = D_{\text{KL}}\!\left(
+    \text{softmax}(\text{logits}_{\text{interv}})
+    \;\|\;
+    \text{softmax}(\text{logits}_{\text{clean}})
+  \right)
+\end{equation}
+
+The \texttt{feature\_intervention} API correctly propagates the
+intervention through the replacement model's transcoder structure,
+ensuring that the measured effect reflects the true causal contribution
+of the feature rather than a residual-stream approximation.

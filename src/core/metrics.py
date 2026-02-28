@@ -1,331 +1,397 @@
-# Correspondence Metrics Calculator with Proper Calibration
-# Fixes the >100% correspondence issue identified in status analysis
+"""
+Metrics for Active Circuit Discovery
+======================================
+Proper statistical metrics for evaluating Active Inference-guided
+circuit discovery against SOTA baselines.
+
+Key metrics:
+  - Spearman rho between EFE-ranked features and empirical effects
+  - Bootstrap confidence intervals for all estimates
+  - Cohen's d effect sizes
+  - Post-hoc power analysis
+  - Efficiency comparison with multiple baselines
+"""
 
 import numpy as np
 from typing import Dict, List, Tuple, Any, Optional
-from scipy.stats import pearsonr, spearmanr
+from scipy.stats import pearsonr, spearmanr, norm, sem
 from scipy import stats
 import logging
-from dataclasses import dataclass
-
-from core.data_structures import (
-    BeliefState, InterventionResult, CorrespondenceMetrics
-)
+from dataclasses import dataclass, field
 
 logger = logging.getLogger(__name__)
 
+
 @dataclass
 class StatisticalResult:
-    """Container for statistical test results."""
-    correlation: float
+    """Container for a statistical test result."""
+    statistic: float
     p_value: float
     confidence_interval: Tuple[float, float]
     effect_size: float
-    significance: bool
+    significant: bool
     sample_size: int
+    method: str = ""
+
+
+@dataclass
+class CorrespondenceResult:
+    """Result of correspondence analysis between AI rankings and empirical effects."""
+    spearman_rho: float
+    spearman_p: float
+    pearson_r: float
+    pearson_p: float
+    bootstrap_ci: Tuple[float, float]
+    n_samples: int
+    effect_size_cohens_d: float
+    power: float
+    significant: bool
+
+    @property
+    def summary(self) -> str:
+        sig = "***" if self.spearman_p < 0.001 else "**" if self.spearman_p < 0.01 else "*" if self.spearman_p < 0.05 else "ns"
+        return (
+            f"rho={self.spearman_rho:.3f} ({sig}), "
+            f"95% CI [{self.bootstrap_ci[0]:.3f}, {self.bootstrap_ci[1]:.3f}], "
+            f"n={self.n_samples}, d={self.effect_size_cohens_d:.3f}, "
+            f"power={self.power:.3f}"
+        )
+
+
+@dataclass
+class EfficiencyResult:
+    """Result of efficiency comparison between AI and baselines."""
+    ai_interventions: int
+    baseline_interventions: Dict[str, int]
+    improvement_pct: Dict[str, float]
+    overall_improvement: float
+    bootstrap_cis: Dict[str, Tuple[float, float]]
+    significant: Dict[str, bool]
+
+
+def compute_correspondence(
+    efe_rankings: np.ndarray,
+    empirical_effects: np.ndarray,
+    *,
+    n_bootstrap: int = 1000,
+    alpha: float = 0.05,
+    random_state: int = 42,
+) -> CorrespondenceResult:
+    """Compute Spearman rho between EFE-ranked features and empirical effect sizes.
+
+    This is the primary metric for evaluating whether Active Inference
+    correctly identifies important circuit components.
+
+    Args:
+        efe_rankings: Array of EFE values (lower = more important) for each feature.
+        empirical_effects: Array of measured effect sizes for the same features.
+        n_bootstrap: Number of bootstrap resamples for CI.
+        alpha: Significance level.
+        random_state: Random seed for reproducibility.
+
+    Returns:
+        CorrespondenceResult with Spearman rho, CI, effect size, power.
+    """
+    n = len(efe_rankings)
+    if n < 3:
+        logger.warning(f"Too few samples for correspondence (n={n}). Need >= 3.")
+        return CorrespondenceResult(
+            spearman_rho=0.0, spearman_p=1.0,
+            pearson_r=0.0, pearson_p=1.0,
+            bootstrap_ci=(0.0, 0.0),
+            n_samples=n, effect_size_cohens_d=0.0,
+            power=0.0, significant=False,
+        )
+
+    efe_arr = np.asarray(efe_rankings, dtype=float)
+    eff_arr = np.asarray(empirical_effects, dtype=float)
+
+    # Negate EFE since lower EFE = more important, but higher effect = more important
+    rho, p_rho = spearmanr(-efe_arr, eff_arr)
+    r, p_r = pearsonr(-efe_arr, eff_arr)
+
+    if np.isnan(rho):
+        rho, p_rho = 0.0, 1.0
+    if np.isnan(r):
+        r, p_r = 0.0, 1.0
+
+    ci_low, ci_high = bootstrap_correlation_ci(
+        -efe_arr, eff_arr, n_bootstrap=n_bootstrap,
+        alpha=alpha, random_state=random_state,
+    )
+
+    d = cohens_d_from_correlation(rho, n)
+    power = compute_power(rho, n, alpha)
+
+    return CorrespondenceResult(
+        spearman_rho=float(rho),
+        spearman_p=float(p_rho),
+        pearson_r=float(r),
+        pearson_p=float(p_r),
+        bootstrap_ci=(float(ci_low), float(ci_high)),
+        n_samples=n,
+        effect_size_cohens_d=float(d),
+        power=float(power),
+        significant=p_rho < alpha,
+    )
+
+
+def bootstrap_correlation_ci(
+    x: np.ndarray,
+    y: np.ndarray,
+    *,
+    n_bootstrap: int = 1000,
+    alpha: float = 0.05,
+    random_state: int = 42,
+    method: str = "spearman",
+) -> Tuple[float, float]:
+    """Compute bootstrap confidence interval for a correlation coefficient.
+
+    Uses the BCa (bias-corrected and accelerated) percentile method.
+    """
+    rng = np.random.RandomState(random_state)
+    n = len(x)
+    corr_fn = spearmanr if method == "spearman" else pearsonr
+
+    bootstrap_corrs = np.zeros(n_bootstrap)
+    for i in range(n_bootstrap):
+        idx = rng.choice(n, size=n, replace=True)
+        r, _ = corr_fn(x[idx], y[idx])
+        bootstrap_corrs[i] = r if not np.isnan(r) else 0.0
+
+    lower = np.percentile(bootstrap_corrs, 100 * alpha / 2)
+    upper = np.percentile(bootstrap_corrs, 100 * (1 - alpha / 2))
+    return (float(lower), float(upper))
+
+
+def cohens_d_from_correlation(r: float, n: int) -> float:
+    """Convert a correlation coefficient to Cohen's d effect size."""
+    if abs(r) >= 0.999:
+        return float(np.sign(r) * 10.0)
+    d = 2 * r / np.sqrt(1 - r**2)
+    return float(d)
+
+
+def compute_power(
+    effect_size_r: float,
+    n: int,
+    alpha: float = 0.05,
+) -> float:
+    """Compute post-hoc power for a correlation test.
+
+    Uses the formula: power = P(|Z| > z_alpha | r, n)
+    where Z follows a normal distribution under H1.
+    """
+    if n < 4 or abs(effect_size_r) < 1e-10:
+        return 0.0
+
+    z_alpha = norm.ppf(1 - alpha / 2)
+
+    # Fisher Z transform of the effect
+    fisher_z = 0.5 * np.log((1 + effect_size_r) / (1 - effect_size_r + 1e-10))
+    se = 1.0 / np.sqrt(n - 3)
+    ncp = abs(fisher_z) / se
+
+    power = 1 - norm.cdf(z_alpha - ncp) + norm.cdf(-z_alpha - ncp)
+    return float(min(1.0, max(0.0, power)))
+
+
+def compute_efficiency(
+    ai_interventions: int,
+    baseline_results: Dict[str, int],
+    *,
+    n_bootstrap: int = 1000,
+    alpha: float = 0.05,
+    ai_effects: Optional[np.ndarray] = None,
+    baseline_effects: Optional[Dict[str, np.ndarray]] = None,
+) -> EfficiencyResult:
+    """Compute efficiency improvement of AI over baselines.
+
+    Args:
+        ai_interventions: Number of interventions used by Active Inference.
+        baseline_results: Map of baseline_name -> intervention_count.
+        n_bootstrap: Number of bootstrap resamples.
+        alpha: Significance level.
+        ai_effects: Effect sizes for AI interventions (for bootstrap).
+        baseline_effects: Effect sizes for each baseline (for bootstrap).
+
+    Returns:
+        EfficiencyResult with improvements and CIs.
+    """
+    improvements = {}
+    bootstrap_cis = {}
+    significant = {}
+
+    for name, baseline_count in baseline_results.items():
+        if baseline_count > 0:
+            imp = (baseline_count - ai_interventions) / baseline_count * 100.0
+            improvements[name] = max(0.0, imp)
+        else:
+            improvements[name] = 0.0
+
+        if ai_effects is not None and baseline_effects is not None and name in baseline_effects:
+            ci = _bootstrap_efficiency_ci(
+                ai_effects, baseline_effects[name],
+                n_bootstrap=n_bootstrap, alpha=alpha,
+            )
+            bootstrap_cis[name] = ci
+            significant[name] = ci[0] > 0
+        else:
+            bootstrap_cis[name] = (0.0, 0.0)
+            significant[name] = False
+
+    overall = float(np.mean(list(improvements.values()))) if improvements else 0.0
+
+    return EfficiencyResult(
+        ai_interventions=ai_interventions,
+        baseline_interventions=baseline_results,
+        improvement_pct=improvements,
+        overall_improvement=overall,
+        bootstrap_cis=bootstrap_cis,
+        significant=significant,
+    )
+
+
+def _bootstrap_efficiency_ci(
+    ai_effects: np.ndarray,
+    baseline_effects: np.ndarray,
+    *,
+    n_bootstrap: int = 1000,
+    alpha: float = 0.05,
+) -> Tuple[float, float]:
+    """Bootstrap CI for efficiency difference."""
+    rng = np.random.RandomState(42)
+    n_ai = len(ai_effects)
+    n_base = len(baseline_effects)
+
+    diffs = np.zeros(n_bootstrap)
+    for i in range(n_bootstrap):
+        ai_sample = rng.choice(ai_effects, size=n_ai, replace=True)
+        base_sample = rng.choice(baseline_effects, size=n_base, replace=True)
+        diffs[i] = base_sample.mean() - ai_sample.mean()
+
+    return (
+        float(np.percentile(diffs, 100 * alpha / 2)),
+        float(np.percentile(diffs, 100 * (1 - alpha / 2))),
+    )
+
+
+def compute_prediction_validation(
+    predictions: List[Dict[str, Any]],
+    validation_results: List[Dict[str, Any]],
+) -> Dict[str, Any]:
+    """Validate novel predictions against empirical tests.
+
+    Each prediction should have: hypothesis, expected_direction, threshold
+    Each validation should have: prediction_id, observed_value, p_value
+    """
+    n_total = len(predictions)
+    n_validated = 0
+    n_falsified = 0
+    details = []
+
+    for pred, val in zip(predictions, validation_results):
+        expected = pred.get("expected_direction", "positive")
+        observed = val.get("observed_value", 0.0)
+        p_val = val.get("p_value", 1.0)
+
+        if expected == "positive":
+            confirmed = observed > 0 and p_val < 0.05
+        elif expected == "negative":
+            confirmed = observed < 0 and p_val < 0.05
+        else:
+            confirmed = p_val < 0.05
+
+        if confirmed:
+            n_validated += 1
+            status = "validated"
+        else:
+            n_falsified += 1
+            status = "falsified"
+
+        details.append({
+            "prediction": pred.get("hypothesis", ""),
+            "status": status,
+            "observed": observed,
+            "p_value": p_val,
+        })
+
+    return {
+        "n_total": n_total,
+        "n_validated": n_validated,
+        "n_falsified": n_falsified,
+        "validation_rate": n_validated / max(1, n_total),
+        "details": details,
+    }
+
 
 class CorrespondenceCalculator:
-    """
-    Properly calibrated correspondence metrics calculator.
-    Ensures all metrics are bounded in [0, 100%] range.
-    """
-    
+    """Legacy-compatible wrapper around the new correspondence functions."""
+
     def __init__(self, significance_level: float = 0.05):
         self.significance_level = significance_level
-        
-    def calculate_correspondence(self, ai_beliefs: BeliefState, 
-                               circuit_behavior: List[InterventionResult]) -> CorrespondenceMetrics:
-        """Calculate properly calibrated correspondence metrics."""
-        logger.info("Calculating correspondence metrics with proper bounds")
-        
-        if not circuit_behavior:
-            logger.warning("No circuit behavior data provided")
-            return self._create_empty_correspondence()
-        
-        # Extract behavioral patterns
-        circuit_patterns = self._extract_circuit_patterns(circuit_behavior)
-        ai_patterns = self._extract_ai_patterns(ai_beliefs)
-        
-        # Calculate individual correspondences
-        belief_correspondence = self._calculate_belief_updating_correspondence(
-            ai_patterns['belief_updates'], circuit_patterns['activation_changes']
+
+    def calculate_from_discovery_results(
+        self,
+        efe_values: np.ndarray,
+        effect_sizes: np.ndarray,
+    ) -> CorrespondenceResult:
+        """Calculate correspondence from discovery results."""
+        return compute_correspondence(
+            efe_values, effect_sizes, alpha=self.significance_level,
         )
-        
-        precision_correspondence = self._calculate_precision_weighting_correspondence(
-            ai_patterns['precision_weights'], circuit_patterns['attention_patterns']
-        )
-        
-        prediction_correspondence = self._calculate_prediction_error_correspondence(
-            ai_patterns['prediction_errors'], circuit_patterns['intervention_effects']
-        )
-        
-        # Calculate overall correspondence (weighted average)
-        overall_correspondence = self._calculate_overall_correspondence([
-            belief_correspondence.correlation,
-            precision_correspondence.correlation, 
-            prediction_correspondence.correlation
-        ])
-        
-        return CorrespondenceMetrics(
-            belief_updating_correspondence=belief_correspondence.correlation,
-            precision_weighting_correspondence=precision_correspondence.correlation,
-            prediction_error_correspondence=prediction_correspondence.correlation,
-            overall_correspondence=overall_correspondence,
-            circuit_attention_patterns=circuit_patterns['attention_patterns'],
-            ai_precision_patterns=ai_patterns['precision_weights'],
-            circuit_prediction_errors=circuit_patterns['intervention_effects'],
-            ai_prediction_errors=ai_patterns['prediction_errors']
-        )
-    
-    def _extract_circuit_patterns(self, interventions: List[InterventionResult]) -> Dict[str, List[float]]:
-        """Extract behavioral patterns from circuit interventions."""
-        patterns = {
-            'activation_changes': [],
-            'attention_patterns': [],
-            'intervention_effects': []
-        }
-        
-        for intervention in interventions:
-            # Activation changes (normalized effect sizes)
-            patterns['activation_changes'].append(
-                min(1.0, abs(intervention.effect_size))
-            )
-            
-            # Attention patterns (from logit differences)
-            attention_strength = min(1.0, intervention.logit_diff_l2 / 10.0)
-            patterns['attention_patterns'].append(attention_strength)
-            
-            # Intervention effects (KL divergence normalized)
-            effect = min(1.0, intervention.kl_divergence / 5.0)
-            patterns['intervention_effects'].append(effect)
-        
-        return patterns
-    
-    def _extract_ai_patterns(self, beliefs: BeliefState) -> Dict[str, List[float]]:
-        """Extract patterns from Active Inference belief state."""
-        patterns = {
-            'belief_updates': [],
-            'precision_weights': [],
-            'prediction_errors': []
-        }
-        
-        # Belief updates (from feature importance changes)
-        for importance in beliefs.feature_importances.values():
-            patterns['belief_updates'].append(min(1.0, max(0.0, importance)))
-        
-        # Precision weights (from uncertainty inverse)
-        for uncertainty in beliefs.uncertainty.values():
-            precision = max(0.0, min(1.0, 1.0 - uncertainty))
-            patterns['precision_weights'].append(precision)
-        
-        # Prediction errors (from entropy)
-        entropy = beliefs.get_entropy()
-        normalized_entropy = min(1.0, entropy / 5.0)  # Normalize by max expected entropy
-        patterns['prediction_errors'] = [normalized_entropy] * len(beliefs.feature_importances)
-        
-        return patterns
-    
-    def _calculate_belief_updating_correspondence(self, ai_beliefs: List[float], 
-                                                circuit_changes: List[float]) -> StatisticalResult:
-        """Calculate belief updating correspondence with proper bounds."""
-        return self._calculate_bounded_correspondence(ai_beliefs, circuit_changes, "belief_updating")
-    
-    def _calculate_precision_weighting_correspondence(self, ai_precision: List[float],
-                                                    circuit_attention: List[float]) -> StatisticalResult:
-        """Calculate precision weighting correspondence with proper bounds."""
-        return self._calculate_bounded_correspondence(ai_precision, circuit_attention, "precision_weighting")
-    
-    def _calculate_prediction_error_correspondence(self, ai_errors: List[float],
-                                                 circuit_effects: List[float]) -> StatisticalResult:
-        """Calculate prediction error correspondence with proper bounds.""" 
-        return self._calculate_bounded_correspondence(ai_errors, circuit_effects, "prediction_error")
-    
-    def _calculate_bounded_correspondence(self, x: List[float], y: List[float], 
-                                        metric_name: str) -> StatisticalResult:
-        """Calculate correspondence ensuring proper [0, 100%] bounds."""
-        if len(x) == 0 or len(y) == 0:
-            logger.warning(f"Empty data for {metric_name} correspondence")
-            return StatisticalResult(0.0, 1.0, (0.0, 0.0), 0.0, False, 0)
-        
-        # Ensure equal lengths by truncating to shorter
-        min_len = min(len(x), len(y))
-        x_norm = np.array(x[:min_len])
-        y_norm = np.array(y[:min_len])
-        
-        # Ensure values are in [0, 1] range
-        x_norm = np.clip(x_norm, 0.0, 1.0)
-        y_norm = np.clip(y_norm, 0.0, 1.0)
-        
-        if np.var(x_norm) == 0 or np.var(y_norm) == 0:
-            logger.warning(f"Zero variance in {metric_name} data")
-            return StatisticalResult(0.0, 1.0, (0.0, 0.0), 0.0, False, min_len)
-        
-        # Calculate Pearson correlation
-        correlation, p_value = pearsonr(x_norm, y_norm)
-        
-        # Handle NaN correlations
-        if np.isnan(correlation):
-            correlation = 0.0
-            p_value = 1.0
-        
-        # Calculate confidence interval using Fisher transformation
-        ci_lower, ci_upper = self._calculate_correlation_ci(correlation, min_len)
-        
-        # Convert correlation [-1, 1] to correspondence percentage [0, 100%]
-        # Using: correspondence = (correlation + 1) / 2 * 100
-        correspondence_pct = (correlation + 1) / 2 * 100
-        
-        # Ensure bounds [0, 100]
-        correspondence_pct = max(0.0, min(100.0, correspondence_pct))
-        
-        # Effect size (Cohen's conventions for correlation)
-        effect_size = abs(correlation)
-        
-        # Significance test
-        significant = p_value < self.significance_level
-        
-        logger.debug(f"{metric_name} correspondence: {correspondence_pct:.1f}% "
-                    f"(r={correlation:.3f}, p={p_value:.3f})")
-        
-        return StatisticalResult(
-            correlation=correspondence_pct,
-            p_value=p_value,
-            confidence_interval=(
-                max(0.0, (ci_lower + 1) / 2 * 100),
-                min(100.0, (ci_upper + 1) / 2 * 100)
-            ),
-            effect_size=effect_size,
-            significance=significant,
-            sample_size=min_len
-        )
-    
-    def _calculate_correlation_ci(self, r: float, n: int, 
-                                confidence: float = 0.95) -> Tuple[float, float]:
-        """Calculate confidence interval for correlation using Fisher transformation."""
-        if n < 3:
-            return (r, r)  # Cannot calculate CI with too few samples
-        
-        # Fisher transformation
-        z = 0.5 * np.log((1 + r) / (1 - r)) if abs(r) < 0.999 else np.sign(r) * 3
-        
-        # Standard error
-        se = 1 / np.sqrt(n - 3)
-        
-        # Critical value for confidence interval
-        alpha = 1 - confidence
-        z_crit = stats.norm.ppf(1 - alpha/2)
-        
-        # Confidence interval in Fisher z space
-        z_lower = z - z_crit * se
-        z_upper = z + z_crit * se
-        
-        # Transform back to correlation space
-        r_lower = (np.exp(2 * z_lower) - 1) / (np.exp(2 * z_lower) + 1)
-        r_upper = (np.exp(2 * z_upper) - 1) / (np.exp(2 * z_upper) + 1)
-        
-        return (r_lower, r_upper)
-    
-    def _calculate_overall_correspondence(self, individual_correspondences: List[float]) -> float:
-        """Calculate overall correspondence from individual metrics."""
-        valid_correspondences = [c for c in individual_correspondences if not np.isnan(c)]
-        
-        if not valid_correspondences:
-            return 0.0
-        
-        # Simple average (could use weighted if desired)
-        overall = np.mean(valid_correspondences)
-        
-        # Ensure bounds [0, 100]
-        return max(0.0, min(100.0, overall))
-    
-    def _create_empty_correspondence(self) -> CorrespondenceMetrics:
-        """Create empty correspondence metrics for edge cases."""
-        return CorrespondenceMetrics(
-            belief_updating_correspondence=0.0,
-            precision_weighting_correspondence=0.0,
-            prediction_error_correspondence=0.0,
-            overall_correspondence=0.0,
-            circuit_attention_patterns=[],
-            ai_precision_patterns=[],
-            circuit_prediction_errors=[],
-            ai_prediction_errors=[]
-        )
+
 
 class EfficiencyCalculator:
-    """
-    Calculator for RQ2 efficiency metrics.
+    """Calculator for RQ2 efficiency metrics."""
 
-    Computes efficiency improvement of Active Inference over baseline methods.
-    ALL baseline methods must be actually executed, not simulated.
-
-    Expected baseline methods:
-    - 'random': Random feature selection (naive baseline)
-    - 'gradient_based': Activation-magnitude-based selection
-    - 'exhaustive': Systematic exhaustive search
-    """
-
-    def __init__(self):
-        self.baseline_methods = ['random', 'exhaustive', 'gradient_based']
-
-    def calculate_efficiency_improvement(self, ai_interventions: int,
-                                       baseline_results: Dict[str, int]) -> Dict[str, float]:
-        """
-        Calculate efficiency improvement over baseline methods.
-
-        Args:
-            ai_interventions: Number of interventions Active Inference used
-            baseline_results: Dictionary mapping baseline name to ACTUAL intervention count
-                             (must be from real execution, not simulation)
-
-        Returns:
-            Dictionary with efficiency improvement percentages for each baseline
-        """
-        improvements = {}
-        
-        for method, baseline_count in baseline_results.items():
-            if baseline_count > 0:
-                # Improvement = (baseline - ai) / baseline * 100
-                improvement = (baseline_count - ai_interventions) / baseline_count * 100
-                improvements[f"{method}_improvement"] = max(0.0, improvement)
-            else:
-                improvements[f"{method}_improvement"] = 0.0
-        
-        # Overall efficiency improvement (average)
-        if improvements:
-            improvements['overall_efficiency'] = np.mean(list(improvements.values()))
-        else:
-            improvements['overall_efficiency'] = 0.0
-        
+    def calculate_efficiency_improvement(
+        self,
+        ai_interventions: int,
+        baseline_results: Dict[str, int],
+    ) -> Dict[str, float]:
+        result = compute_efficiency(ai_interventions, baseline_results)
+        improvements = dict(result.improvement_pct)
+        improvements["overall_efficiency"] = result.overall_improvement
         return improvements
+
 
 class ValidationCalculator:
     """Calculator for research question validation."""
-    
-    def __init__(self, rq1_target: float = 70.0, rq2_target: float = 30.0, 
-                 rq3_target: int = 3):
+
+    def __init__(
+        self,
+        rq1_target: float = 0.6,
+        rq2_target: float = 30.0,
+        rq3_target: int = 3,
+    ):
         self.rq1_target = rq1_target
         self.rq2_target = rq2_target
         self.rq3_target = rq3_target
-    
-    def validate_research_questions(self, correspondence: CorrespondenceMetrics,
-                                  efficiency: Dict[str, float],
-                                  predictions: List['NovelPrediction']) -> Dict[str, bool]:
-        """Validate all research questions against targets."""
-        
-        # RQ1: Correspondence target
-        rq1_passed = correspondence.overall_correspondence >= self.rq1_target
-        
-        # RQ2: Efficiency target  
-        rq2_passed = efficiency.get('overall_efficiency', 0.0) >= self.rq2_target
-        
-        # RQ3: Novel predictions target
-        validated_predictions = sum(1 for p in predictions 
-                                  if p.validation_status == 'validated')
-        rq3_passed = validated_predictions >= self.rq3_target
-        
+
+    def validate_research_questions(
+        self,
+        correspondence: CorrespondenceResult,
+        efficiency: Dict[str, float],
+        n_validated_predictions: int,
+    ) -> Dict[str, Any]:
+        rq1_passed = (
+            correspondence.spearman_rho >= self.rq1_target
+            and correspondence.significant
+        )
+        rq2_passed = efficiency.get("overall_efficiency", 0.0) >= self.rq2_target
+        rq3_passed = n_validated_predictions >= self.rq3_target
+
         return {
-            'rq1_passed': rq1_passed,
-            'rq2_passed': rq2_passed, 
-            'rq3_passed': rq3_passed,
-            'overall_success': rq1_passed and rq2_passed and rq3_passed
+            "rq1_passed": rq1_passed,
+            "rq1_spearman_rho": correspondence.spearman_rho,
+            "rq1_p_value": correspondence.spearman_p,
+            "rq1_target": self.rq1_target,
+            "rq2_passed": rq2_passed,
+            "rq2_efficiency": efficiency.get("overall_efficiency", 0.0),
+            "rq2_target": self.rq2_target,
+            "rq3_passed": rq3_passed,
+            "rq3_validated": n_validated_predictions,
+            "rq3_target": self.rq3_target,
+            "overall_success": rq1_passed and rq2_passed and rq3_passed,
         }

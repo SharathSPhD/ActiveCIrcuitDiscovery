@@ -1,8 +1,4 @@
-# YorK_RP Active Inference Module
-"""Active Inference agent implementation with pymdp integration."""
+# Active Inference Module
+"""Active Inference selector for circuit discovery (lightweight, no pymdp)."""
 
-from .agent import ActiveInferenceAgent
-
-__all__ = [
-    'ActiveInferenceAgent'
-]
+__all__ = []

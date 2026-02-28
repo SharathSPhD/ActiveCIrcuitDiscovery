@@ -15,11 +15,8 @@
 \citation{Friston2015,DaCosta2020}
 \@writefile{toc}{\contentsline {section}{\numberline {I}Introduction}{1}{section.1}\protected@file@percent }
 \newlabel{sec:intro}{{I}{1}{Introduction}{section.1}{}}
-\newlabel{sec:intro@cref}{{[section][1][]I}{[1][1][]1}}
-\citation{Nanda2022}
-\citation{Bloom2024}
-\citation{Pymdp2022}
-\citation{Conmy2024}
+\newlabel{sec:intro@cref}{{[section][1][]I}{[1][1][]1}{}{}{}}
+\citation{marks2024sparse}
 \citation{Pearl2009,Geiger2021}
 \citation{Vaswani2017}
 \citation{Elhage2021}
@@ -40,18 +37,18 @@
 \citation{Cunningham2023}
 \citation{Bricken2023}
 \citation{Templeton2024}
-\citation{Bloom2024}
-\citation{He2024}
+\citation{marks2024sparse}
+\citation{team2024gemma}
 \citation{Friston2010}
 \citation{Friston2017}
 \@writefile{toc}{\contentsline {section}{\numberline {II}Background and Related Work}{2}{section.2}\protected@file@percent }
 \newlabel{sec:background}{{II}{2}{Background and Related Work}{section.2}{}}
-\newlabel{sec:background@cref}{{[section][2][]II}{[1][2][]2}}
+\newlabel{sec:background@cref}{{[section][2][]II}{[1][2][]2}{}{}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {II-A}}Mechanistic Interpretability and Circuit Analysis}{2}{subsection.2.1}\protected@file@percent }
 \@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {II-B}}Sparse Autoencoders for Feature Extraction}{2}{subsection.2.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {II-C}}Active Inference and Expected Free Energy}{2}{subsection.2.3}\protected@file@percent }
 \citation{DaCosta2020}
 \citation{Parr2022}
-\citation{Pymdp2022}
 \citation{Tschantz2020}
 \citation{Sun2024}
 \citation{Conmy2023}
@@ -59,137 +56,108 @@
 \citation{MacKay2003}
 \citation{Conmy2023}
 \citation{Syed2023}
-\citation{Wang2022,Conmy2023}
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {II-C}}Active Inference and Expected Free Energy}{3}{subsection.2.3}\protected@file@percent }
-\newlabel{eq:efe}{{1}{3}{Active Inference and Expected Free Energy}{equation.2.1}{}}
-\newlabel{eq:efe@cref}{{[equation][1][]1}{[1][3][]3}}
+\citation{marks2024sparse}
+\citation{nanda2022transformerlens}
+\@writefile{lot}{\contentsline {table}{\numberline {I}{\ignorespaces Comparison of automated circuit discovery methods.}}{3}{table.1}\protected@file@percent }
+\newlabel{tab:method_comparison}{{I}{3}{Comparison of automated circuit discovery methods}{table.1}{}}
+\newlabel{tab:method_comparison@cref}{{[table][1][]I}{[1][3][]3}{}{}{}}
+\newlabel{eq:efe}{{1}{3}{Active Inference and Expected Free Energy}{equation.1}{}}
+\newlabel{eq:efe@cref}{{[equation][1][]1}{[1][3][]3}{}{}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {II-D}}Gap Analysis: Why Active Inference for Circuit Discovery}{3}{subsection.2.4}\protected@file@percent }
 \@writefile{toc}{\contentsline {section}{\numberline {III}The Active Circuit Discovery Framework}{3}{section.3}\protected@file@percent }
 \newlabel{sec:method}{{III}{3}{The Active Circuit Discovery Framework}{section.3}{}}
-\newlabel{sec:method@cref}{{[section][3][]III}{[1][3][]3}}
-\@writefile{lot}{\contentsline {table}{\numberline {I}{\ignorespaces Comparison of automated circuit discovery methods.}}{3}{table.1}\protected@file@percent }
-\newlabel{tab:method_comparison}{{I}{3}{Comparison of automated circuit discovery methods}{table.1}{}}
-\newlabel{tab:method_comparison@cref}{{[table][1][]I}{[1][3][]3}}
-\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces Overview of the \textsc  {acd}\ framework. The outer loop applies the Active Inference agent; the inner loop performs interventions via TransformerLens and SAE-Lens. Belief state $q(\ensuremath  {\bm  {s}})$ is updated after each intervention observation.}}{3}{figure.1}\protected@file@percent }
-\newlabel{fig:architecture}{{1}{3}{Overview of the \ACD \ framework. The outer loop applies the Active Inference agent; the inner loop performs interventions via TransformerLens and SAE-Lens. Belief state $q(\vect {s})$ is updated after each intervention observation}{figure.1}{}}
-\newlabel{fig:architecture@cref}{{[figure][1][]1}{[1][3][]3}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {III-A}}Formal Problem Statement}{3}{subsection.3.1}\protected@file@percent }
-\newlabel{eq:sae_activation}{{2}{3}{Formal Problem Statement}{equation.3.2}{}}
-\newlabel{eq:sae_activation@cref}{{[equation][2][]2}{[1][3][]3}}
-\citation{DaCosta2020,Friston2015}
-\citation{Chan2022}
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {III-B}}Generative Model and State Space}{4}{subsection.3.2}\protected@file@percent }
-\newlabel{sec:genmodel}{{\mbox  {III-B}}{4}{Generative Model and State Space}{subsection.3.2}{}}
-\newlabel{sec:genmodel@cref}{{[subsection][2][3]\mbox  {III-B}}{[1][4][]4}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {III-C}}Expected Free Energy Computation}{4}{subsection.3.3}\protected@file@percent }
-\newlabel{sec:efe}{{\mbox  {III-C}}{4}{Expected Free Energy Computation}{subsection.3.3}{}}
-\newlabel{sec:efe@cref}{{[subsection][3][3]\mbox  {III-C}}{[1][4][]4}}
-\newlabel{eq:efe_approx}{{7}{4}{Expected Free Energy Computation}{equation.3.7}{}}
-\newlabel{eq:efe_approx@cref}{{[equation][7][]7}{[1][4][]4}}
-\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces Computation graph for Expected Free Energy ($\ensuremath  {\mathcal  {G}}$). Shaded nodes are computed quantities; white nodes are generative model parameters. The agent selects the feature-intervention pair that minimises $-\ensuremath  {\mathcal  {G}}$.}}{4}{figure.2}\protected@file@percent }
-\newlabel{fig:efe_pipeline}{{2}{4}{Computation graph for Expected Free Energy ($\EFE $). Shaded nodes are computed quantities; white nodes are generative model parameters. The agent selects the feature-intervention pair that minimises $-\EFE $}{figure.2}{}}
-\newlabel{fig:efe_pipeline@cref}{{[figure][2][]2}{[1][4][]4}}
-\newlabel{eq:efe_full}{{8}{4}{Expected Free Energy Computation}{equation.3.8}{}}
-\newlabel{eq:efe_full@cref}{{[equation][8][]8}{[1][4][]4}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {III-D}}Belief Updating and Correspondence Measurement}{4}{subsection.3.4}\protected@file@percent }
-\newlabel{sec:belief_update}{{\mbox  {III-D}}{4}{Belief Updating and Correspondence Measurement}{subsection.3.4}{}}
-\newlabel{sec:belief_update@cref}{{[subsection][4][3]\mbox  {III-D}}{[1][4][]4}}
-\newlabel{eq:belief_update}{{9}{4}{Belief Updating and Correspondence Measurement}{equation.3.9}{}}
-\newlabel{eq:belief_update@cref}{{[equation][9][]9}{[1][4][]4}}
-\newlabel{eq:param_learning}{{10}{4}{Belief Updating and Correspondence Measurement}{equation.3.10}{}}
-\newlabel{eq:param_learning@cref}{{[equation][10][]10}{[1][4][]4}}
-\citation{Chan2022,Conmy2023}
+\newlabel{sec:method@cref}{{[section][3][]III}{[1][3][]3}{}{}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces System architecture of \textsc  {acd}{}. The \texttt  {circuit-tracer} pipeline (left) extracts candidate features via EAP and pruning. The Active Inference Selector (right) iteratively scores, selects, and ablates features using an uncertainty-weighted strategy.}}{3}{figure.1}\protected@file@percent }
+\newlabel{fig:architecture}{{1}{3}{System architecture of \ACD {}. The \texttt {circuit-tracer} pipeline (left) extracts candidate features via EAP and pruning. The Active Inference Selector (right) iteratively scores, selects, and ablates features using an uncertainty-weighted strategy}{figure.1}{}}
+\newlabel{fig:architecture@cref}{{[figure][1][]1}{[1][3][]3}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {III-A}}Architecture Overview}{3}{subsection.3.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {III-B}}Candidate Feature Extraction}{3}{subsection.3.2}\protected@file@percent }
+\citation{Friston2015,DaCosta2020}
+\citation{team2024gemma}
+\citation{wang2022interpretability}
+\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces Scoring function pipeline. Each candidate receives a pragmatic score (graph importance $\times $ layer prior) and an epistemic bonus (exploration weight $\times $ uncertainty). After ablation, the uncertainty is zeroed and the layer prior is updated based on observed KL divergence.}}{4}{figure.2}\protected@file@percent }
+\newlabel{fig:scoring}{{2}{4}{Scoring function pipeline. Each candidate receives a pragmatic score (graph importance $\times $ layer prior) and an epistemic bonus (exploration weight $\times $ uncertainty). After ablation, the uncertainty is zeroed and the layer prior is updated based on observed KL divergence}{figure.2}{}}
+\newlabel{fig:scoring@cref}{{[figure][2][]2}{[1][4][]4}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {III-C}}Active Inference Selector}{4}{subsection.3.3}\protected@file@percent }
+\newlabel{eq:score}{{3}{4}{Active Inference Selector}{equation.3}{}}
+\newlabel{eq:score@cref}{{[equation][3][]3}{[1][4][]4}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {III-D}}Belief Updating}{4}{subsection.3.4}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces Flow of a single intervention step. The selector scores candidates, selects the best, ablates it via \texttt  {feature\_intervention}, and updates its uncertainty and layer prior based on the observed KL divergence.}}{4}{figure.3}\protected@file@percent }
+\newlabel{fig:flow}{{3}{4}{Flow of a single intervention step. The selector scores candidates, selects the best, ablates it via \texttt {feature\_intervention}, and updates its uncertainty and layer prior based on the observed KL divergence}{figure.3}{}}
+\newlabel{fig:flow@cref}{{[figure][3][]3}{[1][4][]4}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {III-E}}Intervention Engine}{4}{subsection.3.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {IV}Experimental Setup}{4}{section.4}\protected@file@percent }
+\newlabel{sec:setup}{{IV}{4}{Experimental Setup}{section.4}{}}
+\newlabel{sec:setup@cref}{{[section][4][]IV}{[1][4][]4}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {IV-A}}Models and Hardware}{4}{subsection.4.1}\protected@file@percent }
+\citation{wang2022interpretability}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {IV-B}}Benchmarks}{5}{subsection.4.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {\mbox  {IV-B}1}IOI Circuit Recovery}{5}{subsubsection.4.2.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {\mbox  {IV-B}2}Feature Steering}{5}{subsubsection.4.2.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {IV-C}}Baselines}{5}{subsection.4.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {IV-D}}Metrics}{5}{subsection.4.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {IV-E}}Active Inference Selector}{5}{subsection.4.5}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces Cumulative KL divergence over 20 intervention steps on IOI, averaged across 5 prompts. The \textsc  {acd}{} selector (red) discovers high-impact features earlier than greedy (blue) and random (gray), approaching the oracle upper bound (dashed).}}{5}{figure.4}\protected@file@percent }
+\newlabel{fig:cumkl}{{4}{5}{Cumulative KL divergence over 20 intervention steps on IOI, averaged across 5 prompts. The \ACD {} selector (red) discovers high-impact features earlier than greedy (blue) and random (gray), approaching the oracle upper bound (dashed)}{figure.4}{}}
+\newlabel{fig:cumkl@cref}{{[figure][4][]4}{[1][5][]5}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {IV-F}}Reproducibility}{5}{subsection.4.6}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {V}Results and Analysis}{5}{section.5}\protected@file@percent }
+\newlabel{sec:results}{{V}{5}{Results and Analysis}{section.5}{}}
+\newlabel{sec:results@cref}{{[section][5][]V}{[1][5][]5}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {V-A}}IOI Circuit Recovery}{5}{subsection.5.1}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {II}{\ignorespaces IOI Feature Discovery: Mean KL Divergence per Intervention}}{5}{table.2}\protected@file@percent }
+\newlabel{tab:ioi}{{II}{5}{IOI Feature Discovery: Mean KL Divergence per Intervention}{table.2}{}}
+\newlabel{tab:ioi@cref}{{[table][2][]II}{[1][5][]5}{}{}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {5}{\ignorespaces Oracle efficiency comparison across IOI and multi-step reasoning tasks. The \textsc  {acd}{} selector achieves 74.4\% (IOI) and 78.4\% (multi-step) oracle efficiency, consistently outperforming random selection and matching or exceeding greedy.}}{6}{figure.5}\protected@file@percent }
+\newlabel{fig:oracle_eff}{{5}{6}{Oracle efficiency comparison across IOI and multi-step reasoning tasks. The \ACD {} selector achieves 74.4\% (IOI) and 78.4\% (multi-step) oracle efficiency, consistently outperforming random selection and matching or exceeding greedy}{figure.5}{}}
+\newlabel{fig:oracle_eff@cref}{{[figure][5][]5}{[1][5][]6}{}{}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {6}{\ignorespaces Mean KL divergence across steering multipliers for three concept prompts (10 features each). Steering the Eiffel Tower features at $m{=}10$ produces KL$>$1.0, changing the predicted token from ``Paris'' to ``the''.}}{6}{figure.6}\protected@file@percent }
+\newlabel{fig:steering}{{6}{6}{Mean KL divergence across steering multipliers for three concept prompts (10 features each). Steering the Eiffel Tower features at $m{=}10$ produces KL$>$1.0, changing the predicted token from ``Paris'' to ``the''}{figure.6}{}}
+\newlabel{fig:steering@cref}{{[figure][6][]6}{[1][6][]6}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {V-B}}Feature Steering}{6}{subsection.5.2}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {III}{\ignorespaces Feature Steering Results on Gemma-2-2B}}{6}{table.3}\protected@file@percent }
+\newlabel{tab:steering}{{III}{6}{Feature Steering Results on Gemma-2-2B}{table.3}{}}
+\newlabel{tab:steering@cref}{{[table][3][]III}{[1][5][]6}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {V-C}}Active Discovery Dynamics}{6}{subsection.5.3}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {7}{\ignorespaces Layer distribution of top-10 causal features for IOI (late-layer dominant) vs.\ multi-step reasoning (early-layer dominant). Task-dependent circuit structure emerges naturally from the selector's learned layer priors.}}{6}{figure.7}\protected@file@percent }
+\newlabel{fig:layer_dist}{{7}{6}{Layer distribution of top-10 causal features for IOI (late-layer dominant) vs.\ multi-step reasoning (early-layer dominant). Task-dependent circuit structure emerges naturally from the selector's learned layer priors}{figure.7}{}}
+\newlabel{fig:layer_dist@cref}{{[figure][7][]7}{[1][6][]6}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {V-D}}Multi-step Reasoning}{6}{subsection.5.4}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {IV}{\ignorespaces Multi-step Reasoning: Feature Discovery Efficiency}}{6}{table.4}\protected@file@percent }
+\newlabel{tab:multistep}{{IV}{6}{Multi-step Reasoning: Feature Discovery Efficiency}{table.4}{}}
+\newlabel{tab:multistep@cref}{{[table][4][]IV}{[1][6][]6}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {V-E}}Efficiency Comparison}{6}{subsection.5.5}\protected@file@percent }
+\citation{Friston2015,DaCosta2020}
 \citation{Wang2022}
-\citation{Syed2023}
-\citation{Anthropic2025CT}
-\citation{Conmy2024}
-\citation{Friston2017}
-\citation{Meng2022,Elhage2021}
-\citation{Radford2019}
-\citation{Wang2022}
-\citation{Heimersheim2023}
-\citation{Conmy2023}
-\citation{Nanda2022}
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {III-E}}Intervention Protocol}{5}{subsection.3.5}\protected@file@percent }
-\newlabel{sec:intervention}{{\mbox  {III-E}}{5}{Intervention Protocol}{subsection.3.5}{}}
-\newlabel{sec:intervention@cref}{{[subsection][5][3]\mbox  {III-E}}{[1][4][]5}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {III-F}}Attribution Graph Construction}{5}{subsection.3.6}\protected@file@percent }
-\newlabel{sec:attribution_graph}{{\mbox  {III-F}}{5}{Attribution Graph Construction}{subsection.3.6}{}}
-\newlabel{sec:attribution_graph@cref}{{[subsection][6][3]\mbox  {III-F}}{[1][5][]5}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {III-G}}Novel Prediction Generation}{5}{subsection.3.7}\protected@file@percent }
-\newlabel{sec:predictions}{{\mbox  {III-G}}{5}{Novel Prediction Generation}{subsection.3.7}{}}
-\newlabel{sec:predictions@cref}{{[subsection][7][3]\mbox  {III-G}}{[1][5][]5}}
-\@writefile{loa}{\contentsline {algorithm}{\numberline {1}{\ignorespaces Active Circuit Discovery (\textsc  {acd})}}{5}{algorithm.1}\protected@file@percent }
-\newlabel{alg:acd}{{1}{5}{Algorithm}{algorithm.1}{}}
-\newlabel{alg:acd@cref}{{[algorithm][1][]1}{[1][5][]5}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {III-H}}Algorithm}{5}{subsection.3.8}\protected@file@percent }
-\newlabel{sec:algorithm}{{\mbox  {III-H}}{5}{Algorithm}{subsection.3.8}{}}
-\newlabel{sec:algorithm@cref}{{[subsection][8][3]\mbox  {III-H}}{[1][5][]5}}
-\newlabel{eq:convergence}{{11}{5}{Algorithm}{equation.3.11}{}}
-\newlabel{eq:convergence@cref}{{[equation][11][]11}{[1][5][]5}}
-\@writefile{toc}{\contentsline {section}{\numberline {IV}Experimental Setup}{5}{section.4}\protected@file@percent }
-\newlabel{sec:setup}{{IV}{5}{Experimental Setup}{section.4}{}}
-\newlabel{sec:setup@cref}{{[section][4][]IV}{[1][5][]5}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {IV-A}}Model and Hardware}{5}{subsection.4.1}\protected@file@percent }
-\citation{Wang2022,Conmy2023}
-\citation{Wang2022}
-\citation{Wang2022}
-\@writefile{lot}{\contentsline {table}{\numberline {II}{\ignorespaces Active Inference agent hyperparameters.}}{6}{table.2}\protected@file@percent }
-\newlabel{tab:ai_config}{{II}{6}{Active Inference agent hyperparameters}{table.2}{}}
-\newlabel{tab:ai_config@cref}{{[table][2][]II}{[1][6][]6}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {IV-B}}Sparse Autoencoder Configuration}{6}{subsection.4.2}\protected@file@percent }
-\@writefile{lol}{\contentsline {lstlisting}{\numberline {1}Correct SAE-Lens v0.3+ loading API.}{6}{lstlisting.1}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {IV-C}}Active Inference Hyperparameters}{6}{subsection.4.3}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {IV-D}}Benchmark Task: Golden Gate Bridge}{6}{subsection.4.4}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {IV-E}}Baseline Methods}{6}{subsection.4.5}\protected@file@percent }
-\newlabel{eq:efficiency}{{12}{6}{Baseline Methods}{equation.4.12}{}}
-\newlabel{eq:efficiency@cref}{{[equation][12][]12}{[1][6][]6}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {IV-F}}Research Questions and Validation Criteria}{6}{subsection.4.6}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {IV-G}}Statistical Analysis}{7}{subsection.4.7}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {V}Results and Analysis}{7}{section.5}\protected@file@percent }
-\newlabel{sec:results}{{V}{7}{Results and Analysis}{section.5}{}}
-\newlabel{sec:results@cref}{{[section][5][]V}{[1][7][]7}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {V-A}}Implementation Status}{7}{subsection.5.1}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {V-B}}Pilot Execution Results}{7}{subsection.5.2}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {V-C}}Root Cause Analysis}{7}{subsection.5.3}\protected@file@percent }
-\@writefile{lot}{\contentsline {table}{\numberline {III}{\ignorespaces Implementation status of \textsc  {acd}\ framework components.}}{7}{table.3}\protected@file@percent }
-\newlabel{tab:impl_status}{{III}{7}{Implementation status of \ACD \ framework components}{table.3}{}}
-\newlabel{tab:impl_status@cref}{{[table][3][]III}{[1][7][]7}}
-\@writefile{lot}{\contentsline {table}{\numberline {IV}{\ignorespaces Research question results from pilot execution (NVIDIA L40S, 2025-06-14).}}{7}{table.4}\protected@file@percent }
-\newlabel{tab:pilot_results}{{IV}{7}{Research question results from pilot execution (NVIDIA L40S, 2025-06-14)}{table.4}{}}
-\newlabel{tab:pilot_results@cref}{{[table][4][]IV}{[1][7][]7}}
-\citation{Wang2022}
-\citation{Sun2024,Millidge2021}
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {V-D}}Architectural Validation Results}{8}{subsection.5.4}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {V-E}}Target Performance Envelope}{8}{subsection.5.5}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {VI}Discussion}{8}{section.6}\protected@file@percent }
-\newlabel{sec:discussion}{{VI}{8}{Discussion}{section.6}{}}
-\newlabel{sec:discussion@cref}{{[section][6][]VI}{[1][8][]8}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {VI-A}}Theoretical Contributions and Significance}{8}{subsection.6.1}\protected@file@percent }
-\citation{MacKay2003}
-\citation{Wang2022,Conmy2023}
-\citation{Wang2022}
-\citation{Meng2022}
+\@writefile{lot}{\contentsline {table}{\numberline {V}{\ignorespaces Efficiency Improvement Over Baselines}}{7}{table.5}\protected@file@percent }
+\newlabel{tab:efficiency}{{V}{7}{Efficiency Improvement Over Baselines}{table.5}{}}
+\newlabel{tab:efficiency@cref}{{[table][5][]V}{[1][6][]7}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {V-F}}Research Question Validation}{7}{subsection.5.6}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {VI}{\ignorespaces Research Question Validation Summary}}{7}{table.6}\protected@file@percent }
+\newlabel{tab:rq_validation}{{VI}{7}{Research Question Validation Summary}{table.6}{}}
+\newlabel{tab:rq_validation@cref}{{[table][6][]VI}{[1][6][]7}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {V-G}}Limitations}{7}{subsection.5.7}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {VI}Discussion}{7}{section.6}\protected@file@percent }
+\newlabel{sec:discussion}{{VI}{7}{Discussion}{section.6}{}}
+\newlabel{sec:discussion@cref}{{[section][6][]VI}{[1][7][]7}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {VI-A}}Significance of Results}{7}{subsection.6.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {VI-B}}Task-Dependent Circuit Structure}{7}{subsection.6.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {VI-C}}Limitations}{7}{subsection.6.3}\protected@file@percent }
 \citation{Hubinger2019,Bereska2024}
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {VI-B}}Implementation Lessons}{9}{subsection.6.2}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {VI-C}}Limitations}{9}{subsection.6.3}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {VI-D}}Path to Full Validation}{9}{subsection.6.4}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {VI-E}}Broader Implications for AI Safety}{9}{subsection.6.5}\protected@file@percent }
-\citation{MacKay2003}
-\@writefile{toc}{\contentsline {section}{\numberline {VII}Conclusion}{10}{section.7}\protected@file@percent }
-\newlabel{sec:conclusion}{{VII}{10}{Conclusion}{section.7}{}}
-\newlabel{sec:conclusion@cref}{{[section][7][]VII}{[1][9][]10}}
-\@writefile{toc}{\contentsline {section}{Appendix\nobreakspace  A: Generative Model Parameter Initialisation}{10}{section*.1}\protected@file@percent }
-\newlabel{app:genmodel}{{A}{10}{\appendixname \nobreakspace \thesectiondis \\* Generative Model Parameter Initialisation}{section*.1}{}}
-\newlabel{app:genmodel@cref}{{[section][1][]A}{[1][10][]10}}
-\@writefile{toc}{\contentsline {section}{Appendix\nobreakspace  B: Correspondence Metric Derivation}{10}{section*.2}\protected@file@percent }
-\newlabel{app:correspondence}{{B}{10}{\appendixname \nobreakspace \thesectiondis \\* Correspondence Metric Derivation}{section*.2}{}}
-\newlabel{app:correspondence@cref}{{[section][2][]B}{[1][10][]10}}
-\@writefile{toc}{\contentsline {section}{Appendix\nobreakspace  C: Docker and DGX Spark Deployment}{10}{section*.3}\protected@file@percent }
-\newlabel{app:docker}{{C}{10}{\appendixname \nobreakspace \thesectiondis \\* Docker and DGX Spark Deployment}{section*.3}{}}
-\newlabel{app:docker@cref}{{[section][3][]C}{[1][10][]10}}
-\@writefile{lol}{\contentsline {lstlisting}{\numberline {2}Docker build and run for DGX Spark.}{10}{lstlisting.2}\protected@file@percent }
-\citation{Conmy2023}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {VI-D}}Broader Implications for AI Safety}{8}{subsection.6.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {VII}Conclusion}{8}{section.7}\protected@file@percent }
+\newlabel{sec:conclusion}{{VII}{8}{Conclusion}{section.7}{}}
+\newlabel{sec:conclusion@cref}{{[section][7][]VII}{[1][8][]8}{}{}{}}
+\@writefile{toc}{\contentsline {section}{Appendix\nobreakspace  A: Active Inference Selector Parameters}{8}{section*.1}\protected@file@percent }
+\newlabel{app:selector}{{A}{8}{\appendixname \nobreakspace \thesectiondis \\* Active Inference Selector Parameters}{section*.1}{}}
+\newlabel{app:selector@cref}{{[section][1][]A}{[1][8][]8}{}{}{}}
+\@writefile{toc}{\contentsline {section}{Appendix\nobreakspace  B: Correspondence Metric}{8}{section*.2}\protected@file@percent }
+\newlabel{app:correspondence}{{B}{8}{\appendixname \nobreakspace \thesectiondis \\* Correspondence Metric}{section*.2}{}}
+\newlabel{app:correspondence@cref}{{[section][2][]B}{[1][8][]8}{}{}{}}
+\@writefile{toc}{\contentsline {section}{Appendix\nobreakspace  C: Docker and DGX Spark Deployment}{8}{section*.3}\protected@file@percent }
+\newlabel{app:docker}{{C}{8}{\appendixname \nobreakspace \thesectiondis \\* Docker and DGX Spark Deployment}{section*.3}{}}
+\newlabel{app:docker@cref}{{[section][3][]C}{[1][8][]8}{}{}{}}
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {1}Docker build and run for DGX Spark.}{8}{lstlisting.1}\protected@file@percent }
 \bibstyle{IEEEtran}
 \bibdata{references}
 \bibcite{Bereska2024}{1}
@@ -205,38 +173,35 @@
 \bibcite{Parr2022}{11}
 \bibcite{Friston2015}{12}
 \bibcite{DaCosta2020}{13}
-\bibcite{Nanda2022}{14}
-\bibcite{Bloom2024}{15}
-\bibcite{Pymdp2022}{16}
-\bibcite{Conmy2024}{17}
-\bibcite{Pearl2009}{18}
-\bibcite{Geiger2021}{19}
-\bibcite{Vaswani2017}{20}
-\@writefile{toc}{\contentsline {section}{Appendix\nobreakspace  D: Code-Level API Fixes Applied}{11}{section*.4}\protected@file@percent }
-\newlabel{app:fixes}{{D}{11}{\appendixname \nobreakspace \thesectiondis \\* Code-Level API Fixes Applied}{section*.4}{}}
-\newlabel{app:fixes@cref}{{[section][4][]D}{[1][11][]11}}
-\@writefile{toc}{\contentsline {section}{Appendix\nobreakspace  E: Experimental Reproducibility Checklist}{11}{section*.5}\protected@file@percent }
-\newlabel{app:repro}{{E}{11}{\appendixname \nobreakspace \thesectiondis \\* Experimental Reproducibility Checklist}{section*.5}{}}
-\newlabel{app:repro@cref}{{[section][5][]E}{[1][11][]11}}
-\@writefile{toc}{\contentsline {section}{References}{11}{section*.6}\protected@file@percent }
-\bibcite{Heimersheim2023}{21}
-\bibcite{Lieberum2023}{22}
-\bibcite{Chan2022}{23}
-\bibcite{Meng2022}{24}
-\bibcite{Anthropic2025CT}{25}
-\bibcite{Lindsey2025}{26}
-\bibcite{Bricken2023}{27}
-\bibcite{Cunningham2023}{28}
-\bibcite{Templeton2024}{29}
-\bibcite{He2024}{30}
-\bibcite{Friston2017}{31}
-\bibcite{Tschantz2020}{32}
-\bibcite{Sun2024}{33}
-\bibcite{MacKay2003}{34}
-\@writefile{lot}{\contentsline {table}{\numberline {V}{\ignorespaces Summary of critical API fixes applied to the \textsc  {acd}\ codebase.}}{12}{table.5}\protected@file@percent }
-\newlabel{tab:fixes}{{V}{12}{Summary of critical API fixes applied to the \ACD \ codebase}{table.5}{}}
-\newlabel{tab:fixes@cref}{{[table][5][]V}{[1][11][]12}}
-\bibcite{Radford2019}{35}
-\bibcite{Millidge2021}{36}
-\bibcite{Hubinger2019}{37}
-\gdef \@abspage@last{13}
+\bibcite{marks2024sparse}{14}
+\bibcite{Pearl2009}{15}
+\bibcite{Geiger2021}{16}
+\bibcite{Vaswani2017}{17}
+\bibcite{Heimersheim2023}{18}
+\bibcite{Lieberum2023}{19}
+\bibcite{Chan2022}{20}
+\bibcite{Meng2022}{21}
+\bibcite{Anthropic2025CT}{22}
+\bibcite{Lindsey2025}{23}
+\@writefile{toc}{\contentsline {section}{Appendix\nobreakspace  D: Code-Level Fixes Applied}{9}{section*.4}\protected@file@percent }
+\newlabel{app:fixes}{{D}{9}{\appendixname \nobreakspace \thesectiondis \\* Code-Level Fixes Applied}{section*.4}{}}
+\newlabel{app:fixes@cref}{{[section][4][]D}{[1][9][]9}{}{}{}}
+\@writefile{toc}{\contentsline {section}{Appendix\nobreakspace  E: Experimental Reproducibility Checklist}{9}{section*.5}\protected@file@percent }
+\newlabel{app:repro}{{E}{9}{\appendixname \nobreakspace \thesectiondis \\* Experimental Reproducibility Checklist}{section*.5}{}}
+\newlabel{app:repro@cref}{{[section][5][]E}{[1][9][]9}{}{}{}}
+\@writefile{toc}{\contentsline {section}{References}{9}{section*.6}\protected@file@percent }
+\bibcite{Bricken2023}{24}
+\bibcite{Cunningham2023}{25}
+\bibcite{Templeton2024}{26}
+\bibcite{team2024gemma}{27}
+\bibcite{Friston2017}{28}
+\bibcite{Tschantz2020}{29}
+\bibcite{Sun2024}{30}
+\bibcite{MacKay2003}{31}
+\bibcite{nanda2022transformerlens}{32}
+\bibcite{wang2022interpretability}{33}
+\bibcite{Hubinger2019}{34}
+\@writefile{lot}{\contentsline {table}{\numberline {VII}{\ignorespaces Summary of critical API fixes applied to the \textsc  {acd}{} codebase.}}{10}{table.7}\protected@file@percent }
+\newlabel{tab:fixes}{{VII}{10}{Summary of critical API fixes applied to the \ACD {} codebase}{table.7}{}}
+\newlabel{tab:fixes@cref}{{[table][7][]VII}{[1][9][]10}{}{}{}}
+\gdef \@abspage@last{10}
