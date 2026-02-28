@@ -1,0 +1,84 @@
+% ---- introduction.tex ----
+
+The rapid growth in the scale and deployment of large language models (LLMs) has
+intensified the need for principled methods to audit, explain, and predict their
+behaviour~\cite{Bereska2024}. Mechanistic interpretability pursues this goal by
+reverse-engineering the internal computations of trained models into human-legible
+circuits~\cite{Olah2020,Elhage2021}. A circuit, in this context, denotes the minimal
+subgraph of model components~-- attention heads, MLP neurons, or SAE features~-- whose
+activations are jointly necessary and sufficient to reproduce a specific model
+behaviour on a given family of inputs~\cite{Cammarata2020,Wang2022}.
+
+Circuit analysis has produced landmark findings: Wang et al.\ identified a
+fourteen-head circuit mediating Indirect Object Identification (IOI) in GPT-2
+Small~\cite{Wang2022}; Hanna et al.\ localised a circuit for numerical
+greater-than comparisons~\cite{Hanna2023}; and Nanda et al.\ traced the emergence of
+modular arithmetic generalisation through a Fourier-space circuit during
+grokking~\cite{Nanda2023Grokking}. Each of these studies required thousands of
+manually guided interventions, prompting interest in automation~\cite{Conmy2023,Syed2023}.
+
+Automated Circuit Discovery (\ACDC)~\cite{Conmy2023} generalises the activation
+patching methodology of Wang et al.\ to a greedy graph-pruning algorithm that
+systematically tests every edge in the computational graph. Although \ACDC\ achieves
+strong fidelity on the IOI task, the number of interventions scales as $O(E)$ in the
+number of graph edges, which for deep transformer models reaches the tens of
+thousands. Edge Attribution Patching (\EAP)~\cite{Syed2023} reduces this cost by
+approximating patch effects with integrated gradients, yet it trades correctness for
+efficiency and may miss higher-order interactions. Neither method incorporates
+uncertainty about the circuit structure or adapts its search strategy based on what
+has already been discovered.
+
+Active Inference is a normative framework for perception and action in biological
+agents that unifies perception, learning, and planning under a single objective: the
+minimisation of variational free energy (equivalently, the maximisation of model
+evidence)~\cite{Friston2010,Parr2022}. When extended to planning, the framework
+introduces the Expected Free Energy (\EFE), which decomposes into an epistemic term
+(expected information gain about hidden states) and a pragmatic term (expected
+alignment with preferences)~\cite{Friston2015,DaCosta2020}. Crucially, \EFE\
+minimisation naturally trades off exploration and exploitation: an agent selects
+actions that resolve uncertainty about the world while pursuing desired outcomes.
+
+This work proposes that circuit discovery is precisely the kind of problem for which
+\EFE\ minimisation is appropriate. The ``world'' is the causal graph of an LLM; the
+``actions'' are ablation and activation-patching interventions; the ``hidden states''
+are the identities and importances of circuit-critical features; and the ``preference''
+is the rapid identification of a faithful, minimal circuit. An Active Inference agent
+that maintains a belief distribution over candidate circuit components and selects
+interventions to maximally resolve that uncertainty will, in theory, identify circuits
+with fewer total interventions than either random or gradient-ranked selection.
+
+The contributions of this paper are as follows.
+
+\textbf{(C1) Theoretical framing.} A formal mapping is established between Active
+Inference and circuit discovery, showing how transformer residual stream components
+correspond to hidden states in the agent's generative model, how intervention effects
+correspond to observations, and how the transformer's attention precision maps to the
+agent's precision weighting.
+
+\textbf{(C2) Framework implementation.} The Active Circuit Discovery (\ACD) framework
+is implemented in Python, integrating TransformerLens~\cite{Nanda2022} for forward
+pass instrumentation, SAE-Lens~\cite{Bloom2024} for Sparse Autoencoder feature
+extraction, \pymdp~\cite{Pymdp2022} for the Active Inference agent's belief updating
+and \EFE\ computation, and CircuitsVis~\cite{Conmy2024} for attribution graph
+visualisation.
+
+\textbf{(C3) Evaluation protocol.} Three precisely stated research questions are
+defined and corresponding metrics, baselines, and statistical tests are specified,
+providing a template for reproducible evaluation of any future automated circuit
+discovery method.
+
+\textbf{(C4) Honest preliminary assessment.} The paper reports the results of an
+end-to-end pilot experiment on GPT-2 Small, including a candid account of which
+components performed as expected, which failed, and why, together with the specific
+code-level fixes applied.
+
+\textbf{(C5) Deployment artifact.} A Docker container configured for the NVIDIA DGX
+Spark multi-GPU platform is provided, enabling future reproduction at scale.
+
+The remainder of this paper is structured as follows. Section~\ref{sec:background}
+reviews related work on circuit analysis, Active Inference, and sparse
+autoencoders. Section~\ref{sec:method} describes the \ACD\ framework in detail.
+Section~\ref{sec:setup} specifies the experimental protocol. Section~\ref{sec:results}
+reports results from the pilot implementation. Section~\ref{sec:discussion} interprets
+these results and outlines the path to full validation.
+Section~\ref{sec:conclusion} concludes.

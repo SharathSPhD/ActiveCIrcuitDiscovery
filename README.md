@@ -8,17 +8,22 @@
 
 A comprehensive research implementation demonstrating how Active Inference principles can guide efficient circuit discovery in transformer architectures, with enhanced statistical validation, prediction generation, and comprehensive analysis capabilities.
 
-## 🚀 Project Status: Enhanced & Complete
+## Project Status: Under Active Development
 
-**100% Implementation Complete** - All three research questions validated with comprehensive statistical testing and enhanced prediction systems.
+The framework is fully implemented with all components functional.  Benchmark
+numbers are generated during actual experiment runs and depend on your
+hardware, model, and configuration.  See `results/` for run-specific outputs.
 
-- ✅ **RQ1**: >75% correspondence achieved (target: 70%)
-- ✅ **RQ2**: >35% efficiency improvement (target: 30%)
-- ✅ **RQ3**: 5+ validated novel predictions (target: 3)
+### Recent Fixes (2026-02-28)
 
-### 🔧 Recent Fix (2025-11-05): Baseline Execution
-
-**FIXED**: Removed baseline simulation code - all baselines now execute actual interventions for scientifically valid RQ2 efficiency comparisons. See [`docs/BASELINE_EXECUTION.md`](docs/BASELINE_EXECUTION.md) for details.
+- **SAE-Lens API**: Corrected `SAE.from_pretrained(release, sae_id)` call format
+- **Mean Ablation**: Implemented true corpus-mean activation substitution
+- **Correspondence**: Replaced per-intervention Pearson r (undefined at n=1) with accumulated Spearman ρ over all interventions
+- **pymdp API**: Fixed `infer_states`, `infer_policies`, `update_likelihood_dirichlet` calls to match v0.0.1 API
+- **Convergence**: Replaced broken feature-pair comparison with KL-divergence-based convergence
+- **Prediction Validation**: Replaced synthetic random data generation with real circuit measurements from TransformerLens hooks
+- **Attribution Graph API**: Fixed `nodes`/`edges` list iteration in prediction system
+- **Baseline Execution**: All baselines execute actual interventions (previously fixed 2025-11-05)
 
 ## 🎯 Overview
 
@@ -227,20 +232,22 @@ Our enhanced implementation includes comprehensive statistical validation:
 - **Multiple Comparisons**: Proper correction for family-wise error rates
 
 ### Performance Benchmarks
-Based on extensive testing across multiple experiments:
 
-| Metric | Enhanced System | Baseline Methods | Improvement |
-|--------|----------------|------------------|-------------|
-| **Correspondence** | 78.3% ± 4.2% | N/A | ✅ Exceeds 70% target |
-| **Efficiency** | 37.8% ± 5.1% | 0% (baseline) | ✅ Exceeds 30% target |
-| **Novel Predictions** | 5.2 ± 1.1 | 0 | ✅ Exceeds 3 target |
-| **Statistical Significance** | p < 0.001 | N/A | ✅ Highly significant |
+Results are generated during actual experiment runs.  Target thresholds are:
 
-### Research Question Achievement
+| Metric | Target | Measurement Method |
+|--------|--------|--------------------|
+| **RQ1 Correspondence** | > 70% | Spearman ρ between EFE scores and empirical intervention effect sizes |
+| **RQ2 Efficiency** | > 30% reduction | Active Inference vs random/exhaustive/gradient baseline intervention counts |
+| **RQ3 Predictions** | ≥ 3 validated | Novel predictions validated against real circuit measurements |
 
-- **🎯 RQ1 (Correspondence)**: **ACHIEVED** - 78.3% average correspondence (target: >70%)
-- **⚡ RQ2 (Efficiency)**: **ACHIEVED** - 37.8% average improvement (target: 30%)
-- **🔮 RQ3 (Predictions)**: **ACHIEVED** - 5.2 average validated predictions (target: 3)
+Run `python run_complete_experiment.py` to generate results on your hardware.
+
+### Research Question Targets
+
+- **RQ1 (Correspondence)**: Spearman ρ > 0.4 (p < 0.05) between EFE ranking and empirical effect sizes
+- **RQ2 (Efficiency)**: >30% fewer interventions than exhaustive/random baselines to identify core circuit
+- **RQ3 (Predictions)**: ≥3 theory-grounded predictions validated against real attention/activation data
 
 ## 🧪 Testing & Validation
 

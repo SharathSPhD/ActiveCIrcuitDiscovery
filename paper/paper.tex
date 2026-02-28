@@ -1,0 +1,158 @@
+% paper.tex -- Main IEEE-style journal paper
+% Active Circuit Discovery: EFE-Guided Mechanistic Interpretability in LLMs
+% Compiled with: pdflatex -> bibtex -> pdflatex -> pdflatex
+
+\documentclass[journal]{IEEEtran}
+
+% --- Core packages ---
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+
+% --- Math ---
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{bm}
+\usepackage{mathtools}
+
+% --- Graphics and figures ---
+\usepackage{graphicx}
+\usepackage{tikz}
+\usepackage{pgfplots}
+\usetikzlibrary{shapes.geometric, arrows.meta, positioning, fit,
+                decorations.pathreplacing, calc, backgrounds,
+                matrix, chains, scopes, shadows.blur}
+\pgfplotsset{compat=1.18}
+
+% --- Tables ---
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{multirow}
+\usepackage{array}
+\usepackage{makecell}
+
+% --- Algorithms ---
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\algnewcommand\algorithmicinput{\textbf{Input:}}
+\algnewcommand\algorithmicoutput{\textbf{Output:}}
+\algnewcommand\Input{\item[\algorithmicinput]}
+\algnewcommand\Output{\item[\algorithmicoutput]}
+
+% --- Hyperlinks and cross-refs ---
+\usepackage[colorlinks=true, linkcolor=blue, citecolor=blue, urlcolor=blue]{hyperref}
+\usepackage{cleveref}
+
+% --- Code listings ---
+\usepackage{listings}
+\lstset{
+  basicstyle=\small\ttfamily,
+  keywordstyle=\bfseries,
+  commentstyle=\itshape,
+  frame=single,
+  breaklines=true,
+  captionpos=b,
+  numbers=left,
+  numberstyle=\tiny,
+  language=Python
+}
+
+% --- Bibliography ---
+\usepackage{cite}
+
+% --- Theorem environments ---
+\newtheorem{definition}{Definition}
+\newtheorem{proposition}{Proposition}
+\newtheorem{theorem}{Theorem}
+
+% --- Custom commands ---
+\newcommand{\EFE}{\ensuremath{\mathcal{G}}}
+\newcommand{\FE}{\ensuremath{\mathcal{F}}}
+\newcommand{\KL}[2]{\ensuremath{D_{\mathrm{KL}}\!\left(#1 \,\|\, #2\right)}}
+\newcommand{\E}[1]{\ensuremath{\mathbb{E}\!\left[#1\right]}}
+\newcommand{\softmax}{\ensuremath{\operatorname{softmax}}}
+\newcommand{\Attn}{\ensuremath{\operatorname{Attn}}}
+\newcommand{\MLP}{\ensuremath{\operatorname{MLP}}}
+\newcommand{\abs}[1]{\ensuremath{\left|#1\right|}}
+\newcommand{\norm}[1]{\ensuremath{\left\|#1\right\|}}
+\newcommand{\vect}[1]{\ensuremath{\bm{#1}}}
+\newcommand{\mat}[1]{\ensuremath{\mathbf{#1}}}
+\newcommand{\ACDC}{\textsc{acdc}}
+\newcommand{\EAP}{\textsc{eap}}
+\newcommand{\ACD}{\textsc{acd}}
+\newcommand{\pymdp}{\texttt{pymdp}}
+
+% --- Document metadata ---
+\begin{document}
+
+\title{Active Circuit Discovery: Expected Free Energy-Guided\\
+       Intervention Selection for Mechanistic Interpretability\\
+       in Large Language Models}
+
+\author{Sharath~S.~PhD~Candidate,~\IEEEmembership{University of York}%
+\thanks{Manuscript received February 2026. Corresponding author: University of York,
+Department of Computer Science. This work was conducted as part of the
+MSc Computer Science research programme.}%
+}
+
+\markboth{IEEE Transactions on Neural Networks and Learning Systems,~Vol.~XX,
+No.~X, 2026}%
+{Author: Active Circuit Discovery}
+
+\maketitle
+
+% =====================================================================
+\begin{abstract}
+\input{sections/abstract}
+\end{abstract}
+
+\begin{IEEEkeywords}
+mechanistic interpretability, active inference, expected free energy, circuit
+discovery, sparse autoencoders, transformer language models, GPT-2,
+intervention selection, causal circuit analysis, variational free energy
+\end{IEEEkeywords}
+
+% =====================================================================
+\section{Introduction}
+\label{sec:intro}
+\input{sections/introduction}
+
+% =====================================================================
+\section{Background and Related Work}
+\label{sec:background}
+\input{sections/background}
+
+% =====================================================================
+\section{The Active Circuit Discovery Framework}
+\label{sec:method}
+\input{sections/methodology}
+
+% =====================================================================
+\section{Experimental Setup}
+\label{sec:setup}
+\input{sections/experimental_setup}
+
+% =====================================================================
+\section{Results and Analysis}
+\label{sec:results}
+\input{sections/results}
+
+% =====================================================================
+\section{Discussion}
+\label{sec:discussion}
+\input{sections/discussion}
+
+% =====================================================================
+\section{Conclusion}
+\label{sec:conclusion}
+\input{sections/conclusion}
+
+% =====================================================================
+\appendices
+\input{sections/appendix}
+
+% =====================================================================
+\bibliographystyle{IEEEtran}
+\bibliography{references}
+
+\end{document}

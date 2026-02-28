@@ -1,0 +1,33 @@
+% ---- conclusion.tex ----
+
+This paper introduced Active Circuit Discovery (\ACD), a framework that applies
+Expected Free Energy minimisation from the Active Inference paradigm to the problem of
+automated circuit discovery in large language models. The core insight is that circuit
+discovery is a partially observable decision problem: the identities and importances
+of circuit-critical SAE features are hidden states, interventions are actions, and
+intervention effects are observations. By maintaining a probabilistic belief over these
+hidden states and selecting interventions to maximally resolve uncertainty, an Active
+Inference agent can identify circuits with fewer total interventions than exhaustive or
+gradient-ranked baselines.
+
+The framework integrates four established libraries: TransformerLens for forward pass
+instrumentation, SAE-Lens for sparse autoencoder feature extraction, \pymdp\ for
+discrete-state Active Inference, and CircuitsVis for attribution graph
+visualisation. Three research questions were precisely stated with testable, quantified
+thresholds, providing a rigorous evaluation protocol applicable to any future automated
+circuit discovery method.
+
+A pilot implementation on GPT-2 Small identified five implementation failures,
+detailed at the code level, all of which have been corrected. The honest reporting of
+zero valid interventions executed in the pilot run, rather than fabricated metrics,
+represents the empirical state of the work. Post-fix architectural validation confirmed
+that each individual component (SAE loading, activation ablation, \pymdp\ belief
+updating) functions correctly in isolation, providing a solid foundation for end-to-end
+validation.
+
+Future work will focus on completing the validated pipeline on the canonical IOI and
+Golden Gate Bridge benchmarks, extending evaluation to GPT-2 Medium and Pythia-1B,
+and implementing multi-step planning for the Active Inference agent. The Docker
+container targeting the NVIDIA DGX Spark platform, together with the fully open-source
+codebase, is released to facilitate reproduction and extension by the mechanistic
+interpretability community.

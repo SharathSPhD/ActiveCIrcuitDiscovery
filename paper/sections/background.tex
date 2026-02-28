@@ -1,0 +1,123 @@
+% ---- background.tex ----
+
+\subsection{Mechanistic Interpretability and Circuit Analysis}
+
+Mechanistic interpretability traces causal pathways through neural networks by
+applying targeted interventions~-- zeroing activations, swapping activations between
+forward passes on different inputs, or replacing specific components with learned
+approximations~-- and measuring the resulting change in model output~\cite{Pearl2009,
+Geiger2021}. The transformer architecture~\cite{Vaswani2017} is especially amenable to
+this analysis because its residual stream structure allows the contribution of each
+component to the final logits to be decomposed additively~\cite{Elhage2021}.
+
+Olah et al.\ introduced the concept of circuits in convolutional vision
+networks~\cite{Olah2020,Cammarata2020}. Elhage et al.\ formalised the residual stream
+decomposition for transformers and demonstrated in-context learning heads, induction
+heads, and name-mover heads in small two-layer models~\cite{Elhage2021}. Wang et al.\
+applied this framework at scale in a celebrated study of the fourteen-head IOI circuit
+in GPT-2 Small, using path patching to confirm causal roles~\cite{Wang2022}. Subsequent
+work characterised circuits for docstring completion~\cite{Heimersheim2023},
+numerical reasoning~\cite{Hanna2023}, and Chinchilla at 70~B
+parameters~\cite{Lieberum2023}.
+
+A recurring limitation of manual circuit analysis is labour intensity. Conmy et al.\
+addressed this with Automated Circuit Discovery (\ACDC), a greedy edge-pruning
+algorithm that recovers circuits matching manual analyses on the IOI and docstring
+tasks~\cite{Conmy2023}. Syed et al.\ proposed Edge Attribution Patching (\EAP), which
+approximates intervention effects with gradient-based attribution and achieves
+competitive results at a fraction of the runtime~\cite{Syed2023}. Geiger et al.\
+introduced causal abstraction as a formal verification criterion for circuit
+hypotheses~\cite{Geiger2021}, and Chan et al.\ developed causal scrubbing for
+the same purpose~\cite{Chan2022}.
+
+Meng et al.\ complemented circuit analysis with causal tracing applied to factual
+associations in GPT models, identifying mid-layer MLP blocks as the primary locus of
+stored world knowledge~\cite{Meng2022}. Lindsey et al.\ recently combined attribution
+graphs constructed via \texttt{circuit-tracer}~\cite{Anthropic2025CT} with large-scale
+SAE analysis to map the biology of Claude~3 Sonnet at a component
+level~\cite{Lindsey2025}.
+
+\subsection{Sparse Autoencoders for Feature Extraction}
+
+Polysemanticity~-- the tendency of individual neurons to respond to multiple unrelated
+concepts~-- has been identified as a core obstacle to mechanistic
+interpretability~\cite{Olah2020,Bricken2023}. Sparse Autoencoders (SAEs) address this
+by learning an overcomplete, sparse linear basis for the residual stream at each layer.
+Cunningham et al.\ demonstrated that features learned by SAEs are substantially more
+monosemantic than individual neurons~\cite{Cunningham2023}. Bricken et al.\ scaled
+this approach to a one-layer MLP with 4,096-dimensional activations, recovering over
+512 interpretable features including curve detectors and orientation-selective
+units~\cite{Bricken2023}. Templeton et al.\ extended the analysis to SAE features in
+Claude models, recovering structured emotional and semantic concepts~\cite{Templeton2024}.
+
+SAE-Lens~\cite{Bloom2024} provides pre-trained SAE weights and a standardised API for
+loading, querying, and applying SAEs to arbitrary residual stream activations. For
+GPT-2 Small, the \texttt{gpt2-small-res-jb} release provides residual-stream SAEs at
+every layer, trained on the Pile corpus. He et al.\ showed that using SAE features as
+the unit of circuit analysis significantly improves circuit faithfulness compared to
+attention-head-level analysis~\cite{He2024}.
+
+\subsection{Active Inference and Expected Free Energy}
+
+Active Inference (AI) is a unified computational framework derived from the Free
+Energy Principle~\cite{Friston2010}, which posits that biological agents minimise the
+surprise (negative model log-evidence) associated with their sensory states. Friston
+et al.\ formalised this as variational inference: agents approximate the true posterior
+over hidden states $\vect{s}$ given observations $\vect{o}$ by maintaining a
+recognition distribution $q(\vect{s})$ and minimising the variational free energy
+$\FE = \KL{q(\vect{s})}{p(\vect{s}\mid\vect{o})} \geq
+-\log p(\vect{o})$~\cite{Friston2017}.
+
+For planning and action selection, Da Costa et al.\ extended this to the Expected Free
+Energy, defined for a policy $\pi$ over future time steps $\tau > t$
+as~\cite{DaCosta2020}:
+\begin{equation}
+  \EFE(\pi) = \sum_{\tau > t}
+    \underbrace{\E[\log p(\vect{o}_\tau) - \log q(\vect{o}_\tau \mid \pi)]}_{\text{pragmatic value}}
+    - \underbrace{\E[\log q(\vect{s}_\tau \mid \pi) - \log q(\vect{s}_\tau \mid \vect{o}_\tau,\pi)]}_{\text{epistemic value}}.
+  \label{eq:efe}
+\end{equation}
+The pragmatic value measures expected reward (preference satisfaction), while the
+epistemic value measures expected information gain (uncertainty reduction). Policies are
+selected according to a Boltzmann distribution over negative \EFE\ values.
+
+Parr et al.\ provide a comprehensive treatment of Active Inference as a model of
+cognition~\cite{Parr2022}. Heins et al.\ implement discrete-state Active Inference
+in the \pymdp\ Python library~\cite{Pymdp2022}, which provides matrix-based
+generative models $(\mat{A}, \mat{B}, \mat{C}, \mat{D})$ representing the observation
+model, transition model, log-preference vector, and prior over initial states
+respectively. Tschantz et al.\ demonstrated that \EFE\ minimisation recovers
+reinforcement learning in the limit of pure pragmatic value~\cite{Tschantz2020}.
+
+Sun et al.\ explored the conceptual alignment between Active Inference and neural network
+interpretability, arguing that attention mechanisms implement a form of precision-weighted
+prediction error minimisation~\cite{Sun2024}. The present work operationalises this
+connection by embedding it within an automated circuit discovery procedure.
+
+\subsection{Gap Analysis: Why Active Inference for Circuit Discovery}
+
+Table~\ref{tab:method_comparison} summarises the properties of existing automated
+circuit discovery methods and the proposed \ACD\ framework. Existing methods treat
+intervention selection as either exhaustive~\cite{Conmy2023} or gradient-ranked and
+therefore non-adaptive~\cite{Syed2023}. Neither approach explicitly models uncertainty
+about circuit structure or uses that uncertainty to guide further investigation.
+Active Inference addresses this gap by maintaining a full posterior over candidate
+feature importances and selecting the intervention that, in expectation, most reduces
+this uncertainty~-- analogous to Bayesian experimental design~\cite{MacKay2003}.
+
+\begin{table}[t]
+  \centering
+  \caption{Comparison of automated circuit discovery methods.}
+  \label{tab:method_comparison}
+  \begin{tabularx}{\columnwidth}{lXXXX}
+    \toprule
+    Method & Uncertainty & Adaptive & Online & Testable \\
+           & Modelling & Selection & Learning & Predictions \\
+    \midrule
+    \ACDC~\cite{Conmy2023}   & No  & No  & No  & No \\
+    \EAP~\cite{Syed2023}     & No  & No  & No  & No \\
+    Grad. Ranking            & No  & No  & No  & No \\
+    \textbf{\ACD (ours)}     & Yes & Yes & Yes & Yes \\
+    \bottomrule
+  \end{tabularx}
+\end{table}

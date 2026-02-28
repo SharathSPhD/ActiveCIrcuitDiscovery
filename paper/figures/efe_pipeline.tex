@@ -1,0 +1,61 @@
+% figures/efe_pipeline.tex -- EFE computation graph (TikZ)
+
+\begin{tikzpicture}[
+    font=\small,
+    obs/.style = {
+        circle, draw=blue!70!black, fill=blue!12,
+        minimum size=1.1cm, align=center, line width=0.6pt
+    },
+    param/.style = {
+        rectangle, draw=black!50, fill=white,
+        rounded corners=2pt, minimum width=1.4cm, minimum height=0.6cm,
+        align=center, line width=0.5pt
+    },
+    comp/.style = {
+        rectangle, draw=orange!80!black, fill=orange!10,
+        rounded corners=3pt, minimum width=2.0cm, minimum height=0.65cm,
+        align=center, line width=0.5pt
+    },
+    result/.style = {
+        rectangle, draw=green!60!black, fill=green!10,
+        rounded corners=3pt, minimum width=2.4cm, minimum height=0.7cm,
+        align=center, font=\small\bfseries, line width=0.7pt
+    },
+    arr/.style = {-{Latex[length=1.8mm]}, thick, draw=black!60},
+    node distance = 0.8cm and 1.6cm
+]
+
+% Row 1: inputs
+\node[param] (pi)  {$\vect{\pi}_t$\\(beliefs)};
+\node[param, right=1.4cm of pi] (A) {$\mat{A}$\\(obs.\ model)};
+\node[param, right=1.4cm of A] (c) {$\vect{c}$\\(preference)};
+
+% Row 2: predictive obs
+\node[comp, below=0.9cm of pi, xshift=1.0cm] (phat)
+    {$\hat{p}(o) = \mat{A}\,\vect{\pi}_t$};
+
+% Row 3: epistemic and pragmatic
+\node[comp, below=0.9cm of phat, xshift=-1.3cm] (epist)
+    {Epistemic\\$\mathbb{H}[\hat{p}(o)]$};
+\node[comp, below=0.9cm of phat, xshift=1.3cm] (prag)
+    {Pragmatic\\$\vect{c}^\top \hat{p}(o)$};
+
+% Row 4: EFE
+\node[result, below=0.9cm of epist, xshift=1.3cm] (efe)
+    {$\EFE(l,k,u)$};
+
+% Arrows
+\draw[arr] (pi.south) |- (phat.west);
+\draw[arr] (A.south)  -- (phat.north);
+\draw[arr] (phat.south) -| (epist.north);
+\draw[arr] (phat.south) -| (prag.north);
+\draw[arr] (c.south)  |- (prag.east);
+\draw[arr] (epist.south) -| (efe.west);
+\draw[arr] (prag.south) -| (efe.east);
+
+% Labels on edges
+\node[font=\scriptsize, text=black!50] at ($(pi.south)+(0.1,-0.3)$) {beliefs};
+\node[font=\scriptsize, text=black!50] at ($(efe.south)+(0,0.3)$)
+    {\scriptsize select $\arg\min -\EFE$};
+
+\end{tikzpicture}

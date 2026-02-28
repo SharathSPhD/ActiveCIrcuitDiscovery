@@ -90,13 +90,31 @@ class CircuitTracer(ICircuitTracer):
             target_layers = self.config.sae.target_layers
             logger.info(f"Using configured target layers: {target_layers}")
         
+        # Determine SAE release based on model name
+        model_name = self.config.model.name.lower()
+        if "gpt2" in model_name and "medium" not in model_name:
+            sae_release = "gpt2-small-res-jb"
+        elif "gpt2" in model_name and "medium" in model_name:
+            sae_release = "gpt2-medium-res-jb"
+        elif "pythia-1b" in model_name:
+            sae_release = "pythia-1b-res-sm"
+        elif "pythia-6.9b" in model_name or "pythia-6b" in model_name:
+            sae_release = "pythia-6.9b-res-sm"
+        else:
+            sae_release = None
+
         for layer in target_layers:
             try:
-                if SAE_LENS_AVAILABLE:
-                    sae_id = f"gpt2-small-res-jb-{layer}"
-                    sae = SAE.from_pretrained(sae_id, device=self.device)
+                if SAE_LENS_AVAILABLE and sae_release is not None:
+                    # Correct SAE-Lens API: (release, sae_id) tuple
+                    sae_id = f"blocks.{layer}.hook_resid_post"
+                    sae, cfg_dict, log_sparsity = SAE.from_pretrained(
+                        release=sae_release,
+                        sae_id=sae_id,
+                        device=self.device
+                    )
                     self.sae_analyzers[layer] = sae
-                    logger.info(f"Loaded SAE for layer {layer}")
+                    logger.info(f"Loaded SAE for layer {layer} (release={sae_release})")
                 else:
                     self._create_fallback_analyzer(layer)
             except Exception as e:
@@ -104,13 +122,22 @@ class CircuitTracer(ICircuitTracer):
                 self._create_fallback_analyzer(layer)
     
     def _auto_discover_active_layers(self) -> List[int]:
-        """Auto-discover layers with significant activity for sample inputs."""
-        # Use sample inputs to determine active layers
-        sample_inputs = [
-            "The Golden Gate Bridge is located in",
-            "When I think about cats, I",
-            "The capital of France is"
-        ]
+        """Auto-discover layers with significant activity using configurable calibration inputs."""
+        # Use configurable calibration inputs; fall back to diverse defaults
+        calibration_path = getattr(self.config.sae, 'calibration_inputs_path', None)
+        if calibration_path and Path(calibration_path).exists():
+            with open(calibration_path, 'r') as f:
+                sample_inputs = [line.strip() for line in f if line.strip()][:10]
+        else:
+            # Diverse calibration inputs covering different knowledge domains
+            sample_inputs = [
+                "The economy grew significantly during the first quarter.",
+                "Scientists discovered a new approach to protein folding.",
+                "The president signed the legislation into law yesterday.",
+                "Researchers analyzed the neural network's hidden representations.",
+                "The temperature dropped below freezing across the region.",
+                "Artists gathered to exhibit their latest works at the gallery.",
+            ]
         
         start_layer, end_layer = self.config.sae.layer_search_range
         if end_layer == -1:
@@ -442,11 +469,82 @@ class CircuitTracer(ICircuitTracer):
     def _perform_mean_ablation(self, tokens: torch.Tensor,
                              feature: SAEFeature,
                              baseline_cache: Dict) -> torch.Tensor:
-        """Perform mean ablation intervention."""
-        
-        # Calculate mean activation for this feature across dataset
-        # For now, use zero ablation as approximation
-        return self._perform_ablation_intervention(tokens, feature, baseline_cache)
+        """Perform true mean ablation: replace feature activation with corpus-mean value."""
+        # Lazily compute mean activations over reference corpus if not yet cached
+        if not hasattr(self, '_mean_feature_activations'):
+            self._compute_mean_activations()
+
+        mean_value = self._mean_feature_activations.get(
+            (feature.layer, feature.feature_id), 0.0
+        )
+
+        def mean_ablation_hook(activations, hook):
+            sae = self.sae_analyzers.get(feature.layer)
+            if sae is None:
+                return activations
+            if isinstance(sae, dict):  # Fallback SAE
+                activations_flat = activations.view(-1, activations.size(-1))
+                feature_acts = F.relu(torch.matmul(activations_flat, sae['encoder']))
+                feature_acts[:, feature.feature_id] = mean_value
+                reconstructed = torch.matmul(feature_acts, sae['decoder'])
+                return reconstructed.view(activations.shape)
+            else:
+                feature_acts = sae.encode(activations)
+                feature_acts[:, :, feature.feature_id] = mean_value
+                return sae.decode(feature_acts)
+
+        hook_point = f"blocks.{feature.layer}.hook_resid_post"
+        with self.model.hooks([(hook_point, mean_ablation_hook)]):
+            logits = self.model(tokens)
+        return logits[:, -1, :]
+
+    def _compute_mean_activations(self):
+        """Compute mean feature activations over a reference corpus for mean ablation."""
+        reference_texts = [
+            "The economy grew significantly during the first quarter.",
+            "Scientists discovered a new approach to protein folding.",
+            "The president signed the legislation into law yesterday.",
+            "Researchers analyzed the neural network's hidden representations.",
+            "The temperature dropped below freezing across the region.",
+            "Artists gathered to exhibit their latest works at the gallery.",
+            "The cat sat quietly by the window watching the birds outside.",
+            "Engineers designed a new bridge using advanced composite materials.",
+        ]
+
+        all_feature_values: Dict[tuple, List[float]] = {}
+
+        with torch.no_grad():
+            for text in reference_texts:
+                try:
+                    toks = self.model.to_tokens(text)
+                    _, cache = self.model.run_with_cache(toks)
+
+                    for layer, sae in self.sae_analyzers.items():
+                        resid_key = f"blocks.{layer}.hook_resid_post"
+                        if resid_key not in cache:
+                            continue
+                        acts = cache[resid_key]
+
+                        if isinstance(sae, dict):
+                            acts_flat = acts.view(-1, acts.size(-1))
+                            feat_acts = F.relu(torch.matmul(acts_flat, sae['encoder']))
+                        else:
+                            feat_acts = sae.encode(acts)
+                            feat_acts = feat_acts.view(-1, feat_acts.size(-1))
+
+                        for feat_id in range(min(feat_acts.size(-1), 2048)):
+                            key = (layer, feat_id)
+                            val = feat_acts[:, feat_id].mean().item()
+                            if key not in all_feature_values:
+                                all_feature_values[key] = []
+                            all_feature_values[key].append(val)
+                except Exception as e:
+                    logger.warning(f"Mean activation computation failed for '{text[:30]}': {e}")
+
+        self._mean_feature_activations = {
+            k: float(np.mean(vals)) for k, vals in all_feature_values.items()
+        }
+        logger.info(f"Computed mean activations for {len(self._mean_feature_activations)} (layer, feature) pairs")
     
     def _calculate_effect_size(self, baseline_logits: torch.Tensor, 
                              intervened_logits: torch.Tensor) -> float:

@@ -1,0 +1,93 @@
+% figures/circuit_flow.tex -- Illustrative circuit-level data flow (TikZ)
+% Shows residual stream layers with SAE features and ACD-discovered circuit path
+
+\begin{tikzpicture}[
+    font=\footnotesize,
+    layer/.style = {
+        rectangle, draw=black!50, fill=gray!6,
+        minimum width=1.2cm, minimum height=3.8cm,
+        rounded corners=2pt, line width=0.5pt
+    },
+    feat/.style = {
+        circle, draw=black!40, fill=white,
+        minimum size=0.42cm, inner sep=0pt, line width=0.4pt
+    },
+    highfeat/.style = {
+        circle, draw=red!70!black, fill=red!18,
+        minimum size=0.42cm, inner sep=0pt, line width=0.7pt
+    },
+    circfeat/.style = {
+        circle, draw=blue!70!black, fill=blue!20,
+        minimum size=0.48cm, inner sep=0pt, line width=1pt
+    },
+    resid/.style = {
+        -{Latex[length=1.6mm]}, thick, draw=black!50
+    },
+    circedge/.style = {
+        -{Latex[length=1.8mm]}, very thick, draw=blue!70!black
+    },
+    layerlabel/.style = {font=\scriptsize, text=black!60}
+]
+
+\def\layersep{1.7}
+
+% Draw 6 residual stream layers (5-10)
+\foreach \li [count=\xi] in {5,6,7,8,9,10} {
+    \pgfmathsetmacro\xpos{(\xi-1)*\layersep}
+    \node[layer] (L\li) at (\xpos, 0) {};
+    \node[layerlabel, below=0.05cm of L\li] {$l=\li$};
+    % Residual stream arrow
+    \ifnum\xi<6
+        \pgfmathsetmacro\xnext{\xi*\layersep}
+        \draw[resid] (\xpos+0.6, 0.1) -- (\xnext-0.6, 0.1);
+    \fi
+}
+
+% Add inactive features to each layer (grey dots)
+\foreach \li [count=\xi] in {5,6,7,8,9,10} {
+    \pgfmathsetmacro\xpos{(\xi-1)*\layersep}
+    \foreach \yi in {-1.4,-0.9,-0.4,0.1,0.6,1.1,1.6} {
+        \node[feat] at (\xpos, \yi) {};
+    }
+}
+
+% Highlight active features (orange = active, not in circuit)
+\node[highfeat] (f5a) at (0*\layersep, 1.1) {};
+\node[highfeat] (f6a) at (1*\layersep, 0.6) {};
+\node[highfeat] (f6b) at (1*\layersep, -0.4) {};
+\node[highfeat] (f7a) at (2*\layersep, 1.1) {};
+\node[highfeat] (f8a) at (3*\layersep, 0.1) {};
+\node[highfeat] (f9a) at (4*\layersep, -0.9) {};
+
+% Highlight circuit members (blue = selected by ACD)
+\node[circfeat] (c5)  at (0*\layersep, -0.4) {};
+\node[circfeat] (c6)  at (1*\layersep, 1.6) {};
+\node[circfeat] (c7)  at (2*\layersep, -0.9) {};
+\node[circfeat] (c8)  at (3*\layersep, 1.1) {};
+\node[circfeat] (c9)  at (4*\layersep, 0.6) {};
+\node[circfeat] (c10) at (5*\layersep, -0.4) {};
+
+% Circuit edges (causal pathway)
+\draw[circedge] (c5)  -- (c6);
+\draw[circedge] (c6)  -- (c7);
+\draw[circedge] (c7)  -- (c8);
+\draw[circedge] (c8)  -- (c9);
+\draw[circedge] (c9)  -- (c10);
+
+% Legend
+\node[feat,  label={right:\scriptsize Active, non-circuit}]
+    at ($(L10.east)+(0.6, 0.8)$) {};
+\node[highfeat, label={right:\scriptsize Active, high EFE}]
+    at ($(L10.east)+(0.6, 0.2)$) {};
+\node[circfeat, label={right:\scriptsize Circuit member (\ACD)}]
+    at ($(L10.east)+(0.6,-0.4)$) {};
+
+% Input label
+\node[font=\scriptsize, align=center] at (-1.0, 0.1) {``The\\Golden\\Gate..''};
+\draw[-{Latex[length=1.5mm]}, black!50] (-0.5, 0.1) -- (L5.west |- 0,0.1);
+
+% Output label
+\node[font=\scriptsize, align=center] at (5*\layersep+1.0, 0.1) {``San''\\(target)};
+\draw[-{Latex[length=1.5mm]}, black!50] (L10.east |- 0,0.1) -- (5*\layersep+0.6, 0.1);
+
+\end{tikzpicture}
