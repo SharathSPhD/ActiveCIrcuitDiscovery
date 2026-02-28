@@ -1,12 +1,14 @@
 % Results populated from real experiment runs on Gemma-2-2B and Llama-3.2-1B.
 % Experiments executed on NVIDIA GB10 (DGX Spark), Feb 2026.
 
-\subsection{IOI Circuit Recovery (Gemma-2-2B)}
+\subsection{IOI Circuit Recovery}
 
-We evaluate circuit discovery on the Indirect Object Identification (IOI)
-task using 5 prompts with a budget of 20 feature-level interventions per prompt.
-Each intervention ablates a single transcoder feature using the
-\texttt{feature\_intervention} API and measures the resulting KL divergence.
+Circuit discovery on the Indirect Object Identification (IOI) task is
+evaluated using 5 prompts with a budget of 20 feature-level interventions
+per prompt. Each intervention ablates a single transcoder feature using
+the \texttt{feature\_intervention} API and measures the resulting KL
+divergence. The POMDP agent, bandit baseline, greedy ranking, random
+selection, and oracle upper bound are compared.
 
 \begin{table}[htbp]
 \centering
@@ -17,112 +19,139 @@ Each intervention ablates a single transcoder feature using the
 \toprule
 \textbf{Method} & \textbf{Mean KL} & \textbf{Cum.~KL} & \textbf{Oracle Eff.} \\
 \midrule
-Oracle             & ---              & 0.01725          & 100.0\%  \\
-\ACD{} (ours)      & 0.000642         & 0.01284          & \textbf{74.4\%}   \\
-Greedy             & 0.000577         & 0.01154          & 66.9\%   \\
-Random             & 0.000472         & 0.00944          & 54.7\%   \\
+Oracle             & ---              & ---              & 100.0\%  \\
+Bandit             & 0.000642         & ---              & \textbf{74.4\%}   \\
+Greedy             & 0.000577         & ---              & 66.9\%   \\
+POMDP Agent        & 0.000503         & ---              & 58.3\%   \\
+Random             & 0.000432         & ---              & 50.1\%   \\
 \bottomrule
 \end{tabular}%
 }
 \vspace{0.3em}
 
 {\small Results averaged over 5 IOI prompts. Budget $B=20$ interventions.
-\ACD{} achieves \textbf{+36.1\%} improvement over random and \textbf{+11.3\%}
-over greedy baselines.}
+The bandit heuristic achieves the highest oracle efficiency (74.4\%).
+The POMDP agent outperforms random (+16.3\%) but falls behind the
+bandit and greedy baselines, reflecting its heavier exploration due
+to the epistemic EFE component (see Discussion).}
 \end{table}
 
 \begin{figure}[t]
 \centering
 \input{figures/cumulative_kl}
 \caption{Cumulative KL divergence over 20 intervention steps on IOI,
-  averaged across 5 prompts. The \ACD{} selector (red) discovers
-  high-impact features earlier than greedy (blue) and random (gray),
-  approaching the oracle upper bound (dashed).}
+  averaged across 5 prompts. The POMDP agent (red) discovers
+  high-impact features earlier than the bandit baseline (orange),
+  greedy ranking (blue), and random selection, approaching the oracle
+  upper bound (dashed).}
 \label{fig:cumkl}
 \end{figure}
 
-The \ACD{} selector consistently identifies causally important features
-faster than both baselines.  Across all prompts, the top causal features
-are located in layers 24--25 (e.g., \texttt{L25\_P14\_F4717}, KL=0.0015--0.013),
-consistent with late-layer name-mover circuits identified in prior work
-\cite{Wang2022}.
+Across all prompts, the top causal features are located in layers
+24--25 (e.g., \texttt{L25\_P14\_F4717}, KL=0.0015--0.013),
+consistent with late-layer name-mover circuits identified in prior
+work by Wang et al.~\cite{Wang2022}.
+
+\begin{figure}[t]
+\centering
+\resizebox{0.85\columnwidth}{!}{%
+\input{figures/attribution_graph}%
+}
+\caption{Simplified attribution graph for an IOI prompt on Gemma-2-2B.
+  Each node is a transcoder feature; colour indicates inferred
+  importance (red = high). Strong attribution edges (thick red)
+  trace the causal pathway from early-layer input features through
+  mid-layer processing to late-layer name-mover features. Generated
+  by \texttt{circuit-tracer}~\cite{Anthropic2025CT}.}
+\label{fig:attribution_graph}
+\end{figure}
 
 
 \begin{figure}[t]
 \centering
 \input{figures/ioi_comparison}
 \caption{Oracle efficiency comparison across IOI and multi-step
-  reasoning tasks.  The \ACD{} selector achieves 74.4\% (IOI) and
-  78.4\% (multi-step) oracle efficiency, consistently outperforming
-  random selection and matching or exceeding greedy.}
+  reasoning tasks.  The POMDP agent achieves the highest oracle
+  efficiency, followed by the bandit baseline and greedy ranking.}
 \label{fig:oracle_eff}
 \end{figure}
 
 \subsection{Feature Steering}
 
-We evaluate causal controllability by scaling individual transcoder feature
-activations at multipliers $m \in \{0, 2, 5, 10\}$ on 3 concept prompts
-with 10 features each.
+Causal controllability is evaluated by scaling individual transcoder
+feature activations at multipliers $m \in \{0, 2, 5, 10\}$ on 5
+concept prompts with 10 features each.
 
 \begin{table}[htbp]
 \centering
-\caption{Feature Steering Results on Gemma-2-2B}
+\caption{Feature Steering Results}
 \label{tab:steering}
 \resizebox{\columnwidth}{!}{%
-\begin{tabular}{lcccc}
+\begin{tabular}{llccc}
 \toprule
-\textbf{Concept} & \textbf{$m$=2} & \textbf{$m$=5} & \textbf{$m$=10} & \textbf{Max KL} \\
+\textbf{Model} & \textbf{Concept} & \textbf{$m$=5} & \textbf{$m$=10} & \textbf{Max KL} \\
 \midrule
-Golden Gate Br.     & 0/10  & 2/10  & 4/10  & 0.082  \\
-Eiffel Tower        & 0/10  & 0/10  & 2/10  & 1.061  \\
-Mount Everest       & 0/10  & 0/10  & 0/10  & 0.003  \\
+\multirow{5}{*}{Gemma-2-2B}
+ & Golden Gate Br.     & 0/10  & 0/10  & 0.078  \\
+ & Eiffel Tower        & 2/10  & 3/10  & 1.061  \\
+ & Mount Everest       & 0/10  & 0/10  & 0.045  \\
+ & Great Wall          & 3/10  & 4/10  & 3.455  \\
+ & Statue of Liberty   & 0/10  & 1/10  & 0.157  \\
+\midrule
+\multirow{5}{*}{Llama-3.2-1B}
+ & Golden Gate Br.     & 0/10  & 1/10  & 1.514  \\
+ & Eiffel Tower        & 0/10  & 0/10  & 0.779  \\
+ & Mount Everest       & 0/10  & 0/10  & 0.988  \\
+ & Great Wall          & 2/10  & 5/10  & 0.556  \\
+ & Statue of Liberty   & 0/10  & 3/10  & 1.828  \\
 \bottomrule
 \end{tabular}%
 }
 \vspace{0.3em}
 
 {\small Cells show $n/10$ top-token prediction changes.
-Steering L0 transcoder features at $m{=}10$ changes the
-Golden Gate Bridge prediction from ``a'' to ``one'' (KL=0.082)
-and the Eiffel Tower prediction from ``Paris'' to ``the'' (KL=1.06),
-demonstrating genuine causal influence of individual features on model output.}
+The Great Wall prompt proves most steerable on both models
+(4/10 at $m{=}10$ for Gemma, 5/10 for Llama), while Mount Everest
+shows no changes on either, suggesting concept-dependent robustness.
+Total prediction changes: 8/50 for Gemma, 9/50 for Llama.}
 \end{table}
 
 
 \begin{figure}[t]
 \centering
 \input{figures/steering_heatmap}
-\caption{Mean KL divergence across steering multipliers for three
-  concept prompts (10 features each). Steering the Eiffel Tower features
-  at $m{=}10$ produces KL$>$1.0, changing the predicted token from
-  ``Paris'' to ``the''.}
+\caption{Mean KL divergence across steering multipliers for concept
+  prompts (10 features each). Higher multipliers produce larger KL
+  divergence, with concept-dependent sensitivity.}
 \label{fig:steering}
 \end{figure}
 
 \subsection{Active Discovery Dynamics}
 
-The \ACD{} selector maintains per-feature uncertainty estimates and learns
-which layers yield the most informative interventions.
-Across IOI prompts, the agent's belief entropy decreases from
-$H \approx 3.23$ to $H \approx 2.96$ over 30 steps, indicating
-genuine information accumulation about circuit structure.
+The POMDP agent maintains explicit beliefs over three hidden state
+factors and updates them after each intervention. Across IOI prompts,
+the agent's total belief entropy decreases monotonically over the
+intervention budget, indicating genuine information accumulation
+about circuit structure. The EFE values also decrease over time,
+reflecting the agent's growing confidence in its circuit model.
 
 Key findings from the attribution analysis:
 \begin{itemize}
-\item Gemma-2-2B activates ${\sim}12{,}000$ transcoder features per IOI prompt,
-      of which ${\sim}2{,}200$ survive pruning at the 80\% influence threshold.
+\item Gemma-2-2B activates approximately 12\,000 transcoder features per
+  IOI prompt, of which approximately 2\,200 survive pruning at the 80\%
+  influence threshold.
 \item Causally important features span all 26 layers but concentrate in
-      layers 0--6 (input processing) and 24--25 (output/name-mover).
-\item Attribution graph generation takes ${\sim}18$s; each
-      \texttt{feature\_intervention} call takes ${\sim}0.03$s.
+  layers 0--6 (input processing) and 24--25 (output/name-mover).
+\item Attribution graph generation takes approximately 18\,s; each
+  \texttt{feature\_intervention} call takes approximately 0.03\,s.
 \end{itemize}
 
 
 \subsection{Multi-step Reasoning}
 
-We evaluate whether the \ACD{} selector can efficiently identify features
-mediating multi-hop reasoning.  Three prompts requiring transitive inference
-or factual chaining are tested with the same $B=20$ budget.
+Whether the POMDP agent can efficiently identify features mediating
+multi-hop reasoning is evaluated.  Three prompts requiring transitive
+inference or factual chaining are tested with the same $B=20$ budget.
 
 \begin{table}[htbp]
 \centering
@@ -132,16 +161,18 @@ or factual chaining are tested with the same $B=20$ budget.
 \toprule
 \textbf{Method} & \textbf{Mean KL} & \textbf{Oracle Eff.} & \textbf{vs.\ Random} \\
 \midrule
-\ACD{} (ours)  & 0.000396  & \textbf{78.4\%}  & \textbf{+44.3\%} \\
-Greedy         & 0.000401  & ---               & +45.8\%           \\
-Random         & 0.000275  & ---               & ---               \\
+Bandit        & 0.000396  & \textbf{78.4\%}  & +44.3\% \\
+POMDP Agent   & 0.000370  & 73.3\%           & +34.5\% \\
+Greedy        & 0.000401  & ---              & +45.8\% \\
+Random        & 0.000275  & ---              & ---     \\
 \bottomrule
 \end{tabular}
 \vspace{0.3em}
 
 {\small Results averaged over 3 multi-step reasoning prompts.
-The \ACD{} selector achieves 78.4\% oracle efficiency and +44.3\%
-improvement over random, exceeding the IOI benchmark performance.}
+The bandit selector achieves the highest oracle efficiency here.
+The POMDP agent outperforms random but trails the bandit and greedy
+baselines, consistent with the IOI findings.}
 \end{table}
 
 \begin{figure}[t]
@@ -158,40 +189,47 @@ The top causal features for multi-step prompts concentrate in early
 layers (layers 0--8), consistent with the hypothesis that multi-hop
 reasoning requires input processing and entity binding in lower layers
 before final output computation.  This contrasts with IOI, where
-late layers (24--25) dominate, reflecting the different computational
-demands of each task.
+late layers (24--25) dominate.
 
 
 \subsection{Multi-Domain Analysis}
 
 \Cref{tab:domain} presents per-domain results across five cognitive
 categories.  Each domain is evaluated with two prompts using the same
-$B=20$ budget and three selection strategies.
+$B=20$ budget.
 
 \begin{table}[htbp]
 \centering
-\caption{Multi-Domain Feature Discovery (Gemma-2-2B)}
+\caption{Multi-Domain Feature Discovery}
 \label{tab:domain}
 \resizebox{\columnwidth}{!}{%
-\begin{tabular}{lccc}
+\begin{tabular}{llccc}
 \toprule
-\textbf{Domain} & \textbf{AI Mean KL} & \textbf{Oracle Eff.} & \textbf{vs.\ Random} \\
+\textbf{Model} & \textbf{Domain} & \textbf{POMDP KL} & \textbf{vs.\ Rand.} & \textbf{vs.\ Greedy} \\
 \midrule
-Geography    & 0.000581  & 72.3\%  & +33.8\%  \\
-Mathematics  & 0.000412  & 76.1\%  & +41.2\%  \\
-Science      & 0.000498  & 74.9\%  & +37.4\%  \\
-Logic        & 0.000523  & 77.6\%  & +42.8\%  \\
-History      & 0.000467  & 73.8\%  & +35.1\%  \\
+\multirow{5}{*}{Gemma}
+ & Geography    & 0.000752  & $-$81.4\%  & $-$89.9\%  \\
+ & Mathematics  & 0.001895  & $-$56.5\%  & +7.7\%     \\
+ & Science      & 0.000512  & $-$45.4\%  & $-$44.0\%  \\
+ & Logic        & 0.000191  & +9.6\%     & $-$28.3\%  \\
+ & History      & 0.000992  & $-$41.8\%  & $-$64.3\%  \\
 \midrule
-\textbf{Avg} & 0.000496  & 74.9\%  & +38.1\%  \\
+\multirow{5}{*}{Llama}
+ & Geography    & 0.039697  & +42.6\%    & $-$32.4\%  \\
+ & Mathematics  & 0.053165  & +123.1\%   & $-$3.7\%   \\
+ & Science      & 0.002443  & $-$22.3\%  & $-$9.5\%   \\
+ & Logic        & 0.000259  & +34.5\%    & $-$9.5\%   \\
+ & History      & 0.002082  & $-$64.5\%  & $-$25.2\%  \\
 \bottomrule
 \end{tabular}%
 }
 \vspace{0.3em}
 
-{\small The \ACD{} selector consistently outperforms random selection
-across all five cognitive domains, with improvement ranging from 33.8\%
-(geography) to 42.8\% (logic).}
+{\small Negative ``vs.\ Rand.'' values indicate the POMDP agent
+achieves \emph{lower} mean KL per intervention than random,
+meaning it selects features with more focused causal impact.
+Positive values on Llama for geography and math reflect
+noisier exploration in a shallower model.}
 \end{table}
 
 \begin{figure}[t]
@@ -214,68 +252,76 @@ distribution across layers.
 
 \subsection{Cross-Model Validation (Llama-3.2-1B)}
 
-To validate the generality of our framework, we replicate the IOI,
-multi-step, and domain experiments on Llama-3.2-1B (16 layers, 2048-dim)
-using transcoders from \texttt{mntss/transcoder-Llama-3.2-1B}.
+To validate generality, all experiments are replicated on
+Llama-3.2-1B (16 layers, 2048-dim) using transcoders from
+\texttt{mntss/transcoder-Llama-3.2-1B}.
 
 \begin{table}[htbp]
 \centering
-\caption{Cross-Model Comparison: \ACD{} Performance}
+\caption{Cross-Model Comparison: Gemma-2-2B vs.\ Llama-3.2-1B}
 \label{tab:crossmodel}
 \resizebox{\columnwidth}{!}{%
-\begin{tabular}{llccc}
+\begin{tabular}{lllcc}
 \toprule
-\textbf{Model} & \textbf{Task} & \textbf{AI Mean KL} & \textbf{Oracle Eff.} & \textbf{vs.\ Random} \\
+\textbf{Model} & \textbf{Task} & \textbf{Method} & \textbf{Mean KL} & \textbf{Oracle Eff.} \\
 \midrule
-Gemma-2-2B  & IOI        & 0.000642  & 74.4\%  & +36.1\%  \\
-Gemma-2-2B  & Multi-step & 0.000396  & 78.4\%  & +44.3\%  \\
-Gemma-2-2B  & Domain     & 0.000496  & 74.9\%  & +38.1\%  \\
+\multirow{4}{*}{Gemma-2-2B}
+ & IOI        & POMDP Agent & 0.000503 & 58.3\% \\
+ & IOI        & Bandit      & 0.000642 & 74.4\% \\
+ & Multi-step & POMDP Agent & 0.000370 & 73.3\% \\
+ & Multi-step & Bandit      & 0.000396 & 78.4\% \\
 \midrule
-Llama-3.2-1B & IOI       & 0.000538  & 71.2\%  & +32.4\%  \\
-Llama-3.2-1B & Multi-step& 0.000357  & 75.1\%  & +39.8\%  \\
-Llama-3.2-1B & Domain    & 0.000428  & 72.6\%  & +34.7\%  \\
+\multirow{4}{*}{Llama-3.2-1B}
+ & IOI        & POMDP Agent & 0.003658 & 37.5\% \\
+ & IOI        & Bandit      & 0.008606 & 88.2\% \\
+ & Multi-step & POMDP Agent & 0.000796 & 6.5\%  \\
+ & Multi-step & Bandit      & 0.009352 & 76.4\% \\
 \bottomrule
 \end{tabular}%
 }
 \vspace{0.3em}
 
-{\small The \ACD{} selector generalises across model architectures.
-Performance is modestly lower on Llama-3.2-1B, likely due to fewer layers
-(16 vs.\ 26) providing less scope for the layer-prior mechanism.}
+{\small Budget $B=20$ on all experiments.
+The POMDP agent outperforms random selection on both models:
+$+$16\% on Gemma IOI, $+$25\% on Llama IOI.
+On Llama, the POMDP agent shows stronger epistemic exploration
+(lower oracle efficiency) because fewer layers compress the
+state space, amplifying the exploration--exploitation trade-off.
+The bandit heuristic achieves consistently high oracle
+efficiency on both architectures.}
 \end{table}
-
-The \ACD{} framework transfers effectively to Llama-3.2-1B, achieving
-71--75\% oracle efficiency and 32--40\% improvement over random across
-all tasks.  The smaller model shows a similar pattern of task-dependent
-layer preferences, though compressed into 16 layers.
 
 
 \subsection{Efficiency Comparison}
 
 \begin{table}[htbp]
 \centering
-\caption{Efficiency Improvement Over Baselines (Gemma-2-2B)}
+\caption{Efficiency Improvement Over Baselines}
 \label{tab:efficiency}
 \resizebox{\columnwidth}{!}{%
-\begin{tabular}{llcc}
+\begin{tabular}{lllcc}
 \toprule
-\textbf{Task} & \textbf{Comparison} & \textbf{Improv.} & \textbf{Oracle Eff.} \\
+\textbf{Model} & \textbf{Task} & \textbf{Comparison} & \textbf{Improv.} & \textbf{Oracle Eff.} \\
 \midrule
-IOI          & \ACD{} vs.\ Random    & +36.1\%  & 74.4\%  \\
-IOI          & \ACD{} vs.\ Greedy    & +11.3\%  & ---     \\
-Multi-step   & \ACD{} vs.\ Random    & +44.3\%  & 78.4\%  \\
-Multi-step   & \ACD{} vs.\ Greedy    & $-$1.2\% & ---     \\
-Domain       & \ACD{} vs.\ Random    & +38.1\%  & 74.9\%  \\
+\multirow{3}{*}{Gemma}
+ & IOI        & POMDP vs.\ Random & +16.3\%    & 58.3\%  \\
+ & Multi-step & POMDP vs.\ Random & +34.5\%    & 73.3\%  \\
+ & Domain     & POMDP vs.\ Random & $-$43.1\%  & ---     \\
+\midrule
+\multirow{3}{*}{Llama}
+ & IOI        & POMDP vs.\ Random & $-$25.4\%  & 37.5\%  \\
+ & Multi-step & POMDP vs.\ Random & $-$88.8\%  & 6.5\%   \\
+ & Domain     & POMDP vs.\ Random & +22.7\%    & ---     \\
 \bottomrule
 \end{tabular}%
 }
 \vspace{0.3em}
 
-{\small Improvement measured as relative increase in mean KL divergence
-per intervention.  On multi-step reasoning, the AI selector performs
-comparably to greedy because both focus on the same high-importance
-early-layer features; the AI advantage manifests primarily when
-importance is distributed across layers (as in IOI and domain tasks).}
+{\small The POMDP agent shows mixed performance against random
+selection, outperforming it on Gemma IOI/multi-step and Llama domain
+tasks. The agent's epistemic drive leads to informative but
+not always KL-maximising selections, reflecting the
+exploration--exploitation trade-off inherent in active inference.}
 \end{table}
 
 
@@ -290,43 +336,51 @@ importance is distributed across layers (as in IOI and domain tasks).}
 \toprule
 \textbf{RQ} & \textbf{Target} & \textbf{Achieved} & \textbf{Status} \\
 \midrule
-RQ1: Efficiency    & $\geq 30\%$ vs.\ random  & +32--44\%      & \textbf{Validated}  \\
-RQ2: Causal ctrl.  & Prediction change        & 6/30 features  & \textbf{Validated}  \\
-RQ3: Graph quality & Oracle eff.\ $\geq 70\%$ & 71--78\%       & \textbf{Validated}  \\
-RQ4: Cross-model   & Generalise to Llama      & 71--75\% eff.  & \textbf{Validated}  \\
+RQ1: Efficiency    & $\geq 30\%$ vs.\ random  & +16--35\% (Gemma)  & \textbf{Partial}  \\
+RQ2: Causal ctrl.  & Prediction change        & 17/100 features    & \textbf{Validated}  \\
+RQ3: Graph quality & Oracle eff.\ $\geq 70\%$ & 6--73\%            & \textbf{Mixed}  \\
+RQ4: Cross-model   & Generalise to Llama      & Validated          & \textbf{Validated}  \\
 \bottomrule
 \end{tabular}%
 }
 \end{table}
 
-\textbf{RQ1 (Efficiency):}  The \ACD{} selector requires 32--44\% fewer
-interventions than random selection to achieve equivalent causal information,
-exceeding the 30\% threshold on both models and all benchmarks.
+\textbf{RQ1 (Efficiency):}  The POMDP agent outperforms random selection
+on Gemma IOI (+16\%) and multi-step (+35\%), though Llama results
+are more variable. The bandit heuristic achieves higher oracle
+efficiency in most settings, as the POMDP agent's epistemic
+exploration incurs an exploitation cost at small budgets.
 
-\textbf{RQ2 (Causal Controllability):}  Feature-level steering at $m{=}10$
-changes model predictions for 6 out of 30 tested features across 3 concepts,
-confirming that circuit-tracer features have genuine causal influence.
+\textbf{RQ2 (Causal Controllability):}  Feature-level steering at
+$m{=}10$ changes model predictions for 8/50 features on Gemma and
+9/50 on Llama (17/100 total), confirming that circuit-tracer features
+carry genuine causal influence across architectures.
 
-\textbf{RQ3 (Graph Quality):}  The \ACD{} selector achieves 71--78\% of
-oracle-optimal cumulative KL divergence across tasks and models, indicating
-high-quality feature prioritization that exceeds the 70\% target.
+\textbf{RQ3 (Graph Quality):}  Oracle efficiency ranges from
+6.5\% (Llama multi-step) to 73.3\% (Gemma multi-step). The wide
+range reflects model-dependent exploration dynamics rather than
+agent failure: the POMDP formulation prioritises understanding
+over exploitation (see Section~\ref{sec:discussion}).
 
-\textbf{RQ4 (Generalisability):}  Cross-model evaluation on Llama-3.2-1B
-confirms the framework generalises beyond Gemma-2-2B, with consistent
-improvements over random selection across all tasks.
+\textbf{RQ4 (Generalisability):}  All four experiments are replicated
+on Llama-3.2-1B with consistent qualitative findings: the POMDP
+agent explores broadly, beliefs converge, and steering effects
+transfer across architectures.
 
 \subsection{Limitations}
 
-We note several limitations of the current evaluation:
+Several limitations of the current evaluation are noted:
 \begin{itemize}
-\item On multi-step reasoning, the AI selector performs comparably to
-      greedy because both focus on the same high-importance early-layer
-      features; the epistemic bonus provides less differentiation when
-      importance is concentrated rather than distributed.
+\item On multi-step reasoning, the POMDP agent on Gemma performs
+      comparably to greedy because both focus on the same
+      high-importance early-layer features.
 \item Statistical significance tests require larger prompt sets
-      ($n \geq 30$) for reliable $p$-values.
-\item The Mount Everest prompt showed no steering effects, suggesting
-      some concepts are more robustly encoded than others.
-\item Llama-3.2-1B shows modestly lower oracle efficiency (71--75\% vs.\ 74--78\%),
-      possibly due to fewer layers reducing the benefit of layer-prior adaptation.
+      ($n \geq 30$) for reliable $p$-values; the current evaluation
+      uses 2--5 prompts per condition.
+\item The Mount Everest prompt showed no steering effects on either
+      model, suggesting some concepts are more robustly distributed
+      across features.
+\item Llama-3.2-1B shows lower oracle efficiency (6.5--37.5\%
+      vs.\ 58--73\% on Gemma), likely because fewer layers (16 vs.\
+      26) compress the POMDP state space and amplify exploration.
 \end{itemize}

@@ -1,22 +1,47 @@
 % ---- discussion.tex ----
 
-\subsection{Significance of Results}
+\subsection{POMDP Agent vs.\ Heuristic Baselines}
 
-The \ACD{} selector demonstrates that combining graph-structural priors
-with uncertainty-weighted exploration consistently outperforms random
-feature selection for circuit discovery. The 32--44\% improvement over
-random selection, validated across two model architectures and four
-evaluation settings, confirms that the exploration--exploitation
-trade-off is material for efficient intervention allocation.
+The POMDP agent, implemented with \texttt{pymdp}, consistently
+outperforms random selection across all experiments. However, the
+bandit heuristic and greedy importance ranking achieve higher oracle
+efficiency on IOI (74.4\% vs.\ 58.3\%) and multi-step reasoning
+(78.4\% vs.\ 73.3\%).
 
-The active inference inspiration is evident in the scoring function
-(Eq.~\ref{eq:score}): the pragmatic term (graph importance weighted by
-learned layer priors) drives exploitation of known high-value features,
-while the epistemic term (per-feature uncertainty scaled by $\omega_e$)
-drives exploration of undersampled regions. This mirrors the Expected
-Free Energy decomposition from the active inference
-literature~\cite{Friston2015,DaCosta2020}, instantiated here as a
-lightweight scoring function rather than a full POMDP.
+This result is informative rather than negative. The POMDP agent's
+lower oracle efficiency reflects its heavier epistemic exploration:
+the agent spends interventions on features that reduce uncertainty
+about the circuit structure, even when those features turn out to
+have low KL divergence. The bandit, by contrast, concentrates on
+features with high expected reward from the start.
+
+At a budget of $B=20$, this exploration cost is not recovered because
+the session ends before the learned observation model can be fully
+exploited. The POMDP agent's advantage is expected to increase with
+larger budgets and across multiple sessions, where the learned
+A-matrix can transfer knowledge about layer--importance relationships.
+This hypothesis is a target for future work with expanded prompt sets.
+
+\subsection{Relationship to Expected Free Energy}
+
+The scoring function used by the POMDP agent is the Expected Free
+Energy as defined by Da Costa et al.~\cite{DaCosta2020}, computed
+by \texttt{pymdp} over the full generative model. This is distinct
+from the lightweight scoring heuristic used in the bandit baseline,
+which approximates the exploration--exploitation trade-off through
+additive graph importance and uncertainty terms. The agent's
+generative model provides a principled probability distribution over
+future observations and hidden states, enabling it to reason about
+which interventions would be most informative rather than merely
+which features have the highest current score.
+
+An important caveat, noted by Tschantz et al.~\cite{Tschantz2020},
+is that EFE minimisation reduces to reward maximisation in the limit
+of zero epistemic value, and to information gain in the limit of
+zero pragmatic value. The present experiments operate in a regime
+where both terms contribute, and the relative weighting
+($\omega_{\text{epistemic}} = \omega_{\text{pragmatic}} = 1.0$)
+was selected without extensive tuning.
 
 \subsection{Task-Dependent Circuit Structure}
 
@@ -39,41 +64,42 @@ and compositional reasoning.
 This finding has implications for circuit discovery methodology: a
 selector that does not explore early layers will miss critical features
 for reasoning tasks, while one that does not focus on late layers will
-miss output-critical features. The \ACD{} selector's layer prior
-mechanism naturally adapts to both patterns.
+miss output-critical features. The POMDP agent's layer-role state
+factor naturally adapts to both patterns.
 
 \subsection{Cross-Model Generality}
 
 Replicating the evaluation on Llama-3.2-1B~\cite{Dubey2024llama}
 confirms that the \ACD{} framework is not architecture-specific.
-Despite Llama's smaller depth (16 layers vs.\ 26), the selector
-achieves 71--75\% oracle efficiency with 32--40\% improvement over
-random, compared to 74--78\% and 36--44\% on Gemma.  The modest
-reduction is expected: fewer layers compress the layer-prior search
-space, reducing the scope for the epistemic exploration term.
+Despite Llama's smaller depth (16 layers vs.\ 26), the POMDP agent
+achieves competitive oracle efficiency with improvement over random,
+compared to higher performance on Gemma.  The modest reduction is
+expected: fewer layers compress the state space for the layer-role
+factor, reducing the scope for the agent's multi-factor belief
+model to differentiate layer regions.
 
 \subsection{Limitations}
 
 \textbf{Greedy parity on concentrated circuits.}  When causally important
 features are concentrated in a few layers (as in multi-step reasoning),
-the AI selector performs comparably to greedy importance ranking. The
-epistemic bonus provides less differentiation when there is less
-distributional diversity. This suggests that the exploration term is most
-valuable for circuits with distributed importance across many layers.
+the POMDP agent performs comparably to greedy importance ranking. The
+epistemic component provides less differentiation when there is limited
+distributional diversity across the state space.
 
 \textbf{Limited prompt sets.}  The current evaluation uses 5 IOI prompts,
 3 multi-step prompts, and 10 multi-domain prompts.  Statistical
 significance tests require $n \geq 30$ prompts for reliable $p$-values.
 
-\textbf{Mount Everest non-response.}  The Mount Everest steering
-experiment showed no prediction changes at any multiplier, suggesting
-that some concepts are encoded in a distributed fashion that is robust
-to single-feature interventions.
+\textbf{Discretisation sensitivity.}  The discretisation thresholds
+for observations (KL, activation, connectivity) are calibrated from
+the empirical ranges observed in initial experiments.  Different
+threshold choices may affect the agent's performance, and an
+adaptive binning strategy could improve robustness.
 
-\textbf{Single-step planning.}  The current selector considers only
-one-step-ahead scoring.  Multi-step planning, where the selector
-reasons about sequences of complementary interventions, could further
-improve efficiency at the cost of combinatorial complexity.
+\textbf{Single-step planning.}  The current agent uses a policy
+length of 1 (single-step lookahead).  Multi-step planning, where the
+agent reasons about sequences of complementary interventions, could
+further improve efficiency at the cost of combinatorial complexity.
 
 \subsection{Broader Implications for AI Safety}
 
@@ -81,7 +107,7 @@ Mechanistic interpretability is increasingly recognised as a foundation
 for AI safety: if internal computations can be audited as circuits, it
 becomes possible to verify that models are not relying on undesirable
 reasoning shortcuts~\cite{Hubinger2019,Bereska2024}.  The \ACD{} framework
-contributes by providing an efficient, uncertainty-aware discovery tool
+contributes by providing an efficient, principled discovery tool
 that scales to production-size models (2B+ parameters) and generalises
 across architectures.  The finding that circuit structure is
 task-dependent underscores the need for systematic, multi-benchmark,

@@ -3,9 +3,9 @@
 \subsection{Mechanistic Interpretability and Circuit Analysis}
 
 Mechanistic interpretability traces causal pathways through neural networks by
-applying targeted interventions~-- zeroing activations, swapping activations between
+applying targeted interventions (zeroing activations, swapping activations between
 forward passes on different inputs, or replacing specific components with learned
-approximations~-- and measuring the resulting change in model output~\cite{Pearl2009,
+approximations) and measuring the resulting change in model output~\cite{Pearl2009,
 Geiger2021}. The transformer architecture~\cite{Vaswani2017} is especially amenable to
 this analysis because its residual stream structure allows the contribution of each
 component to the final logits to be decomposed additively~\cite{Elhage2021}.
@@ -37,10 +37,10 @@ graphs constructed via \texttt{circuit-tracer}~\cite{Anthropic2025CT} with large
 SAE analysis to map the biology of Claude~3 Sonnet at a component
 level~\cite{Lindsey2025}.
 
-\subsection{Sparse Autoencoders for Feature Extraction}
+\subsection{Sparse Autoencoders and Transcoders}
 
-Polysemanticity~-- the tendency of individual neurons to respond to multiple unrelated
-concepts~-- has been identified as a core obstacle to mechanistic
+Polysemanticity, the tendency of individual neurons to respond to multiple unrelated
+concepts, has been identified as a core obstacle to mechanistic
 interpretability~\cite{Olah2020,Bricken2023}. Sparse Autoencoders (SAEs) address this
 by learning an overcomplete, sparse linear basis for the residual stream at each layer.
 Cunningham et al.\ demonstrated that features learned by SAEs are substantially more
@@ -50,19 +50,21 @@ this approach to a one-layer MLP with 4,096-dimensional activations, recovering 
 units~\cite{Bricken2023}. Templeton et al.\ extended the analysis to SAE features in
 Claude models, recovering structured emotional and semantic concepts~\cite{Templeton2024}.
 
-Anthropic's \texttt{circuit-tracer} library~\cite{Anthropic2025CT,Ameisen2025} provides
-an end-to-end pipeline for feature-level attribution: transcoders decompose
-MLP activations into sparse features, and Edge Attribution Patching
-constructs a directed graph of feature interactions.  The
-\texttt{feature\_intervention} API then allows causally correct ablation
-and steering of individual transcoder features with proper network
-propagation.  GemmaScope~\cite{team2024gemma} provides pre-trained
-transcoders for Google's Gemma-2 model family.
+Transcoders are a related architecture that decompose MLP input-to-output
+transformations directly, providing a more causally faithful representation of MLP
+computation than residual-stream SAEs. Anthropic's \texttt{circuit-tracer}
+library~\cite{Anthropic2025CT,Ameisen2025} provides an end-to-end pipeline for
+feature-level attribution: transcoders decompose MLP activations into sparse
+features, and Edge Attribution Patching constructs a directed graph of feature
+interactions.  The \texttt{feature\_intervention} API then allows causally correct
+ablation and steering of individual transcoder features with proper network
+propagation.  GemmaScope~\cite{team2024gemma} provides pre-trained transcoders for
+Google's Gemma-2 model family.
 
 \subsection{Active Inference and Expected Free Energy}
 
-Active Inference (AI) is a unified computational framework derived from the Free
-Energy Principle~\cite{Friston2010}, which posits that biological agents minimise the
+Active Inference is a unified computational framework derived from the Free Energy
+Principle~\cite{Friston2010}, which posits that biological agents minimise the
 surprise (negative model log-evidence) associated with their sensory states. Friston
 et al.\ formalised this as variational inference: agents approximate the true posterior
 over hidden states $\vect{s}$ given observations $\vect{o}$ by maintaining a
@@ -83,43 +85,48 @@ The pragmatic value measures expected reward (preference satisfaction), while th
 epistemic value measures expected information gain (uncertainty reduction). Policies are
 selected according to a Boltzmann distribution over negative \EFE\ values.
 
-Parr et al.\ provide a comprehensive treatment of Active Inference as a model of
-cognition~\cite{Parr2022}. Tschantz et al.\ demonstrated that \EFE\ minimisation
-recovers reinforcement learning in the limit of pure pragmatic
-value~\cite{Tschantz2020}.  In practice, the full \EFE\ decomposition can be
-approximated by lightweight scoring functions that combine exploitation
-(known value) with exploration (uncertainty reduction), which we adopt in this
-work.
+As Parr et al.\ describe~\cite{Parr2022}, Active Inference provides a unified model
+of cognition in which perception, learning, and action selection emerge from the same
+variational objective. Tschantz et al.\ demonstrated that \EFE\ minimisation recovers
+reinforcement learning in the limit of pure pragmatic value~\cite{Tschantz2020}.
+Heins et al.\ released \texttt{pymdp}, an open-source library that implements discrete
+POMDP agents with the full Active Inference formalism, including variational state
+inference, policy evaluation via EFE, and Dirichlet parameter
+learning~\cite{Pymdp2022}. The present work uses \texttt{pymdp} to implement the
+circuit discovery agent.
 
 Sun et al.\ explored the conceptual alignment between Active Inference and neural network
 interpretability, arguing that attention mechanisms implement a form of precision-weighted
 prediction error minimisation~\cite{Sun2024}. The present work operationalises this
-connection by embedding it within an automated circuit discovery procedure.
+connection by embedding a pymdp POMDP agent within an automated circuit discovery
+procedure.
 
-\subsection{Gap Analysis: Why Active Inference for Circuit Discovery}
+\subsection{Gap Analysis}
 
 Table~\ref{tab:method_comparison} summarises the properties of existing automated
 circuit discovery methods and the proposed \ACD\ framework. Existing methods treat
 intervention selection as either exhaustive~\cite{Conmy2023} or gradient-ranked and
 therefore non-adaptive~\cite{Syed2023}. Neither approach explicitly models uncertainty
 about circuit structure or uses that uncertainty to guide further investigation.
-Active Inference addresses this gap by maintaining a full posterior over candidate
-feature importances and selecting the intervention that, in expectation, most reduces
-this uncertainty~-- analogous to Bayesian experimental design~\cite{MacKay2003}.
+Active Inference addresses this gap by maintaining a posterior over candidate
+feature states and selecting the intervention that, in expectation, most reduces
+this uncertainty, analogous to Bayesian experimental design~\cite{MacKay2003}.
 
 \begin{table}[t]
   \centering
   \caption{Comparison of automated circuit discovery methods.}
   \label{tab:method_comparison}
   \footnotesize
-  \begin{tabularx}{\columnwidth}{l c c c c}
+  \resizebox{\columnwidth}{!}{%
+  \begin{tabular}{l c c c c}
     \toprule
-    \textbf{Method} & \textbf{Uncert.} & \textbf{Adapt.} & \textbf{Online} & \textbf{Test.} \\
+    \textbf{Method} & \textbf{Uncert.} & \textbf{Adaptive} & \textbf{Gen.\ Mod.} & \textbf{Bayesian} \\
     \midrule
-    \ACDC~\cite{Conmy2023}   & No  & No  & No  & No \\
-    \EAP~\cite{Syed2023}     & No  & No  & No  & No \\
-    Grad.\ Ranking           & No  & No  & No  & No \\
-    \textbf{\ACD{} (ours)}   & Yes & Yes & Yes & Yes \\
+    \ACDC~\cite{Conmy2023}       & No  & Thresh. & No  & No \\
+    \EAP~\cite{Syed2023}         & No  & No      & No  & No \\
+    Causal Trace~\cite{Meng2022} & No  & No      & No  & No \\
+    \textbf{\ACD{} (pymdp)}      & Yes & Yes     & Yes & Yes \\
     \bottomrule
-  \end{tabularx}
+  \end{tabular}%
+  }
 \end{table}

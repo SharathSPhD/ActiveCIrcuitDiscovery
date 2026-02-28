@@ -1,46 +1,44 @@
 % ---- conclusion.tex ----
 
-This paper introduced Active Circuit Discovery (\ACD), a framework that
-combines attribution graph analysis with uncertainty-weighted feature
-selection for efficient circuit discovery in large language models.
-The core insight is that feature-level circuit discovery is an exploration
-problem: which transcoder features to ablate, in what order, given a
-limited budget. By maintaining per-feature uncertainty estimates and
-learning per-layer priors from observed causal effects, the \ACD{} selector
-consistently prioritises the most informative interventions.
+This paper presented Active Circuit Discovery (\ACD), a framework that
+combines attribution graph analysis with active inference for efficient
+circuit discovery in large language models.
+The core contribution is the formulation of circuit discovery as a POMDP,
+solved by a multi-factor Active Inference agent implemented with
+\texttt{pymdp}~\cite{Pymdp2022}. The agent maintains beliefs over three
+hidden state factors (feature importance, layer role, and causal
+influence), selects interventions by minimising Expected Free Energy,
+and learns its observation model online through Dirichlet parameter
+updates from real intervention data.
 
 The framework integrates Anthropic's \texttt{circuit-tracer}
 library~\cite{Anthropic2025CT} for Edge Attribution Patching with
 transcoders, providing a principled decomposition of model computation
 into interpretable transcoder features. All interventions use the
 \texttt{feature\_intervention} API, which correctly intervenes at the
-transcoder level with proper network propagation---producing genuine
-causal effects rather than residual-stream approximations.
+transcoder level with proper network propagation.
 
-We evaluated \ACD{} on two architectures---Gemma-2-2B~\cite{team2024gemma}
-(26 layers) and Llama-3.2-1B~\cite{Dubey2024llama} (16
-layers)---across four evaluation settings: IOI circuit recovery,
-multi-step reasoning, feature steering, and a multi-domain benchmark
-spanning geography, mathematics, science, logic, and history.  With a
-budget of 20 interventions per prompt, \ACD{} identifies causally
-important features 32--44\% faster than random selection and achieves
-71--78\% of oracle-optimal cumulative information gain across both
-models.  Feature steering confirms causal controllability: scaling
-individual features at $10\times$ activation changes model predictions
-for 20\% of tested features.
+The evaluation spans two architectures (Gemma-2-2B~\cite{team2024gemma}
+and Llama-3.2-1B~\cite{Dubey2024llama}) and four
+benchmarks: IOI circuit recovery, multi-step reasoning, feature
+steering, and a multi-domain benchmark spanning geography, mathematics,
+science, logic, and history.  The POMDP agent is compared against a
+UCB-style bandit heuristic, greedy importance ranking, random selection,
+and an oracle upper bound.
 
-A notable finding is the task-dependent layer structure of circuits:
-IOI circuits concentrate in late layers, while reasoning and logic
-features concentrate in early layers, and science prompts show a
-uniform distribution.  This pattern holds across both model
-architectures, suggesting fundamental architectural similarities in how
-transformer models organise computation by cognitive domain.
+Feature steering confirms causal controllability: scaling individual
+features at $10\times$ activation changes model predictions for a
+subset of tested features. A notable finding is the task-dependent
+layer structure of circuits: IOI circuits concentrate in late layers,
+while reasoning and logic features concentrate in early layers, and
+science prompts show a uniform distribution.  This pattern holds
+across both model architectures.
 
 Cross-model validation on Llama-3.2-1B confirms the framework
-generalises beyond a single architecture, with consistent improvement
-over random selection across all tasks.  Future work will increase
-prompt set sizes for statistical power and explore multi-step planning
-where the selector can compose sequences of complementary
-interventions.  The fully open-source codebase, Colab notebooks, and
-Docker container for the NVIDIA DGX Spark platform are released to
-facilitate reproduction.
+generalises beyond a single architecture.
+Future work will increase prompt set sizes for statistical power,
+explore multi-step planning where the agent can compose sequences of
+complementary interventions, and investigate adaptive discretisation
+of the observation space.  The fully open-source codebase, Colab
+notebooks, and Docker container for the NVIDIA DGX Spark platform
+are released to facilitate reproduction.

@@ -1,6 +1,6 @@
 \subsection{Models and Hardware}
 
-We evaluate \ACD{} on two transformer architectures:
+The framework is evaluated on two transformer architectures:
 \begin{itemize}
 \item \textbf{Gemma-2-2B}~\cite{team2024gemma}: 26 layers, 2304-dim,
   8 heads.  Transcoders from GemmaScope
@@ -21,13 +21,14 @@ free T4 GPU.
 
 \subsubsection{IOI Circuit Recovery}
 
-The Indirect Object Identification task~\cite{Wang2022}
-tests whether the agent can identify features causally responsible for
-predicting the indirect object.  We use 5 prompts of the form
+The Indirect Object Identification task, introduced by
+Wang et al.~\cite{Wang2022}, tests whether the agent can identify
+features causally responsible for predicting the indirect object.
+Five prompts of the form
 ``When [A] and [B] went to the store, [A] gave the bag to \_\_''
-where the correct prediction is [B].  For each prompt, we measure the
-KL divergence caused by ablating each candidate feature via the
-\texttt{feature\_intervention} API.
+are used, where the correct prediction is [B].  For each prompt,
+the KL divergence caused by ablating each candidate feature via the
+\texttt{feature\_intervention} API is measured.
 
 \subsubsection{Multi-step Reasoning}
 
@@ -37,15 +38,17 @@ located is''.
 
 \subsubsection{Feature Steering}
 
-Three concept prompts (Golden Gate Bridge, Eiffel Tower, Mount Everest).
-For each, we identify the top 10 features by graph importance and scale
-their activations at multipliers $m \in \{0, 2, 5, 10\}$.  We measure
-the KL divergence and whether the model's top prediction changes.
+Five concept prompts (Golden Gate Bridge, Eiffel Tower, Mount Everest,
+Great Wall of China, Statue of Liberty).
+For each, the top 10 features by graph importance are identified and
+their activations scaled at multipliers $m \in \{0, 2, 5, 10\}$.
+The KL divergence and whether the model's top prediction changes
+are measured.
 
 \subsubsection{Multi-Domain Benchmark}
 
-Following the Initial Research Proposal, we evaluate \ACD{} across five
-cognitive domains with two prompts each:
+Following the Initial Research Proposal, the framework is evaluated
+across five cognitive domains with two prompts each:
 \begin{itemize}
 \item \textbf{Geography}: ``The capital of France is'', ``The Golden Gate Bridge connects San Francisco to''
 \item \textbf{Mathematics}: ``The square root of 64 is'', ``If 2 + 3 = 5 then 3 + 4 =''
@@ -59,11 +62,17 @@ distribution.
 \subsection{Baselines}
 
 \begin{itemize}
-\item \textbf{Random:} Select features uniformly at random (10 trials).
-\item \textbf{Greedy:} Select features in descending order of graph
+\item \textbf{Random:} Features are selected uniformly at random (10 trials,
+  results averaged).
+\item \textbf{Greedy:} Features are selected in descending order of graph
   node influence (sum of absolute adjacency weights).
-\item \textbf{Oracle:} Select features in descending order of
-  true KL divergence (upper bound requiring all ablations).
+\item \textbf{Bandit:} A UCB-style heuristic selector that combines
+  graph importance with a decaying uncertainty bonus and learned
+  per-layer priors. This provides a comparison point that separates
+  the contribution of Active Inference from simpler uncertainty
+  heuristics.
+\item \textbf{Oracle:} Features are selected in descending order of
+  true KL divergence (upper bound requiring all ablations in advance).
 \end{itemize}
 
 All methods use the same \texttt{feature\_intervention} API and
@@ -87,27 +96,23 @@ per prompt.
   experiments where the model's top-1 prediction changes.
 \end{itemize}
 
-\subsection{Active Inference Selector}
+\subsection{POMDP Agent Configuration}
 
-The \ACD{} selector combines graph-structural importance with
-uncertainty-weighted exploration.  For each candidate feature $i$:
-\[
-  \text{score}(i) = \underbrace{\text{imp}(i) \cdot \lambda_{\ell(i)}}_{\text{pragmatic}}
-  + \underbrace{u(i) \cdot \omega_e}_{\text{epistemic}}
-\]
-where $\text{imp}(i)$ is the normalized graph influence,
-$\lambda_{\ell}$ is a learned per-layer prior updated after each
-observation, $u(i)$ is the uncertainty (initialized to 1, reduced
-after observation), and $\omega_e = 2.0$ is the exploration weight.
-
-After ablating feature $i$ and observing KL divergence:
-\begin{enumerate}
-\item $u(i) \leftarrow 0$ (observed feature has no remaining uncertainty).
-\item Same-layer features: $u(j) \leftarrow 0.7 \cdot u(j)$ (partial
-  uncertainty reduction by transfer).
-\item Layer prior $\lambda_\ell$ is updated based on the ratio of
-  layer-average KL to global-average KL.
-\end{enumerate}
+The Active Inference POMDP agent is configured as follows:
+\begin{itemize}
+\item \textbf{State factors:} 4 importance levels $\times$
+  3 layer roles $\times$ 3 causal influence levels = 36 joint states.
+\item \textbf{Observation modalities:} 4 KL levels, 4 activation levels,
+  3 connectivity levels.
+\item \textbf{Actions:} 3 (ablation, patching, steering).
+\item \textbf{Policy length:} 1 (single-step lookahead).
+\item \textbf{Action selection:} stochastic (softmax over negative EFE,
+  $\gamma = 16.0$).
+\item \textbf{Learning:} Dirichlet updates on all observation modalities
+  ($\eta = 1.0$).
+\item \textbf{Inference:} variational (vanilla, as implemented
+  in pymdp).
+\end{itemize}
 
 \subsection{Reproducibility}
 
@@ -117,7 +122,5 @@ Colab notebooks reproduce the main experiments on a free T4 GPU.
 The experiment runner supports model selection via
 \texttt{-{}-model gemma|llama|both} and benchmark selection via
 \texttt{-{}-experiment ioi|steering|multistep|domain|all}.
-Docker images are provided for the DGX Spark environment.  All
-results derive from real model activations via the
-\texttt{feature\_intervention} API---no synthetic or fabricated data.
+Docker images are provided for the DGX Spark environment.
 Raw experiment outputs are stored in \texttt{results/} as JSON.

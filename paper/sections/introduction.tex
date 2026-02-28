@@ -5,11 +5,11 @@ intensified the need for principled methods to audit, explain, and predict their
 behaviour~\cite{Bereska2024}. Mechanistic interpretability pursues this goal by
 reverse-engineering the internal computations of trained models into human-legible
 circuits~\cite{Olah2020,Elhage2021}. A circuit, in this context, denotes the minimal
-subgraph of model components~-- attention heads, MLP neurons, or SAE features~-- whose
+subgraph of model components (attention heads, MLP neurons, or SAE features) whose
 activations are jointly necessary and sufficient to reproduce a specific model
 behaviour on a given family of inputs~\cite{Cammarata2020,Wang2022}.
 
-Circuit analysis has produced landmark findings: Wang et al.\ identified a
+Circuit analysis has produced landmark findings. Wang et al.\ identified a
 fourteen-head circuit mediating Indirect Object Identification (IOI) in GPT-2
 Small~\cite{Wang2022}; Hanna et al.\ localised a circuit for numerical
 greater-than comparisons~\cite{Hanna2023}; and Nanda et al.\ traced the emergence of
@@ -34,7 +34,7 @@ minimisation of variational free energy (equivalently, the maximisation of model
 evidence)~\cite{Friston2010,Parr2022}. When extended to planning, the framework
 introduces the Expected Free Energy (\EFE), which decomposes into an epistemic term
 (expected information gain about hidden states) and a pragmatic term (expected
-alignment with preferences)~\cite{Friston2015,DaCosta2020}. Crucially, \EFE\
+alignment with preferences)~\cite{Friston2015,DaCosta2020}. \EFE\
 minimisation naturally trades off exploration and exploitation: an agent selects
 actions that resolve uncertainty about the world while pursuing desired outcomes.
 
@@ -49,28 +49,30 @@ with fewer total interventions than either random or gradient-ranked selection.
 
 The contributions of this paper are as follows.
 
-\textbf{(C1) Theoretical framing.} A formal mapping is established between
-active inference and circuit discovery, showing how transcoder features correspond
-to candidate circuit components, how ablation effects correspond to observations,
-and how uncertainty-weighted scoring implements the exploration--exploitation
-trade-off analogous to Expected Free Energy minimisation.
+\textbf{(C1) Active Inference formulation.} Circuit discovery is cast as a
+partially observable Markov decision process (POMDP) with three hidden state
+factors (feature importance, layer role, causal influence), three observation
+modalities (KL divergence, activation magnitude, graph connectivity), and three
+actions (ablation, patching, steering). The agent is implemented using the
+\texttt{pymdp} library~\cite{Pymdp2022}, with Expected Free Energy guiding
+intervention selection and Dirichlet parameter updates enabling online learning
+of the observation model.
 
 \textbf{(C2) Framework implementation.} The Active Circuit Discovery (\ACD)
-framework is implemented in Python, integrating Anthropic's
+framework integrates Anthropic's
 \texttt{circuit-tracer}~\cite{Anthropic2025CT,Ameisen2025} for Edge Attribution Patching
 with GemmaScope transcoders and the \texttt{feature\_intervention} API for
-causally correct transcoder-level interventions on Gemma-2-2B.
+causally correct transcoder-level interventions.
 
-\textbf{(C3) Validated evaluation.} Three research questions are defined with
-quantified targets and evaluated on two benchmarks (IOI, multi-step reasoning)
-with three baselines (random, greedy, oracle), all using real model activations.
-The \ACD{} selector achieves 36--44\% improvement over random selection and
-74--78\% of oracle-optimal performance.
+\textbf{(C3) Validated evaluation.} The POMDP agent is compared against a
+heuristic bandit baseline, greedy importance ranking, random selection, and an
+oracle upper bound on two models (Gemma-2-2B and Llama-3.2-1B) across four
+benchmarks (IOI, multi-step reasoning, feature steering, and a five-domain
+cognitive benchmark).
 
 \textbf{(C4) Causal controllability.} Feature steering experiments demonstrate
 that individual transcoder features causally control model behaviour, with
-prediction changes observed for 20\% of tested features at $10\times$ activation
-scaling.
+prediction changes observed at $10\times$ activation scaling.
 
 \textbf{(C5) Reproducibility artifacts.} Three Google Colab notebooks, a Docker
 container for NVIDIA DGX Spark, and raw experiment results (JSON) are released

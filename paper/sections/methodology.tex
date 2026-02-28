@@ -1,5 +1,5 @@
 This section formalises the \ACD{} framework, detailing the attribution
-graph backend, the active inference-inspired feature selector, and the
+graph backend, the POMDP-based active inference agent, and the
 intervention engine.
 
 \subsection{Architecture Overview}
@@ -11,12 +11,13 @@ intervention engine.
 }
 \caption{System architecture of \ACD{}. The \texttt{circuit-tracer}
   pipeline (left) extracts candidate features via EAP and pruning.
-  The Active Inference Selector (right) iteratively scores, selects,
-  and ablates features using an uncertainty-weighted strategy.}
+  The Active Inference POMDP agent (right) selects interventions by
+  minimising Expected Free Energy, updates beliefs from observations,
+  and learns its observation model via Dirichlet updates.}
 \label{fig:architecture}
 \end{figure}
 
-\ACD{} consists of three layers:
+The framework consists of three layers:
 
 \begin{enumerate}
 \item \textbf{Attribution Graph Backend.} Anthropic's
@@ -26,11 +27,11 @@ intervention engine.
   features, an adjacency matrix encoding feature interactions, and
   activation values.
 
-\item \textbf{Active Inference Selector.}  An uncertainty-weighted
-  scoring function selects the next feature to intervene on, combining
-  graph-structural importance (exploitation) with per-feature uncertainty
-  (exploration).  Per-layer priors are learned online from observed
-  causal effects.
+\item \textbf{Active Inference POMDP Agent.}  A multi-factor POMDP agent
+  implemented with \texttt{pymdp}~\cite{Pymdp2022} maintains a generative
+  model of the circuit structure. The agent performs variational state
+  inference, evaluates candidate interventions via Expected Free Energy,
+  and learns its observation model online from real intervention data.
 
 \item \textbf{Intervention Engine.}  Executes feature-level ablations
   and steering via the \texttt{feature\_intervention} API, which
@@ -63,73 +64,146 @@ Candidates are sampled across layers (up to $k$ per layer) to ensure
 diversity.
 
 
-\subsection{Active Inference Selector}
+\subsection{POMDP Formulation}
 
 \begin{figure}[t]
 \centering
 \resizebox{\columnwidth}{!}{%
 \input{figures/efe_pipeline}%
 }
-\caption{Scoring function pipeline. Each candidate receives a pragmatic
-  score (graph importance $\times$ layer prior) and an epistemic bonus
-  (exploration weight $\times$ uncertainty). After ablation, the
-  uncertainty is zeroed and the layer prior is updated based on
-  observed KL divergence.}
+\caption{POMDP agent pipeline. At each step, the agent infers
+  hidden states from observations, evaluates all action--candidate
+  pairs via EFE, selects the pair with lowest EFE, executes the
+  intervention, and updates its generative model via Dirichlet learning.}
 \label{fig:scoring}
 \end{figure}
 
-The selector scores each unobserved candidate feature $i$ as:
-\begin{equation}
-\label{eq:score}
-  \text{score}(i) = \underbrace{\text{imp}(i) \cdot \lambda_{\ell(i)}}_{\text{pragmatic}}
-  + \underbrace{u(i) \cdot \omega_e}_{\text{epistemic}}
-\end{equation}
+The circuit discovery problem is cast as a discrete POMDP with the
+following structure.
 
-where:
+\subsubsection{Hidden State Factors}
+
+Three hidden state factors capture distinct aspects of each
+candidate feature:
 \begin{itemize}
-\item $\text{imp}(i) \in [0, 1]$ is the normalised graph influence.
-\item $\lambda_\ell$ is a learned per-layer prior, initialised to 1.
-\item $u(i) \in [0, 1]$ is the feature uncertainty, initialised to 1.
-\item $\omega_e > 0$ is the exploration weight (default 2.0).
+\item \textbf{Factor 0: Feature importance}
+  $s_0 \in \{\text{negligible}, \text{low}, \text{moderate}, \text{high}\}$
+  (4 levels). Represents the causal contribution of a feature to the
+  model's output on the current prompt.
+\item \textbf{Factor 1: Layer role}
+  $s_1 \in \{\text{early}, \text{middle}, \text{late}\}$ (3 levels).
+  Determined by the feature's position within the network
+  (layers are divided into thirds).
+\item \textbf{Factor 2: Causal influence}
+  $s_2 \in \{\text{weak}, \text{moderate}, \text{strong}\}$ (3 levels).
+  Reflects the feature's degree of causal control over downstream
+  computation, inferred from intervention effects.
 \end{itemize}
 
-The feature with the highest score is selected:
-$i^* = \arg\max_{i \notin \mathcal{O}} \text{score}(i)$.
+\subsubsection{Observation Modalities}
+
+Three observation modalities provide complementary evidence about
+hidden states:
+\begin{itemize}
+\item \textbf{Modality 0: KL divergence magnitude.} The KL divergence
+  between the clean and intervened output distributions, discretised
+  into 4 levels: $\{$negligible ($<10^{-4}$), small ($<10^{-3}$),
+  medium ($<10^{-2}$), large ($\geq 10^{-2}$)$\}$.
+\item \textbf{Modality 1: Activation magnitude.} The absolute activation
+  value of the feature, discretised into 4 levels.
+\item \textbf{Modality 2: Graph connectivity.} The sum of in-degree
+  and out-degree of the feature in the attribution graph, discretised
+  into 3 levels: $\{$sparse, moderate, dense$\}$.
+\end{itemize}
+
+\subsubsection{Actions}
+
+Three intervention types are available:
+\begin{itemize}
+\item \textbf{Ablation}: set the transcoder feature activation to zero.
+\item \textbf{Activation patching}: replace the feature activation with
+  a reference value from a different prompt.
+\item \textbf{Feature steering}: scale the activation by a multiplier
+  $m \in \{0, 2, 5, 10\}$.
+\end{itemize}
+
+\subsubsection{Generative Model}
+
+The generative model consists of four components, following the
+standard Active Inference formulation~\cite{Friston2017,Parr2022}:
+
+\begin{itemize}
+\item $\mat{A}$: \textbf{Observation likelihood} $P(o_m \mid s_0, s_1, s_2)$
+  for each modality $m$. Encodes domain-informed priors about how hidden
+  feature states produce observable intervention effects. The A matrix
+  is learned online via Dirichlet concentration updates from each
+  observation.
+
+\item $\mat{B}$: \textbf{Transition model} $P(s' \mid s, a)$.
+  Factor~0 (importance) is controlled by the three actions;
+  Factors~1 and~2 have identity transitions (intrinsic properties that
+  do not change upon intervention).
+
+\item $\mat{C}$: \textbf{Preference model} (log-prior over preferred
+  observations). Higher KL divergence and higher activation are
+  preferred, encoding the goal of finding causally important features.
+
+\item $\mat{D}$: \textbf{Prior beliefs} over hidden states. Biased
+  toward low importance (most features are not causally critical) and
+  uniform over layer role.
+\end{itemize}
 
 
-\subsection{Belief Updating}
+\subsection{Intervention Selection via Expected Free Energy}
 
-After ablating feature $i^*$ and observing the KL divergence
-$\text{KL}_{i^*}$, the selector updates its state:
+At each step, the agent evaluates each unobserved candidate feature $i$
+and each action $a$ by computing the Expected Free Energy:
+\begin{multline}
+  G(i, a) = \underbrace{\E_{q}\!\bigl[\log q(s_\tau | \pi) - \log q(s_\tau | o_\tau, \pi)\bigr]}_{\text{epistemic: information gain}} \\
+  + \underbrace{\E_{q}\!\bigl[\log p(o_\tau) - \log q(o_\tau | \pi)\bigr]}_{\text{pragmatic: preference satisfaction}}
+\end{multline}
+
+The candidate--action pair with the lowest EFE is selected:
+\begin{equation}
+  (i^*, a^*) = \arg\min_{(i,a)} G(i, a)
+\end{equation}
+
+This selection criterion naturally trades off exploration (choosing
+features that maximally reduce uncertainty about hidden states) with
+exploitation (choosing features that are expected to produce preferred
+observations, namely high KL divergence).
+
+
+\subsection{Belief Updating and Learning}
+
+After executing the selected intervention and observing the resulting
+KL divergence, activation magnitude, and graph connectivity, the agent:
 
 \begin{enumerate}
-\item \textbf{Uncertainty reduction.}
-  $u(i^*) \leftarrow 0$ (fully observed).
-  For all features $j$ in the same layer:
-  $u(j) \leftarrow 0.7 \cdot u(j)$ (partial transfer).
-  For all features $j$ at adjacent positions:
-  $u(j) \leftarrow 0.9 \cdot u(j)$.
+\item \textbf{Infers posterior states.} The pymdp agent performs
+  variational inference to update $q(s_0, s_1, s_2 \mid o_0, o_1, o_2)$.
 
-\item \textbf{Layer prior update.}
-  Let $\bar{\text{KL}}_\ell$ be the running mean KL for layer $\ell$ and
-  $\bar{\text{KL}}_{\text{global}}$ be the overall mean.  Then:
+\item \textbf{Updates the observation model.} The Dirichlet
+  concentration parameters $\mat{p_A}$ are updated:
   \begin{equation}
-    \lambda_\ell \leftarrow 1 + 0.5 \left(
-      \frac{\bar{\text{KL}}_\ell}{\bar{\text{KL}}_{\text{global}}} - 1
-    \right)
+    p_{A_m}(o_m, s_0, s_1, s_2) \mathrel{+}= \eta \cdot q(s_0) \cdot q(s_1) \cdot q(s_2)
   \end{equation}
-  This upweights layers whose features have high causal impact and
-  downweights uninformative layers.
+  where $\eta$ is the learning rate. This enables the agent to improve
+  its mapping from hidden states to observations as it accumulates
+  intervention data.
+
+\item \textbf{Steps the time index.} The agent advances its internal
+  clock and resets the observation buffer for the next step.
 \end{enumerate}
 
-The pragmatic--epistemic decomposition in~\cref{eq:score} mirrors the
-Expected Free Energy decomposition in active
-inference~\cite{Friston2015,DaCosta2020}: the pragmatic term drives
-exploitation of known high-value features, while the epistemic term
-drives exploration of uncertain features.  Unlike a full POMDP agent,
-the selector operates in a bandit-like setting where each feature is
-intervened on at most once, making the scoring function a lightweight
-but effective approximation.
+
+\subsection{Convergence Detection}
+
+The agent monitors the KL divergence between successive belief
+distributions over a rolling window. When the average belief change
+falls below a threshold $\theta = 0.01$, the agent signals convergence,
+indicating that further interventions are unlikely to substantially
+revise the inferred circuit structure.
 
 
 \subsection{Intervention Engine}
@@ -139,10 +213,10 @@ but effective approximation.
 \resizebox{0.85\columnwidth}{!}{%
 \input{figures/circuit_flow}%
 }
-\caption{Flow of a single intervention step. The selector scores
-  candidates, selects the best, ablates it via
-  \texttt{feature\_intervention}, and updates its uncertainty and
-  layer prior based on the observed KL divergence.}
+\caption{Flow of a single intervention step. The POMDP agent
+  evaluates all candidate--action pairs via EFE, selects the best,
+  executes the intervention via \texttt{feature\_intervention}, and
+  updates its generative model from the resulting observations.}
 \label{fig:flow}
 \end{figure}
 

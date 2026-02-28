@@ -1,4 +1,6 @@
 # Active Inference Module
-"""Active Inference selector for circuit discovery (lightweight, no pymdp)."""
+"""Active Inference POMDP agent for circuit discovery, powered by pymdp."""
 
-__all__ = []
+from src.active_inference.pomdp_agent import ActiveInferencePOMDPAgent
+
+__all__ = ["ActiveInferencePOMDPAgent"]

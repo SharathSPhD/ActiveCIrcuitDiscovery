@@ -73,6 +73,9 @@ K.~J. Friston, T.~Rigoli, D.~Ognibene, C.~Mathys, T.~Fitzgerald, and G.~Pezzulo,
 \bibitem{DaCosta2020}
 L.~D. Costa, T.~Parr, N.~Sajid, S.~Veselic, V.~Neacsu, and K.~Friston, ``Active inference on discrete state-spaces: a synthesis,'' \emph{Journal of Mathematical Psychology}, vol.~99, p. 102447, 2020.
 
+\bibitem{Pymdp2022}
+C.~Heins, B.~Millidge, D.~Demekas, B.~Klein, K.~Friston, I.~D. Couzin, and A.~Tschantz, ``pymdp: A python library for active inference in discrete state spaces,'' \emph{Journal of Open Source Software}, vol.~7, no.~73, p. 4098, 2022.
+
 \bibitem{Anthropic2025CT}
 \BIBentryALTinterwordspacing
 M.~Hanna, M.~Piotrowski, E.~Ameisen, and J.~Lindsey, ``circuit-tracer: Open-source circuit tracing tools,'' 2025, gitHub repository, released by Anthropic Fellows and Decode Research. [Online]. Available: \url{https://github.com/decoderesearch/circuit-tracer}

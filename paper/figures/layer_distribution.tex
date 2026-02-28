@@ -1,34 +1,37 @@
-% figures/layer_distribution.tex -- Layer distribution: IOI vs Multi-step
+% Auto-generated from experiment results.
 \begin{tikzpicture}
 \begin{axis}[
     ybar,
-    width=0.95\columnwidth,
+    width=\columnwidth,
     height=5cm,
-    bar width=14pt,
-    enlarge x limits=0.25,
-    ylabel={Fraction of top-10 features},
+    bar width=10pt,
+    ylabel={Count (top-10 features)},
     symbolic x coords={Early, Mid, Late},
     xtick=data,
     x tick label style={font=\scriptsize},
-    ymin=0, ymax=1.0,
-    ytick={0, 0.2, 0.4, 0.6, 0.8, 1.0},
+    y tick label style={font=\scriptsize},
+    ylabel style={font=\scriptsize},
+    legend style={
+        font=\scriptsize,
+        at={(0.5,-0.22)},
+        anchor=north,
+        legend columns=2
+    },
+    ymin=0,
+    enlarge x limits=0.3,
     nodes near coords,
-    nodes near coords align={vertical},
-    every node near coord/.append style={font=\scriptsize},
-    legend style={at={(0.97,0.97)}, anchor=north east, font=\scriptsize},
-    ymajorgrids=true,
-    grid style=dashed,
+    nodes near coords style={font=\tiny},
 ]
 
-% IOI (late-layer dominant: top features in L24, L25, L6, L8)
 \addplot[fill=blue!40, draw=blue!60] coordinates {
-    (Early, 0.30) (Mid, 0.0) (Late, 0.70)
+    (Early, 23) (Mid, 3) (Late, 4)
 };
 
 \addplot[fill=red!40, draw=red!60] coordinates {
-    (Early, 0.77) (Mid, 0.10) (Late, 0.13)
+    (Early, 14) (Mid, 0) (Late, 6)
 };
 
-\legend{IOI, Multi-step}
+\legend{Multi-step (Gemma), IOI (Gemma)}
+
 \end{axis}
 \end{tikzpicture}
