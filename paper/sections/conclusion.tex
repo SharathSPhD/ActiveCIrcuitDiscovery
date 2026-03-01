@@ -26,16 +26,22 @@ science, logic, and history.  The POMDP agent is compared against a
 UCB-style bandit heuristic, greedy importance ranking, random selection,
 and an oracle upper bound.
 
-Feature steering confirms causal controllability: scaling individual
-features at $10\times$ activation changes model predictions for a
-subset of tested features. A notable finding is the task-dependent
-layer structure of circuits: IOI circuits concentrate in late layers,
-while reasoning and logic features concentrate in early layers, and
-science prompts show a uniform distribution.  This pattern holds
-across both model architectures.
+Against the four hypotheses stated in Section~\ref{sec:intro}:
+\textbf{H1} (efficiency) shows a positive trend on Gemma
+($+$16--30\% over random) but is not statistically significant at
+$\alpha=0.05$ due to small prompt counts; \textbf{H2} (causal
+controllability) is accepted ($p < 10^{-15}$, binomial test on
+17/100 prediction changes at $10\times$ scaling); \textbf{H3}
+(discovery quality $\geq 50\%$ oracle efficiency) is accepted for
+Gemma (58.3\%) but not for Llama (37.5\%); and \textbf{H4}
+(cross-architecture transfer) is accepted at the qualitative level,
+with all experiment types replicated on Llama-3.2-1B.
 
-Cross-model validation on Llama-3.2-1B confirms the framework
-generalises beyond a single architecture.
+A notable finding is the task-dependent layer structure of circuits:
+IOI circuits concentrate in late layers, while reasoning and logic
+features concentrate in early layers, and science prompts show a
+uniform distribution.  This pattern holds across both architectures.
+
 Future work will increase prompt set sizes for statistical power,
 explore multi-step planning where the agent can compose sequences of
 complementary interventions, and investigate adaptive discretisation

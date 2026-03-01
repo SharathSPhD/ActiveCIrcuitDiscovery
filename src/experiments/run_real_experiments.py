@@ -368,6 +368,8 @@ def run_ioi_experiment(
             'greedy_std_kl': safe_std(greedy_means),
             'random_mean_kl': safe_mean(rand_means),
             'random_std_kl': safe_std(rand_means),
+            # Percentage improvements: (AI_mean - baseline_mean) / baseline_mean * 100
+            # Uses mean-of-per-prompt-means; paper tables cite these values directly.
             'ai_vs_random_pct': float((safe_mean(ai_means) - safe_mean(rand_means)) / max(safe_mean(rand_means), 1e-10) * 100),
             'ai_vs_greedy_pct': float((safe_mean(ai_means) - safe_mean(greedy_means)) / max(safe_mean(greedy_means), 1e-10) * 100),
             'ai_vs_bandit_pct': float((safe_mean(ai_means) - safe_mean(bandit_means)) / max(safe_mean(bandit_means), 1e-10) * 100),

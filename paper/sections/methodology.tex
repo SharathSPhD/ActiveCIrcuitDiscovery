@@ -159,8 +159,8 @@ standard Active Inference formulation~\cite{Friston2017,Parr2022}:
 At each step, the agent evaluates each unobserved candidate feature $i$
 and each action $a$ by computing the Expected Free Energy:
 \begin{multline}
-  G(i, a) = \underbrace{\E_{q}\!\bigl[\log q(s_\tau | \pi) - \log q(s_\tau | o_\tau, \pi)\bigr]}_{\text{epistemic: information gain}} \\
-  + \underbrace{\E_{q}\!\bigl[\log p(o_\tau) - \log q(o_\tau | \pi)\bigr]}_{\text{pragmatic: preference satisfaction}}
+  G(i, a) = \underbrace{\mathbb{E}_{q}\!\bigl[\log q(s_\tau | \pi) - \log q(s_\tau | o_\tau, \pi)\bigr]}_{\text{epistemic: information gain}} \\
+  + \underbrace{\mathbb{E}_{q}\!\bigl[\log p(o_\tau) - \log q(o_\tau | \pi)\bigr]}_{\text{pragmatic: preference satisfaction}}
 \end{multline}
 
 The candidate--action pair with the lowest EFE is selected:

@@ -40,14 +40,13 @@
 \citation{Templeton2024}
 \citation{Anthropic2025CT,Ameisen2025}
 \citation{team2024gemma}
-\citation{Friston2010}
-\citation{Friston2017}
 \@writefile{toc}{\contentsline {section}{\numberline {II}Background and Related Work}{2}{section.2}\protected@file@percent }
 \newlabel{sec:background}{{II}{2}{Background and Related Work}{section.2}{}}
 \newlabel{sec:background@cref}{{[section][2][]II}{[1][2][]2}{}{}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {II-A}}Mechanistic Interpretability and Circuit Analysis}{2}{subsection.2.1}\protected@file@percent }
 \@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {II-B}}Sparse Autoencoders and Transcoders}{2}{subsection.2.2}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {II-C}}Active Inference and Expected Free Energy}{2}{subsection.2.3}\protected@file@percent }
+\citation{Friston2010}
+\citation{Friston2017}
 \citation{DaCosta2020}
 \citation{Parr2022}
 \citation{Tschantz2020}
@@ -60,21 +59,22 @@
 \citation{Syed2023}
 \citation{Meng2022}
 \citation{Anthropic2025CT}
-\citation{Pymdp2022}
-\citation{nanda2022transformerlens}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {II-C}}Active Inference and Expected Free Energy}{3}{subsection.2.3}\protected@file@percent }
 \newlabel{eq:efe}{{1}{3}{Active Inference and Expected Free Energy}{equation.1}{}}
 \newlabel{eq:efe@cref}{{[equation][1][]1}{[1][3][]3}{}{}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {II-D}}Gap Analysis}{3}{subsection.2.4}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {III}The Active Circuit Discovery Framework}{3}{section.3}\protected@file@percent }
-\newlabel{sec:method}{{III}{3}{The Active Circuit Discovery Framework}{section.3}{}}
-\newlabel{sec:method@cref}{{[section][3][]III}{[1][3][]3}{}{}{}}
 \@writefile{lot}{\contentsline {table}{\numberline {I}{\ignorespaces Comparison of automated circuit discovery methods.}}{3}{table.1}\protected@file@percent }
 \newlabel{tab:method_comparison}{{I}{3}{Comparison of automated circuit discovery methods}{table.1}{}}
 \newlabel{tab:method_comparison@cref}{{[table][1][]I}{[1][3][]3}{}{}{}}
 \@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces System architecture of \textsc  {acd}{}. The \texttt  {circuit-tracer} pipeline (left) extracts candidate features via EAP and pruning. The Active Inference POMDP agent (right) selects interventions by minimising Expected Free Energy, updates beliefs from observations, and learns its observation model via Dirichlet updates.}}{3}{figure.1}\protected@file@percent }
 \newlabel{fig:architecture}{{1}{3}{System architecture of \ACD {}. The \texttt {circuit-tracer} pipeline (left) extracts candidate features via EAP and pruning. The Active Inference POMDP agent (right) selects interventions by minimising Expected Free Energy, updates beliefs from observations, and learns its observation model via Dirichlet updates}{figure.1}{}}
 \newlabel{fig:architecture@cref}{{[figure][1][]1}{[1][3][]3}{}{}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {III}The Active Circuit Discovery Framework}{3}{section.3}\protected@file@percent }
+\newlabel{sec:method}{{III}{3}{The Active Circuit Discovery Framework}{section.3}{}}
+\newlabel{sec:method@cref}{{[section][3][]III}{[1][3][]3}{}{}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {III-A}}Architecture Overview}{3}{subsection.3.1}\protected@file@percent }
+\citation{Pymdp2022}
+\citation{nanda2022transformerlens}
 \citation{Friston2017,Parr2022}
 \@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces POMDP agent pipeline. At each step, the agent infers hidden states from observations, evaluates all action--candidate pairs via EFE, selects the pair with lowest EFE, executes the intervention, and updates its generative model via Dirichlet learning.}}{4}{figure.2}\protected@file@percent }
 \newlabel{fig:scoring}{{2}{4}{POMDP agent pipeline. At each step, the agent infers hidden states from observations, evaluates all action--candidate pairs via EFE, selects the pair with lowest EFE, executes the intervention, and updates its generative model via Dirichlet learning}{figure.2}{}}
@@ -86,7 +86,6 @@
 \@writefile{toc}{\contentsline {subsubsection}{\numberline {\mbox  {III-C}3}Actions}{4}{subsubsection.3.3.3}\protected@file@percent }
 \@writefile{toc}{\contentsline {subsubsection}{\numberline {\mbox  {III-C}4}Generative Model}{4}{subsubsection.3.3.4}\protected@file@percent }
 \@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {III-D}}Intervention Selection via Expected Free Energy}{4}{subsection.3.4}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {III-E}}Belief Updating and Learning}{4}{subsection.3.5}\protected@file@percent }
 \citation{team2024gemma}
 \citation{Dubey2024llama}
 \citation{Anthropic2025CT}
@@ -94,6 +93,7 @@
 \@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces Flow of a single intervention step. The POMDP agent evaluates all candidate--action pairs via EFE, selects the best, executes the intervention via \texttt  {feature\_intervention}, and updates its generative model from the resulting observations.}}{5}{figure.3}\protected@file@percent }
 \newlabel{fig:flow}{{3}{5}{Flow of a single intervention step. The POMDP agent evaluates all candidate--action pairs via EFE, selects the best, executes the intervention via \texttt {feature\_intervention}, and updates its generative model from the resulting observations}{figure.3}{}}
 \newlabel{fig:flow@cref}{{[figure][3][]3}{[1][5][]5}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {III-E}}Belief Updating and Learning}{5}{subsection.3.5}\protected@file@percent }
 \@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {III-F}}Convergence Detection}{5}{subsection.3.6}\protected@file@percent }
 \@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {III-G}}Intervention Engine}{5}{subsection.3.7}\protected@file@percent }
 \@writefile{toc}{\contentsline {section}{\numberline {IV}Experimental Setup}{5}{section.4}\protected@file@percent }
@@ -105,96 +105,107 @@
 \@writefile{toc}{\contentsline {subsubsection}{\numberline {\mbox  {IV-B}2}Multi-step Reasoning}{5}{subsubsection.4.2.2}\protected@file@percent }
 \@writefile{toc}{\contentsline {subsubsection}{\numberline {\mbox  {IV-B}3}Feature Steering}{5}{subsubsection.4.2.3}\protected@file@percent }
 \@writefile{toc}{\contentsline {subsubsection}{\numberline {\mbox  {IV-B}4}Multi-Domain Benchmark}{5}{subsubsection.4.2.4}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {IV-C}}Baselines}{5}{subsection.4.3}\protected@file@percent }
 \citation{Wang2022}
 \citation{Anthropic2025CT}
 \citation{Anthropic2025CT}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {IV-C}}Baselines}{6}{subsection.4.3}\protected@file@percent }
 \@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {IV-D}}Metrics}{6}{subsection.4.4}\protected@file@percent }
 \@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {IV-E}}POMDP Agent Configuration}{6}{subsection.4.5}\protected@file@percent }
 \@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {IV-F}}Reproducibility}{6}{subsection.4.6}\protected@file@percent }
-\@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces Cumulative KL divergence over 20 intervention steps on IOI, averaged across 5 prompts. The POMDP agent (red) discovers high-impact features earlier than the bandit baseline (orange), greedy ranking (blue), and random selection, approaching the oracle upper bound (dashed).}}{6}{figure.4}\protected@file@percent }
-\newlabel{fig:cumkl}{{4}{6}{Cumulative KL divergence over 20 intervention steps on IOI, averaged across 5 prompts. The POMDP agent (red) discovers high-impact features earlier than the bandit baseline (orange), greedy ranking (blue), and random selection, approaching the oracle upper bound (dashed)}{figure.4}{}}
-\newlabel{fig:cumkl@cref}{{[figure][4][]4}{[1][6][]6}{}{}{}}
 \@writefile{toc}{\contentsline {section}{\numberline {V}Results and Analysis}{6}{section.5}\protected@file@percent }
 \newlabel{sec:results}{{V}{6}{Results and Analysis}{section.5}{}}
 \newlabel{sec:results@cref}{{[section][5][]V}{[1][6][]6}{}{}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {V-A}}IOI Circuit Recovery}{6}{subsection.5.1}\protected@file@percent }
-\@writefile{lot}{\contentsline {table}{\numberline {II}{\ignorespaces IOI Feature Discovery: Mean KL Divergence per Intervention}}{6}{table.2}\protected@file@percent }
-\newlabel{tab:ioi}{{II}{6}{IOI Feature Discovery: Mean KL Divergence per Intervention}{table.2}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {II}{\ignorespaces IOI Feature Discovery: Mean KL ($\pm $ std) per Intervention}}{6}{table.2}\protected@file@percent }
+\newlabel{tab:ioi}{{II}{6}{IOI Feature Discovery: Mean KL ($\pm $ std) per Intervention}{table.2}{}}
 \newlabel{tab:ioi@cref}{{[table][2][]II}{[1][6][]6}{}{}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {V-B}}Feature Steering}{6}{subsection.5.2}\protected@file@percent }
 \@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {V-C}}Active Discovery Dynamics}{6}{subsection.5.3}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces Cumulative KL divergence over 20 intervention steps on IOI (Gemma-2-2B), averaged across 5 prompts. See Table~\ref {tab:ioi} for Llama results. The POMDP agent (red) discovers high-impact features earlier than the bandit baseline (orange), greedy ranking (blue), and random selection, approaching the oracle upper bound (dashed).}}{7}{figure.4}\protected@file@percent }
+\newlabel{fig:cumkl}{{4}{7}{Cumulative KL divergence over 20 intervention steps on IOI (Gemma-2-2B), averaged across 5 prompts. See Table~\ref {tab:ioi} for Llama results. The POMDP agent (red) discovers high-impact features earlier than the bandit baseline (orange), greedy ranking (blue), and random selection, approaching the oracle upper bound (dashed)}{figure.4}{}}
+\newlabel{fig:cumkl@cref}{{[figure][4][]4}{[1][6][]7}{}{}{}}
 \@writefile{lof}{\contentsline {figure}{\numberline {5}{\ignorespaces Simplified attribution graph for an IOI prompt on Gemma-2-2B. Each node is a transcoder feature; colour indicates inferred importance (red = high). Strong attribution edges (thick red) trace the causal pathway from early-layer input features through mid-layer processing to late-layer name-mover features. Generated by \texttt  {circuit-tracer}~\cite  {Anthropic2025CT}.}}{7}{figure.5}\protected@file@percent }
 \newlabel{fig:attribution_graph}{{5}{7}{Simplified attribution graph for an IOI prompt on Gemma-2-2B. Each node is a transcoder feature; colour indicates inferred importance (red = high). Strong attribution edges (thick red) trace the causal pathway from early-layer input features through mid-layer processing to late-layer name-mover features. Generated by \texttt {circuit-tracer}~\cite {Anthropic2025CT}}{figure.5}{}}
 \newlabel{fig:attribution_graph@cref}{{[figure][5][]5}{[1][6][]7}{}{}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {6}{\ignorespaces Oracle efficiency comparison across IOI and multi-step reasoning tasks. The POMDP agent achieves the highest oracle efficiency, followed by the bandit baseline and greedy ranking.}}{7}{figure.6}\protected@file@percent }
-\newlabel{fig:oracle_eff}{{6}{7}{Oracle efficiency comparison across IOI and multi-step reasoning tasks. The POMDP agent achieves the highest oracle efficiency, followed by the bandit baseline and greedy ranking}{figure.6}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {6}{\ignorespaces Oracle efficiency comparison across IOI and multi-step reasoning tasks (Gemma-2-2B). On IOI, the bandit leads; on multi-step, greedy marginally leads. The POMDP agent is competitive on both, outperforming random by 8--17 percentage points.}}{7}{figure.6}\protected@file@percent }
+\newlabel{fig:oracle_eff}{{6}{7}{Oracle efficiency comparison across IOI and multi-step reasoning tasks (Gemma-2-2B). On IOI, the bandit leads; on multi-step, greedy marginally leads. The POMDP agent is competitive on both, outperforming random by 8--17 percentage points}{figure.6}{}}
 \newlabel{fig:oracle_eff@cref}{{[figure][6][]6}{[1][6][]7}{}{}{}}
 \@writefile{lot}{\contentsline {table}{\numberline {III}{\ignorespaces Feature Steering Results}}{7}{table.3}\protected@file@percent }
 \newlabel{tab:steering}{{III}{7}{Feature Steering Results}{table.3}{}}
 \newlabel{tab:steering@cref}{{[table][3][]III}{[1][6][]7}{}{}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {7}{\ignorespaces Mean KL divergence across steering multipliers for concept prompts (10 features each). Higher multipliers produce larger KL divergence, with concept-dependent sensitivity.}}{7}{figure.7}\protected@file@percent }
-\newlabel{fig:steering}{{7}{7}{Mean KL divergence across steering multipliers for concept prompts (10 features each). Higher multipliers produce larger KL divergence, with concept-dependent sensitivity}{figure.7}{}}
-\newlabel{fig:steering@cref}{{[figure][7][]7}{[1][6][]7}{}{}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {V-D}}Multi-step Reasoning}{7}{subsection.5.4}\protected@file@percent }
-\@writefile{lot}{\contentsline {table}{\numberline {IV}{\ignorespaces Multi-step Reasoning: Feature Discovery Efficiency}}{7}{table.4}\protected@file@percent }
-\newlabel{tab:multistep}{{IV}{7}{Multi-step Reasoning: Feature Discovery Efficiency}{table.4}{}}
-\newlabel{tab:multistep@cref}{{[table][4][]IV}{[1][7][]7}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {V-E}}Multi-Domain Analysis}{7}{subsection.5.5}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {7}{\ignorespaces Mean KL divergence across steering multipliers for concept prompts on Gemma-2-2B (10 features each). See Table~\ref {tab:steering} for Llama results. Higher multipliers produce larger KL divergence, with concept-dependent sensitivity.}}{8}{figure.7}\protected@file@percent }
+\newlabel{fig:steering}{{7}{8}{Mean KL divergence across steering multipliers for concept prompts on Gemma-2-2B (10 features each). See Table~\ref {tab:steering} for Llama results. Higher multipliers produce larger KL divergence, with concept-dependent sensitivity}{figure.7}{}}
+\newlabel{fig:steering@cref}{{[figure][7][]7}{[1][6][]8}{}{}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {IV}{\ignorespaces Multi-step Reasoning: Feature Discovery Efficiency ($\pm $ std)}}{8}{table.4}\protected@file@percent }
+\newlabel{tab:multistep}{{IV}{8}{Multi-step Reasoning: Feature Discovery Efficiency ($\pm $ std)}{table.4}{}}
+\newlabel{tab:multistep@cref}{{[table][4][]IV}{[1][7][]8}{}{}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {V}{\ignorespaces Multi-Domain Feature Discovery}}{8}{table.5}\protected@file@percent }
+\newlabel{tab:domain}{{V}{8}{Multi-Domain Feature Discovery}{table.5}{}}
+\newlabel{tab:domain@cref}{{[table][5][]V}{[1][7][]8}{}{}{}}
 \@writefile{lof}{\contentsline {figure}{\numberline {8}{\ignorespaces Layer distribution of top-10 causal features for IOI vs.\ multi-step reasoning on Gemma-2-2B. Early = layers 0--8, Mid = 9--17, Late = 18--25. IOI circuits are late-layer dominant; multi-step reasoning is early-layer dominant.}}{8}{figure.8}\protected@file@percent }
 \newlabel{fig:layer_dist}{{8}{8}{Layer distribution of top-10 causal features for IOI vs.\^^Mmulti-step reasoning on Gemma-2-2B. Early = layers 0--8, Mid = 9--17, Late = 18--25. IOI circuits are late-layer dominant; multi-step reasoning is early-layer dominant}{figure.8}{}}
 \newlabel{fig:layer_dist@cref}{{[figure][8][]8}{[1][7][]8}{}{}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {V-E}}Multi-Domain Analysis}{8}{subsection.5.5}\protected@file@percent }
-\@writefile{lot}{\contentsline {table}{\numberline {V}{\ignorespaces Multi-Domain Feature Discovery}}{8}{table.5}\protected@file@percent }
-\newlabel{tab:domain}{{V}{8}{Multi-Domain Feature Discovery}{table.5}{}}
-\newlabel{tab:domain@cref}{{[table][5][]V}{[1][8][]8}{}{}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {V-F}}Cross-Model Validation (Llama-3.2-1B)}{8}{subsection.5.6}\protected@file@percent }
 \@writefile{lof}{\contentsline {figure}{\numberline {9}{\ignorespaces Layer distribution of top-10 causal features across five cognitive domains on Gemma-2-2B. Early = layers 0--8, Mid = 9--17, Late = 18--25. Logic and mathematics concentrate in early layers; geography and history peak in late layers.}}{8}{figure.9}\protected@file@percent }
 \newlabel{fig:domain_layers}{{9}{8}{Layer distribution of top-10 causal features across five cognitive domains on Gemma-2-2B. Early = layers 0--8, Mid = 9--17, Late = 18--25. Logic and mathematics concentrate in early layers; geography and history peak in late layers}{figure.9}{}}
-\newlabel{fig:domain_layers@cref}{{[figure][9][]9}{[1][8][]8}{}{}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {VI}{\ignorespaces Cross-Model Comparison: Gemma-2-2B vs.\ Llama-3.2-1B}}{8}{table.6}\protected@file@percent }
-\newlabel{tab:crossmodel}{{VI}{8}{Cross-Model Comparison: Gemma-2-2B vs.\ Llama-3.2-1B}{table.6}{}}
-\newlabel{tab:crossmodel@cref}{{[table][6][]VI}{[1][8][]8}{}{}{}}
+\newlabel{fig:domain_layers@cref}{{[figure][9][]9}{[1][7][]8}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {V-F}}Cross-Model Validation (Llama-3.2-1B)}{8}{subsection.5.6}\protected@file@percent }
 \@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {V-G}}Efficiency Comparison}{8}{subsection.5.7}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {V-H}}Research Question Validation}{8}{subsection.5.8}\protected@file@percent }
-\@writefile{lot}{\contentsline {table}{\numberline {VII}{\ignorespaces Efficiency Improvement Over Baselines}}{8}{table.7}\protected@file@percent }
-\newlabel{tab:efficiency}{{VII}{8}{Efficiency Improvement Over Baselines}{table.7}{}}
-\newlabel{tab:efficiency@cref}{{[table][7][]VII}{[1][8][]8}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {V-H}}Hypothesis Evaluation}{8}{subsection.5.8}\protected@file@percent }
 \citation{DaCosta2020}
 \citation{Tschantz2020}
 \citation{Wang2022}
-\citation{Dubey2024llama}
-\@writefile{lot}{\contentsline {table}{\numberline {VIII}{\ignorespaces Research Question Validation Summary}}{9}{table.8}\protected@file@percent }
-\newlabel{tab:rq_validation}{{VIII}{9}{Research Question Validation Summary}{table.8}{}}
-\newlabel{tab:rq_validation@cref}{{[table][8][]VIII}{[1][8][]9}{}{}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {VI}{\ignorespaces Cross-Model Comparison: Gemma-2-2B vs.\ Llama-3.2-1B}}{9}{table.6}\protected@file@percent }
+\newlabel{tab:crossmodel}{{VI}{9}{Cross-Model Comparison: Gemma-2-2B vs.\ Llama-3.2-1B}{table.6}{}}
+\newlabel{tab:crossmodel@cref}{{[table][6][]VI}{[1][8][]9}{}{}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {VII}{\ignorespaces Efficiency Improvement Over Baselines}}{9}{table.7}\protected@file@percent }
+\newlabel{tab:efficiency}{{VII}{9}{Efficiency Improvement Over Baselines}{table.7}{}}
+\newlabel{tab:efficiency@cref}{{[table][7][]VII}{[1][8][]9}{}{}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {V-I}}Limitations}{9}{subsection.5.9}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {VIII}{\ignorespaces Hypothesis Evaluation Summary}}{9}{table.8}\protected@file@percent }
+\newlabel{tab:hypothesis_eval}{{VIII}{9}{Hypothesis Evaluation Summary}{table.8}{}}
+\newlabel{tab:hypothesis_eval@cref}{{[table][8][]VIII}{[1][8][]9}{}{}{}}
 \@writefile{toc}{\contentsline {section}{\numberline {VI}Discussion}{9}{section.6}\protected@file@percent }
 \newlabel{sec:discussion}{{VI}{9}{Discussion}{section.6}{}}
 \newlabel{sec:discussion@cref}{{[section][6][]VI}{[1][9][]9}{}{}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {VI-A}}POMDP Agent vs.\ Heuristic Baselines}{9}{subsection.6.1}\protected@file@percent }
 \@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {VI-B}}Relationship to Expected Free Energy}{9}{subsection.6.2}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {VI-C}}Task-Dependent Circuit Structure}{9}{subsection.6.3}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {VI-D}}Cross-Model Generality}{9}{subsection.6.4}\protected@file@percent }
+\citation{Dubey2024llama}
 \citation{Hubinger2019,Bereska2024}
 \citation{Pymdp2022}
 \citation{Anthropic2025CT}
 \citation{team2024gemma}
 \citation{Dubey2024llama}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {VI-C}}Task-Dependent Circuit Structure}{10}{subsection.6.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {VI-D}}Cross-Model Generality}{10}{subsection.6.4}\protected@file@percent }
 \@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {VI-E}}Limitations}{10}{subsection.6.5}\protected@file@percent }
 \@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {VI-F}}Broader Implications for AI Safety}{10}{subsection.6.6}\protected@file@percent }
 \@writefile{toc}{\contentsline {section}{\numberline {VII}Conclusion}{10}{section.7}\protected@file@percent }
 \newlabel{sec:conclusion}{{VII}{10}{Conclusion}{section.7}{}}
 \newlabel{sec:conclusion@cref}{{[section][7][]VII}{[1][10][]10}{}{}{}}
-\@writefile{toc}{\contentsline {section}{Appendix\nobreakspace  A: Active Inference Selector Parameters}{10}{section*.1}\protected@file@percent }
-\newlabel{app:selector}{{A}{10}{\appendixname \nobreakspace \thesectiondis \\* Active Inference Selector Parameters}{section*.1}{}}
-\newlabel{app:selector@cref}{{[section][1][]A}{[1][10][]10}{}{}{}}
-\@writefile{toc}{\contentsline {section}{Appendix\nobreakspace  B: Correspondence Metric}{10}{section*.2}\protected@file@percent }
-\newlabel{app:correspondence}{{B}{10}{\appendixname \nobreakspace \thesectiondis \\* Correspondence Metric}{section*.2}{}}
-\newlabel{app:correspondence@cref}{{[section][2][]B}{[1][10][]10}{}{}{}}
 \bibstyle{IEEEtran}
 \bibdata{references}
 \bibcite{Bereska2024}{1}
 \bibcite{Olah2020}{2}
 \bibcite{Elhage2021}{3}
+\@writefile{toc}{\contentsline {section}{Appendix\nobreakspace  A: Active Inference Selector Parameters}{11}{section*.1}\protected@file@percent }
+\newlabel{app:selector}{{A}{11}{\appendixname \nobreakspace \thesectiondis \\* Active Inference Selector Parameters}{section*.1}{}}
+\newlabel{app:selector@cref}{{[section][1][]A}{[1][11][]11}{}{}{}}
+\@writefile{toc}{\contentsline {section}{Appendix\nobreakspace  B: Correspondence Metric}{11}{section*.2}\protected@file@percent }
+\newlabel{app:correspondence}{{B}{11}{\appendixname \nobreakspace \thesectiondis \\* Correspondence Metric}{section*.2}{}}
+\newlabel{app:correspondence@cref}{{[section][2][]B}{[1][11][]11}{}{}{}}
+\@writefile{toc}{\contentsline {section}{Appendix\nobreakspace  C: Docker and DGX Spark Deployment}{11}{section*.3}\protected@file@percent }
+\newlabel{app:docker}{{C}{11}{\appendixname \nobreakspace \thesectiondis \\* Docker and DGX Spark Deployment}{section*.3}{}}
+\newlabel{app:docker@cref}{{[section][3][]C}{[1][11][]11}{}{}{}}
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {1}Docker build and run for DGX Spark.}{11}{lstlisting.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{Appendix\nobreakspace  D: Code-Level Fixes Applied}{11}{section*.4}\protected@file@percent }
+\newlabel{app:fixes}{{D}{11}{\appendixname \nobreakspace \thesectiondis \\* Code-Level Fixes Applied}{section*.4}{}}
+\newlabel{app:fixes@cref}{{[section][4][]D}{[1][11][]11}{}{}{}}
+\@writefile{toc}{\contentsline {section}{Appendix\nobreakspace  E: Experimental Reproducibility Checklist}{11}{section*.5}\protected@file@percent }
+\newlabel{app:repro}{{E}{11}{\appendixname \nobreakspace \thesectiondis \\* Experimental Reproducibility Checklist}{section*.5}{}}
+\newlabel{app:repro@cref}{{[section][5][]E}{[1][11][]11}{}{}{}}
+\@writefile{toc}{\contentsline {section}{References}{11}{section*.6}\protected@file@percent }
 \bibcite{Cammarata2020}{4}
 \bibcite{Wang2022}{5}
 \bibcite{Hanna2023}{6}
@@ -207,17 +218,6 @@
 \bibcite{DaCosta2020}{13}
 \bibcite{Pymdp2022}{14}
 \bibcite{Anthropic2025CT}{15}
-\@writefile{toc}{\contentsline {section}{Appendix\nobreakspace  C: Docker and DGX Spark Deployment}{11}{section*.3}\protected@file@percent }
-\newlabel{app:docker}{{C}{11}{\appendixname \nobreakspace \thesectiondis \\* Docker and DGX Spark Deployment}{section*.3}{}}
-\newlabel{app:docker@cref}{{[section][3][]C}{[1][11][]11}{}{}{}}
-\@writefile{lol}{\contentsline {lstlisting}{\numberline {1}Docker build and run for DGX Spark.}{11}{lstlisting.1}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{Appendix\nobreakspace  D: Code-Level Fixes Applied}{11}{section*.4}\protected@file@percent }
-\newlabel{app:fixes}{{D}{11}{\appendixname \nobreakspace \thesectiondis \\* Code-Level Fixes Applied}{section*.4}{}}
-\newlabel{app:fixes@cref}{{[section][4][]D}{[1][11][]11}{}{}{}}
-\@writefile{toc}{\contentsline {section}{Appendix\nobreakspace  E: Experimental Reproducibility Checklist}{11}{section*.5}\protected@file@percent }
-\newlabel{app:repro}{{E}{11}{\appendixname \nobreakspace \thesectiondis \\* Experimental Reproducibility Checklist}{section*.5}{}}
-\newlabel{app:repro@cref}{{[section][5][]E}{[1][11][]11}{}{}{}}
-\@writefile{toc}{\contentsline {section}{References}{11}{section*.6}\protected@file@percent }
 \bibcite{Ameisen2025}{16}
 \bibcite{Pearl2009}{17}
 \bibcite{Geiger2021}{18}
@@ -230,6 +230,9 @@
 \bibcite{Bricken2023}{25}
 \bibcite{Cunningham2023}{26}
 \bibcite{Templeton2024}{27}
+\@writefile{lot}{\contentsline {table}{\numberline {IX}{\ignorespaces Summary of critical API fixes applied to the \textsc  {acd}{} codebase.}}{12}{table.9}\protected@file@percent }
+\newlabel{tab:fixes}{{IX}{12}{Summary of critical API fixes applied to the \ACD {} codebase}{table.9}{}}
+\newlabel{tab:fixes@cref}{{[table][9][]IX}{[1][11][]12}{}{}{}}
 \bibcite{team2024gemma}{28}
 \bibcite{Friston2017}{29}
 \bibcite{Tschantz2020}{30}
@@ -238,7 +241,4 @@
 \bibcite{nanda2022transformerlens}{33}
 \bibcite{Dubey2024llama}{34}
 \bibcite{Hubinger2019}{35}
-\@writefile{lot}{\contentsline {table}{\numberline {IX}{\ignorespaces Summary of critical API fixes applied to the \textsc  {acd}{} codebase.}}{12}{table.9}\protected@file@percent }
-\newlabel{tab:fixes}{{IX}{12}{Summary of critical API fixes applied to the \ACD {} codebase}{table.9}{}}
-\newlabel{tab:fixes@cref}{{[table][9][]IX}{[1][11][]12}{}{}{}}
-\gdef \@abspage@last{12}
+\gdef \@abspage@last{13}

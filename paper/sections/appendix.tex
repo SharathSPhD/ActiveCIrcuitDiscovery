@@ -46,10 +46,15 @@ feature selection) and improvement percentages over random and greedy
 baselines.
 
 KL divergence between clean and intervened output distributions is
-computed as:
+computed as:\footnote{The implementation calls
+\texttt{kl\_div(log(p\_interv), p\_clean)}, which in PyTorch's
+convention yields $D_{\text{KL}}(p_{\text{clean}} \| p_{\text{interv}})$.
+This direction measures the information lost when the intervened
+distribution is used to approximate the clean one, and is the natural
+choice for quantifying the causal impact of an ablation.}
 \begin{equation}
-  D_{\text{KL}}(p_{\text{interv}} \| p_{\text{clean}}) =
-  \sum_v p_{\text{interv}}(v) \log \frac{p_{\text{interv}}(v)}{p_{\text{clean}}(v)}
+  D_{\text{KL}}(p_{\text{clean}} \| p_{\text{interv}}) =
+  \sum_v p_{\text{clean}}(v) \log \frac{p_{\text{clean}}(v)}{p_{\text{interv}}(v)}
 \end{equation}
 using \texttt{torch.nn.functional.kl\_div} with a $10^{-10}$ smoothing
 factor to prevent numerical instability.

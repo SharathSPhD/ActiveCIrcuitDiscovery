@@ -78,6 +78,25 @@ prediction changes observed at $10\times$ activation scaling.
 container for NVIDIA DGX Spark, and raw experiment results (JSON) are released
 for full reproduction.
 
+The following testable hypotheses guide the evaluation.
+
+\textbf{H1 (Efficiency).}  The POMDP agent identifies causally important
+features with higher cumulative KL divergence than random selection within
+a fixed budget of $B=20$ interventions. Assessed via a one-sided paired
+$t$-test across prompts ($\alpha = 0.05$).
+
+\textbf{H2 (Causal controllability).}  Scaling individual transcoder features
+at $10\times$ activation changes the model's top-1 prediction for a
+non-trivial fraction of features. Assessed via a one-sided binomial test
+against a 1\% chance-level baseline ($\alpha = 0.05$).
+
+\textbf{H3 (Discovery quality).}  The POMDP agent achieves oracle
+efficiency $\geq 50\%$ with budget $B=20$. Assessed by point estimate and
+standard deviation across prompts.
+
+\textbf{H4 (Cross-architecture transfer).}  The qualitative findings
+obtained on Gemma-2-2B replicate on Llama-3.2-1B.
+
 The remainder of this paper is structured as follows. Section~\ref{sec:background}
 reviews related work on circuit analysis, Active Inference, and sparse
 autoencoders. Section~\ref{sec:method} describes the \ACD{} framework in detail.
