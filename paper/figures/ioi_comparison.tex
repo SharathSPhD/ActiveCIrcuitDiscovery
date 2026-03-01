@@ -15,7 +15,7 @@
     y tick label style={font=\scriptsize},
     ylabel style={font=\scriptsize},
     title style={font=\scriptsize\bfseries},
-    ymin=0, ymax=100,
+    ymin=0,
     enlarge x limits=0.2,
     nodes near coords,
     nodes near coords style={font=\tiny},
@@ -29,24 +29,24 @@
     },
 ]
 
-\nextgroupplot[ybar, bar width=5pt, title={Gemma-2-2B}]
+\nextgroupplot[ybar, bar width=5pt, title={Gemma-2-2B}, ymax=1443]
 \addplot[fill=blue!40, draw=blue!60] coordinates {
-    (Random, 59.4) (Greedy, 66.9) (Bandit, 74.4) (POMDP, 1255.0)
+    (Random, 51.5) (Greedy, 66.9) (Bandit, 74.4) (POMDP, 1255.0)
 };
 
 \addplot[fill=red!40, draw=red!60] coordinates {
-    (Random, 48.8) (Greedy, 79.4) (Bandit, 78.4) (POMDP, 983.0)
+    (Random, 53.0) (Greedy, 79.4) (Bandit, 78.4) (POMDP, 983.0)
 };
 
 \legend{IOI, Multi-step}
 
-\nextgroupplot[ybar, bar width=5pt, title={Llama-3.2-1B}]
+\nextgroupplot[ybar, bar width=5pt, title={Llama-3.2-1B}, ymax=110]
 \addplot[fill=blue!40, draw=blue!60] coordinates {
-    (Random, 48.1) (Greedy, 40.8) (Bandit, 88.2) (POMDP, 90.6)
+    (Random, 37.1) (Greedy, 40.8) (Bandit, 88.2) (POMDP, 90.6)
 };
 
 \addplot[fill=red!40, draw=red!60] coordinates {
-    (Random, 64.8) (Greedy, 9.5) (Bandit, 76.4) (POMDP, 33.6)
+    (Random, 51.6) (Greedy, 9.5) (Bandit, 76.4) (POMDP, 33.6)
 };
 
 \end{groupplot}

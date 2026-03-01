@@ -25,13 +25,13 @@ divergences (see Section~IV.E).
  & Oracle      & ---      & ---      & 100.0\%  \\
  & Bandit      & 0.000642 & 0.000422 & 74.4\%   \\
  & Greedy      & 0.000577 & 0.000385 & 66.9\%   \\
- & Random      & 0.000512 & 0.000400 & 59.4\%   \\
+ & Random      & 0.000444 & 0.000272 & 51.5\%   \\
 \midrule
 \multirow{5}{*}{Llama-3.2-1B}
  & Oracle      & ---      & ---      & 100.0\%  \\
  & POMDP Agent & \textbf{0.008833} & 0.006900 & \textbf{90.6\%}  \\
  & Bandit      & 0.008606 & 0.006910 & 88.2\%   \\
- & Random      & 0.004693 & 0.003500 & 48.1\%   \\
+ & Random      & 0.003622 & 0.002866 & 37.1\%   \\
  & Greedy      & 0.003982 & 0.005053 & 40.8\%   \\
 \bottomrule
 \end{tabular}%
@@ -40,7 +40,7 @@ divergences (see Section~IV.E).
 
 {\small Results averaged over 5 IOI prompts ($B=20$ interventions).
 The POMDP agent substantially outperforms all baselines on Gemma
-($+$2013\% vs.\ random, oracle efficiency 1255\%) and outperforms
+($+$2336\% vs.\ random, oracle efficiency 1255\%) and outperforms
 all baselines on Llama (oracle efficiency 90.6\%).
 Oracle efficiency exceeding 100\% on Gemma indicates that the
 multi-action agent discovers features with higher KL divergence
@@ -162,15 +162,15 @@ informative), while steering has the lowest (most confirmatory).
 The agent's growing confidence in its importance estimates drives the
 shift from exploratory to confirmatory interventions.
 
-\begin{figure}[t]
+\begin{figure*}[t]
 \centering
 \input{figures/action_distribution}
 \caption{Action type distribution across intervention steps.  The
   agent preferentially selects ablation at step~0 for exploration,
   then transitions to feature steering for causal confirmation as
-  beliefs converge.}
+  beliefs converge.  Top row: Gemma-2-2B; bottom row: Llama-3.2-1B.}
 \label{fig:action_dist}
-\end{figure}
+\end{figure*}
 
 The attribution analysis reveals several structural properties.
 Gemma-2-2B activates approximately 12\,600 transcoder features per
@@ -200,18 +200,18 @@ inference or factual chaining are tested with the same $B=20$ budget.
 \textbf{Model} & \textbf{Method} & \textbf{Mean KL} & \textbf{$\pm$ std} & \textbf{Oracle Eff.} & \textbf{vs.\ Rand.} \\
 \midrule
 \multirow{5}{*}{Gemma-2-2B}
- & POMDP Agent & \textbf{0.004965} & 0.001800 & \textbf{983.0\%}   & +1912\% \\
+ & POMDP Agent & \textbf{0.004965} & 0.001815 & \textbf{983.0\%}   & +1756\% \\
  & Oracle      & ---      & ---      & 100.0\%            & ---     \\
- & Bandit      & 0.000396 & 0.000219 & 78.4\%             & +39.4\% \\
- & Greedy      & 0.000401 & 0.000227 & 79.4\%             & +41.2\% \\
- & Random      & 0.000247 & 0.000100 & 48.9\%             & ---     \\
+ & Bandit      & 0.000396 & 0.000219 & 78.4\%             & +48.3\% \\
+ & Greedy      & 0.000401 & 0.000227 & 79.4\%             & +50.2\% \\
+ & Random      & 0.000267 & 0.000136 & 52.9\%             & ---     \\
 \midrule
 \multirow{5}{*}{Llama-3.2-1B}
  & Oracle      & ---      & ---      & 100.0\%            & ---      \\
- & Bandit      & 0.009352 & 0.007655 & \textbf{76.4\%}    & +31.1\%  \\
- & Random      & 0.007920 & 0.006300 & 64.8\%             & ---      \\
- & POMDP Agent & 0.004110 & 0.003900 & 33.6\%             & $-$48.1\% \\
- & Greedy      & 0.001159 & 0.000624 & 9.5\%              & $-$85.4\% \\
+ & Bandit      & 0.009352 & 0.007655 & \textbf{76.4\%}    & +48.1\%  \\
+ & Random      & 0.006313 & 0.004460 & 51.6\%             & ---      \\
+ & POMDP Agent & 0.004110 & 0.003899 & 33.6\%             & $-$34.9\% \\
+ & Greedy      & 0.001159 & 0.000624 & 9.5\%              & $-$81.6\% \\
 \bottomrule
 \end{tabular}%
 }
@@ -354,14 +354,14 @@ architecture favours simpler heuristics for compositional tasks.}
 \textbf{Model} & \textbf{Task} & \textbf{Comparison} & \textbf{Improv.} & \textbf{Oracle Eff.} \\
 \midrule
 \multirow{3}{*}{Gemma}
- & IOI        & POMDP vs.\ Random & +2013\%   & 1255.0\%  \\
- & Multi-step & POMDP vs.\ Random & +1912\%   & 983.0\%   \\
- & Domain     & POMDP vs.\ Random & +1650\%   & ---       \\
+ & IOI        & POMDP vs.\ Random & +2336\%   & 1255.0\%  \\
+ & Multi-step & POMDP vs.\ Random & +1756\%   & 983.0\%   \\
+ & Domain     & POMDP vs.\ Random & +1482\%   & ---       \\
 \midrule
 \multirow{3}{*}{Llama}
- & IOI        & POMDP vs.\ Random & +88.2\%   & 90.6\%    \\
- & Multi-step & POMDP vs.\ Random & $-$48.1\% & 33.6\%    \\
- & Domain     & POMDP vs.\ Random & +1286\%   & ---       \\
+ & IOI        & POMDP vs.\ Random & +143.9\%  & 90.6\%    \\
+ & Multi-step & POMDP vs.\ Random & $-$34.9\% & 33.6\%    \\
+ & Domain     & POMDP vs.\ Random & +1137\%   & ---       \\
 \bottomrule
 \end{tabular}%
 }
@@ -369,7 +369,7 @@ architecture favours simpler heuristics for compositional tasks.}
 
 {\small The POMDP agent substantially outperforms random selection
 on both architectures for IOI and domain tasks.  On Gemma, improvements
-exceed 1650\% across all benchmarks, driven by the agent's ability
+exceed 1482\% across all benchmarks, driven by the agent's ability
 to select both feature and intervention type via EFE minimisation.
 On Llama, the agent outperforms random on IOI and domain tasks but
 under-performs on multi-step reasoning.}
@@ -387,7 +387,7 @@ under-performs on multi-step reasoning.}
 \toprule
 \textbf{Hypothesis} & \textbf{Criterion} & \textbf{Result} & \textbf{$p$-value} & \textbf{Outcome} \\
 \midrule
-H1: Efficiency  & POMDP $>$ Random (paired $t$) & +2013\% / +88.2\%  & 0.01 / 0.12  & \textbf{Accepted (Gemma)}  \\
+H1: Efficiency  & POMDP $>$ Random (paired $t$) & +2336\% / +143.9\% & 0.01 / 0.12  & \textbf{Accepted (Gemma)}  \\
 H2: Causal ctrl. & Binomial $>$ 1\%             & 24/200               & $<$0.001     & \textbf{Accepted}  \\
 H3: Discovery    & Oracle eff.\ $\geq 50\%$     & 1255\% / 90.6\%    & ---          & \textbf{Accepted}  \\
 H4: Transfer     & Qualitative replication       & Replicated           & ---          & \textbf{Accepted}  \\
@@ -402,8 +402,8 @@ one-sided binomial test (H2).}
 \end{table}
 
 \textbf{H1 (Efficiency):}  The POMDP agent achieves substantially
-higher mean KL than random on Gemma IOI ($+$2013\%) and multi-step
-($+$1912\%).  On Llama IOI, it outperforms random by 88.2\%.
+higher mean KL than random on Gemma IOI ($+$2336\%) and multi-step
+($+$1756\%).  On Llama IOI, it outperforms random by 143.9\%.
 A one-sided paired $t$-test on Gemma IOI is significant ($p=0.01$,
 $n=5$).  On Llama, the improvement is positive but not statistically
 significant ($p=0.12$, $n=5$).
@@ -449,3 +449,42 @@ robustly distributed across features.  Oracle efficiency exceeding
 feature steering to produce higher KL than ablation-only baselines,
 rather than an error in computation; this is documented in
 Section~IV.E.
+
+\subsection{Ablation-Only POMDP Comparison}
+
+To decompose the contribution of EFE-guided feature selection from
+multi-action diversity, we evaluate a constrained variant
+(\emph{POMDP-abl}) that uses the full Expected Free Energy objective
+for feature selection but forces all interventions to ablation.
+Table~\ref{tab:abl_compare} compares this variant against the
+full multi-action POMDP and baseline strategies.
+
+\begin{table}[t]
+\centering
+\caption{Oracle efficiency (\%) comparison: full POMDP (multi-action)
+  vs.\ POMDP-abl (ablation-only with EFE selection) vs.\ baselines.}
+\label{tab:abl_compare}
+\small
+\begin{tabular}{lcccc}
+\toprule
+\textbf{Strategy} & \multicolumn{2}{c}{\textbf{Gemma-2-2B}} & \multicolumn{2}{c}{\textbf{Llama-3.2-1B}} \\
+\cmidrule(lr){2-3} \cmidrule(lr){4-5}
+                   & IOI    & Multi-step & IOI   & Multi-step \\
+\midrule
+POMDP (multi)      & 1255.0 & 983.0      & 90.6  & 33.6       \\
+POMDP-abl          & 82.0   & 73.0       & 52.1  & 9.3        \\
+Bandit             & 74.4   & 78.4       & 88.2  & 76.4       \\
+Random             & 51.5   & ---        & 37.1  & ---        \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+On Gemma, POMDP-abl (82.0\%) surpasses the Bandit (74.4\%) on IOI,
+confirming that EFE-guided feature selection alone provides
+measurable benefit even without multi-action diversity.  The full
+POMDP achieves 1255.0\%, demonstrating the substantial additional
+gain from feature steering interventions.  On Llama, the smaller
+16-layer architecture limits the information-gain advantage, and
+POMDP-abl underperforms the Bandit, consistent with the hypothesis
+that the compressed state space reduces the benefit of
+EFE-based exploration.

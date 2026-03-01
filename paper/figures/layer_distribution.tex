@@ -32,11 +32,19 @@
     (Early, 23) (Mid, 3) (Late, 4)
 };
 
+\addplot[fill=red!40, draw=red!60] coordinates {
+    (Early, 37) (Mid, 4) (Late, 9)
+};
+
 \legend{Multi-step, IOI}
 
 \nextgroupplot[ybar, bar width=8pt, title={Llama-3.2-1B}]
 \addplot[fill=blue!40, draw=blue!60] coordinates {
     (Early, 16) (Mid, 4) (Late, 10)
+};
+
+\addplot[fill=red!40, draw=red!60] coordinates {
+    (Early, 34) (Mid, 4) (Late, 12)
 };
 
 \end{groupplot}
