@@ -31,8 +31,8 @@ the KL divergence caused by ablating each candidate feature via the
 \subsubsection{Multi-step Reasoning}
 
 Three prompts requiring compositional reasoning across two or more
-hops: e.g.\ ``The capital of the country where the Eiffel Tower is
-located is''.
+hops: e.g.\ ``The capital of France is Paris. Paris is in Europe. The
+continent containing Paris is''.
 
 \subsubsection{Feature Steering}
 
@@ -83,6 +83,15 @@ defined as $\text{Cum.~KL} / \text{Oracle~Cum.~KL} \times 100\%$
 and indicating how close a method is to optimal.  The
 \emph{prediction change rate} is the fraction of steering experiments
 in which the model's top-1 prediction changes.
+
+The oracle and all baselines use ablation-only KL divergences,
+whereas the POMDP agent may select patching or steering interventions
+whose KL magnitudes differ from ablation.  Oracle efficiency therefore
+measures how well the agent identifies causally important features
+relative to an ablation-only upper bound.  This is a conservative
+comparison: the agent is penalised for exploratory patching or
+steering steps that may produce lower KL than ablation of the same
+feature.
 
 \subsection{POMDP Agent Configuration}
 

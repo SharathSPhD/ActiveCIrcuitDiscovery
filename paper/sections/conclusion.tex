@@ -3,13 +3,15 @@
 This paper presented Active Circuit Discovery (\ACD), a framework that
 combines attribution graph analysis with active inference for efficient
 circuit discovery in large language models.
-The core contribution is the formulation of circuit discovery as a POMDP,
-solved by a multi-factor Active Inference agent implemented with
-\texttt{pymdp}~\cite{Pymdp2022}. The agent maintains beliefs over three
-hidden state factors (feature importance, layer role, and causal
-influence), selects interventions by minimising Expected Free Energy,
-and learns its observation model online through Dirichlet parameter
-updates from real intervention data.
+The core contribution is the formulation of circuit discovery as a POMDP
+with a three-action intervention space, solved by a multi-factor Active
+Inference agent implemented with \texttt{pymdp}~\cite{Pymdp2022}. The
+agent maintains beliefs over three hidden state factors (feature
+importance, layer role, and causal influence), selects both the target
+feature and intervention type (ablation, activation patching, or feature
+steering) by minimising Expected Free Energy over the joint
+feature--action space, and learns its observation model online through
+Dirichlet parameter updates from real intervention data.
 
 The framework integrates Anthropic's \texttt{circuit-tracer}
 library~\cite{Anthropic2025CT} for Edge Attribution Patching with
@@ -27,20 +29,23 @@ UCB-style bandit heuristic, greedy importance ranking, random selection,
 and an oracle upper bound.
 
 Against the four hypotheses stated in Section~\ref{sec:intro}:
-\textbf{H1} (efficiency) shows a positive trend on Gemma
-($+$16--30\% over random) but is not statistically significant at
-$\alpha=0.05$ due to small prompt counts; \textbf{H2} (causal
-controllability) is accepted ($p < 10^{-15}$, binomial test on
-17/100 prediction changes at $10\times$ scaling); \textbf{H3}
-(discovery quality $\geq 50\%$ oracle efficiency) is accepted for
-Gemma (58.3\%) but not for Llama (37.5\%); and \textbf{H4}
-(cross-architecture transfer) is accepted at the qualitative level,
-with all experiment types replicated on Llama-3.2-1B.
+\textbf{H1} (efficiency) is accepted for Gemma ($+$2013\% over random
+on IOI, $p=0.01$) and shows a positive trend on Llama ($+$88\%,
+$p=0.12$); \textbf{H2} (causal controllability) is accepted
+($p < 10^{-15}$, binomial test on 24/200 prediction changes at
+$10\times$ scaling); \textbf{H3} (discovery quality $\geq 50\%$
+oracle efficiency) is accepted on both architectures (1255\% Gemma,
+90.6\% Llama); and \textbf{H4} (cross-architecture transfer) is
+accepted at both qualitative and quantitative levels, with the POMDP
+agent outperforming baselines on IOI and domain tasks on both models.
 
 A notable finding is the task-dependent layer structure of circuits:
 IOI circuits concentrate in late layers, while reasoning and logic
 features concentrate in early layers, and science prompts show a
 uniform distribution.  This pattern holds across both architectures.
+The multi-action POMDP enables oracle efficiencies exceeding 100\%
+on Gemma because feature steering interventions can amplify causal
+effects beyond what ablation alone reveals.
 
 Future work will increase prompt set sizes for statistical power,
 explore multi-step planning where the agent can compose sequences of

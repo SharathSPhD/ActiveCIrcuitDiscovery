@@ -22,10 +22,62 @@ and adjacent-position features receive a 10\% reduction
 Updated after each observation as
 $\lambda_\ell = 1 + 0.5 (\bar{\text{KL}}_\ell / \bar{\text{KL}}_{\text{global}} - 1)$.
 
+\textbf{Prior observation derivation.}  Before an intervention is
+executed, the agent derives a prior observation for each candidate from
+its graph metadata.  The normalised graph importance $\text{imp}(i)
+\in [0,1]$ is scaled by a factor of $0.01$ before discretisation:
+$o_{\text{prior}} = \text{discretise}(\text{imp}(i) \times 0.01)$.
+This maps the graph-derived importance into the KL divergence
+threshold range $[10^{-4}, 10^{-2}]$, ensuring that the prior
+observation reflects expected KL magnitudes rather than raw graph
+weights.
+
 \textbf{Candidate extraction.}  Up to 5 features per layer, 60 total
 candidates, selected from pruned graph features sorted by influence
 (sum of absolute adjacency weights).  Pruning thresholds: node = 0.8,
 edge = 0.98 (defaults from \texttt{circuit-tracer}).
+
+
+\section{B-Matrix Transition Priors}
+\label{app:bmatrix}
+
+The transition model $\mat{B}$ for Factor~0 (feature importance) uses
+action-conditioned dynamics that encode the causal semantics of each
+intervention type.  These are calibrated priors informed by the
+distinct informational roles of ablation, activation patching, and
+feature steering.
+
+\textbf{Ablation (action~0)} is an exploratory intervention that
+removes a feature entirely, producing the broadest distribution of
+possible outcomes.  Its transition matrix has the lowest diagonal
+concentration (50\% stay, 25\% down, 25\% up), yielding the highest
+transition entropy among the three actions.  Under the EFE
+decomposition, this high entropy translates into high expected
+information gain, making ablation the preferred action when the
+agent is uncertain about a feature's importance.
+
+\textbf{Activation patching (action~1)} replaces the feature
+activation with a reference value, providing a moderately
+informative signal.  The transition is more concentrated
+(70\% stay, 15\% down, 15\% up), producing moderate information
+gain.  Patching is selected when the agent has partial evidence
+and seeks to refine its importance estimate.
+
+\textbf{Feature steering (action~2)} scales the feature activation
+by a multiplier while preserving its directional contribution.
+This near-identity transition (90\% stay, 5\% down, 5\% up) has
+the lowest transition entropy, making it the preferred action
+when the agent's belief is already concentrated and confirmation
+is sought rather than exploration.
+
+All transition probabilities are symmetric around the current state
+to ensure that the expected utility is similar across actions, so
+that the epistemic term (information gain) drives action selection.
+These probabilities are fixed hyperparameters, not learned from data.
+Varying the diagonal element of the ablation transition matrix between
+0.4 and 0.7 did not qualitatively change the action-type distribution
+or oracle efficiency rankings across benchmarks; however, a full
+hyperparameter sweep is left to future work.
 
 
 \section{Correspondence Metric}
@@ -115,7 +167,7 @@ during the implementation and validation process.
       Real measurements only \\
     \texttt{pomdp\_agent.py} & Skip bias &
       ``skip'' action 90\% of the time &
-      Custom ActiveInferenceSelector \\
+      pymdp EFE-based multi-action selection with online Dirichlet learning \\
     \bottomrule
   \end{tabularx}
 \end{table*}

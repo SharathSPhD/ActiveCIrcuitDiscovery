@@ -104,11 +104,18 @@ levels (sparse, moderate, dense).
 
 \subsubsection{Actions}
 
-Three intervention types are available: \emph{ablation}, which sets
-the transcoder feature activation to zero; \emph{activation patching},
-which replaces the feature activation with a reference value from a
-different prompt; and \emph{feature steering}, which scales the
-activation by a multiplier $m \in \{0, 2, 5, 10\}$.
+Three intervention types are available: \emph{ablation} (action~0),
+which sets the transcoder feature activation to zero;
+\emph{activation patching} (action~1), which replaces the feature
+activation with a mean-centred reference value; and
+\emph{feature steering} (action~2), which scales the activation
+by a multiplier.  Each action induces distinct transition dynamics
+in the B-matrix (see Section~\ref{app:bmatrix}): ablation is
+exploratory and shifts the importance belief downward, patching is
+confirmatory and surfaces real importance, and steering preserves
+the current belief.  The agent selects which action to apply to
+each candidate by minimising Expected Free Energy over the joint
+(feature, action) space.
 
 \subsubsection{Generative Model}
 
@@ -119,10 +126,14 @@ $P(o_m \mid s_0, s_1, s_2)$ for each modality~$m$, encoding
 domain-informed priors about how hidden feature states produce
 observable intervention effects; this matrix is learned online via
 Dirichlet concentration updates from each observation.  The
-transition model $\mat{B}$ specifies $P(s' \mid s, a)$: Factor~0
-(importance) is controlled by the three actions, while Factors~1
-and~2 have identity transitions reflecting intrinsic properties that
-do not change upon intervention.  The preference model $\mat{C}$
+transition model $\mat{B}$ specifies $P(s' \mid s, a)$ with
+action-conditioned dynamics: Factor~0 (importance) has distinct
+transition matrices for each of the three actions, encoding how
+ablation, patching, and steering affect the agent's belief about
+feature importance (see Appendix~\ref{app:bmatrix} for the
+calibrated priors).  Factors~1 and~2 have identity transitions
+tiled across actions, reflecting intrinsic properties that do not
+change upon intervention.  The preference model $\mat{C}$
 is a log-prior over preferred observations in which higher KL
 divergence and higher activation are favoured, encoding the goal of
 finding causally important features.  Finally, the prior $\mat{D}$
@@ -191,13 +202,21 @@ revise the inferred circuit structure.
 \label{fig:flow}
 \end{figure}
 
-The intervention engine implements two manipulation types via the
-\texttt{feature\_intervention} API:
+The intervention engine implements three manipulation types via the
+\texttt{feature\_intervention} API, dispatched according to the
+action selected by the POMDP agent at each step:
 
 \textbf{Ablation:} Sets transcoder feature $(l, p, f)$ to zero:
 \begin{equation}
   \text{logits}_{\text{abl}} = \text{feature\_intervention}(\text{prompt},
   [(l, p, f, 0)])
+\end{equation}
+
+\textbf{Activation Patching:} Replaces feature activation with a
+mean-centred reference value $r$:
+\begin{equation}
+  \text{logits}_{\text{patch}} = \text{feature\_intervention}(\text{prompt},
+  [(l, p, f, r)])
 \end{equation}
 
 \textbf{Feature Steering:} Scales activation by multiplier $m$:

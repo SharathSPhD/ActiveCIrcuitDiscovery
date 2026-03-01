@@ -236,6 +236,39 @@ def steer_feature(
     return max(0, kl), ld, new_top
 
 
+def patch_feature(
+    model: ReplacementModel, prompt: str, feat: Dict,
+    clean_probs: torch.Tensor, clean_last: torch.Tensor,
+    ref_value: float = 0.0,
+) -> Tuple[float, float]:
+    """Patch a feature to a reference value and return (KL, logit_diff)."""
+    iv, _ = model.feature_intervention(
+        prompt, [(feat['layer'], feat['pos'], feat['fidx'], ref_value)],
+        return_activations=False
+    )
+    iv_last = iv[0, -1, :]
+    iv_probs = torch.softmax(iv_last, -1)
+    kl = float(torch.nn.functional.kl_div(
+        torch.log(iv_probs + 1e-10), clean_probs, reduction='sum'
+    ).item())
+    ld = float(torch.norm(iv_last - clean_last).item())
+    return max(0, kl), ld
+
+
+def execute_intervention(
+    model: ReplacementModel, prompt: str, feat: Dict,
+    action_name: str, clean_probs: torch.Tensor, clean_last: torch.Tensor,
+) -> Tuple[float, float]:
+    """Dispatch to the appropriate intervention based on agent's selected action."""
+    if action_name == "activation_patching":
+        return patch_feature(model, prompt, feat, clean_probs, clean_last)
+    elif action_name == "feature_steering":
+        kl, ld, _ = steer_feature(model, prompt, feat, 5.0, clean_probs, clean_last)
+        return kl, ld
+    else:
+        return ablate_feature(model, prompt, feat, clean_probs, clean_last)
+
+
 # ======================================================================
 # IOI experiment
 # ======================================================================
@@ -264,32 +297,36 @@ def run_ioi_experiment(
         clean_last = clean_logits[0, -1, :]
         clean_probs = torch.softmax(clean_last, -1)
 
-        # Ground-truth KL for every candidate
-        gt: Dict[str, Dict[str, Any]] = {}
-        for feat in candidates:
-            kl, ld = ablate_feature(model, prompt, feat, clean_probs, clean_last)
-            gt[feat['fid']] = {'kl': kl, 'ld': ld, 'layer': feat['layer']}
-        gt_sorted = sorted(gt.items(), key=lambda x: x[1]['kl'], reverse=True)
-
-        # --- pymdp agent ---
+        # --- pymdp agent (online, multi-action) ---
         agent = ActiveInferencePOMDPAgent(n_layers=n_layers)
         agent.initialize()
         observed_fids: set = set()
         ai_kls = []
+        ai_actions = []
         for step in range(min(budget, len(candidates))):
             unobserved = [c for c in candidates if c['fid'] not in observed_fids]
             if not unobserved:
                 break
-            feat, action, efe = agent.select_intervention(unobserved)
-            kl = gt[feat['fid']]['kl']
+            feat, action_name, efe = agent.select_intervention(unobserved)
+            kl, ld = execute_intervention(
+                model, prompt, feat, action_name, clean_probs, clean_last
+            )
             agent.update_beliefs(
-                feat,
+                feat, action_name=action_name,
                 kl_divergence=kl,
                 activation_value=feat['act'],
                 graph_connectivity=feat.get('in_degree', 0) + feat.get('out_degree', 0),
             )
             observed_fids.add(feat['fid'])
             ai_kls.append(kl)
+            ai_actions.append(action_name)
+
+        # Ground-truth ablation KL for ALL candidates (for baselines)
+        gt: Dict[str, Dict[str, Any]] = {}
+        for feat in candidates:
+            kl, ld = ablate_feature(model, prompt, feat, clean_probs, clean_last)
+            gt[feat['fid']] = {'kl': kl, 'ld': ld, 'layer': feat['layer']}
+        gt_sorted = sorted(gt.items(), key=lambda x: x[1]['kl'], reverse=True)
 
         # --- bandit selector ---
         bandit = BanditSelector(candidates, exploration_weight=2.0)
@@ -319,6 +356,7 @@ def run_ioi_experiment(
             'n_features': int(raw.active_features.shape[0]),
             'ground_truth_top5': [(fid, v['kl']) for fid, v in gt_sorted[:5]],
             'ai_kls': ai_kls,
+            'ai_actions': ai_actions,
             'bandit_kls': bandit_kls,
             'greedy_kls': greedy_kls,
             'oracle_kls': oracle_kls,
@@ -474,30 +512,35 @@ def run_multistep_experiment(
         clean_probs = torch.softmax(clean_last, -1)
         clean_top = model.tokenizer.decode([int(clean_probs.argmax().item())])
 
-        gt: Dict[str, Dict[str, Any]] = {}
-        for feat in candidates:
-            kl, ld = ablate_feature(model, prompt, feat, clean_probs, clean_last)
-            gt[feat['fid']] = {'kl': kl, 'ld': ld, 'layer': feat['layer']}
-        gt_sorted = sorted(gt.items(), key=lambda x: x[1]['kl'], reverse=True)
-
-        # pymdp agent
+        # --- pymdp agent (online, multi-action) ---
         agent = ActiveInferencePOMDPAgent(n_layers=n_layers)
         agent.initialize()
         observed_fids: set = set()
         ai_kls = []
+        ai_actions = []
         for step in range(min(budget, len(candidates))):
             unobserved = [c for c in candidates if c['fid'] not in observed_fids]
             if not unobserved:
                 break
-            feat, action, efe = agent.select_intervention(unobserved)
-            kl = gt[feat['fid']]['kl']
+            feat, action_name, efe = agent.select_intervention(unobserved)
+            kl, ld = execute_intervention(
+                model, prompt, feat, action_name, clean_probs, clean_last
+            )
             agent.update_beliefs(
-                feat, kl_divergence=kl,
+                feat, action_name=action_name, kl_divergence=kl,
                 activation_value=feat['act'],
                 graph_connectivity=feat.get('in_degree', 0) + feat.get('out_degree', 0),
             )
             observed_fids.add(feat['fid'])
             ai_kls.append(kl)
+            ai_actions.append(action_name)
+
+        # Ground-truth ablation KL for ALL candidates (for baselines)
+        gt: Dict[str, Dict[str, Any]] = {}
+        for feat in candidates:
+            kl, ld = ablate_feature(model, prompt, feat, clean_probs, clean_last)
+            gt[feat['fid']] = {'kl': kl, 'ld': ld, 'layer': feat['layer']}
+        gt_sorted = sorted(gt.items(), key=lambda x: x[1]['kl'], reverse=True)
 
         # bandit
         bandit = BanditSelector(candidates, exploration_weight=2.0)
@@ -528,6 +571,7 @@ def run_multistep_experiment(
             'n_candidates': len(candidates),
             'top10_features': [(fid, v['kl'], v['layer']) for fid, v in gt_sorted[:10]],
             'ai_kls': ai_kls,
+            'ai_actions': ai_actions,
             'bandit_kls': bandit_kls,
             'greedy_kls': greedy_kls,
             'oracle_kls': oracle_kls,
@@ -615,30 +659,44 @@ def run_domain_experiment(
             clean_probs = torch.softmax(clean_last, -1)
             clean_top = model.tokenizer.decode([int(clean_probs.argmax().item())])
 
+            # --- pymdp agent (online, multi-action) ---
+            agent = ActiveInferencePOMDPAgent(n_layers=n_layers)
+            agent.initialize()
+            observed_fids: set = set()
+            ai_kls = []
+            ai_actions = []
+            for step in range(min(budget, len(candidates))):
+                unobserved = [c for c in candidates if c['fid'] not in observed_fids]
+                if not unobserved:
+                    break
+                feat_sel, action_name, efe = agent.select_intervention(unobserved)
+                kl, ld = execute_intervention(
+                    model, prompt, feat_sel, action_name, clean_probs, clean_last
+                )
+                agent.update_beliefs(
+                    feat_sel, action_name=action_name, kl_divergence=kl,
+                    activation_value=feat_sel['act'],
+                    graph_connectivity=feat_sel.get('in_degree', 0) + feat_sel.get('out_degree', 0),
+                )
+                observed_fids.add(feat_sel['fid'])
+                ai_kls.append(kl)
+                ai_actions.append(action_name)
+
+            # Ground-truth ablation KL for ALL candidates (for baselines)
             gt: Dict[str, Dict[str, Any]] = {}
             for feat in candidates:
                 kl, ld = ablate_feature(model, prompt, feat, clean_probs, clean_last)
                 gt[feat['fid']] = {'kl': kl, 'ld': ld, 'layer': feat['layer']}
             gt_sorted = sorted(gt.items(), key=lambda x: x[1]['kl'], reverse=True)
 
-            # pymdp agent
-            agent = ActiveInferencePOMDPAgent(n_layers=n_layers)
-            agent.initialize()
-            observed_fids: set = set()
-            ai_kls = []
+            # bandit
+            bandit = BanditSelector(candidates, exploration_weight=2.0)
+            bandit_kls = []
             for step in range(min(budget, len(candidates))):
-                unobserved = [c for c in candidates if c['fid'] not in observed_fids]
-                if not unobserved:
-                    break
-                feat_sel, action, efe = agent.select_intervention(unobserved)
-                kl = gt[feat_sel['fid']]['kl']
-                agent.update_beliefs(
-                    feat_sel, kl_divergence=kl,
-                    activation_value=feat_sel['act'],
-                    graph_connectivity=feat_sel.get('in_degree', 0) + feat_sel.get('out_degree', 0),
-                )
-                observed_fids.add(feat_sel['fid'])
-                ai_kls.append(kl)
+                idx, feat = bandit.select_next()
+                kl = gt[feat['fid']]['kl']
+                bandit.update(idx, kl)
+                bandit_kls.append(kl)
 
             greedy_kls = [gt[candidates[i]['fid']]['kl'] for i in range(min(budget, len(candidates)))]
 
@@ -663,11 +721,15 @@ def run_domain_experiment(
                 'n_candidates': len(candidates),
                 'top10_features': [(fid, v['kl'], v['layer']) for fid, v in gt_sorted[:10]],
                 'ai_kls': ai_kls,
+                'ai_actions': ai_actions,
+                'bandit_kls': bandit_kls,
                 'greedy_kls': greedy_kls,
                 'ai_mean': float(np.mean(ai_kls)) if ai_kls else 0,
+                'bandit_mean': float(np.mean(bandit_kls)) if bandit_kls else 0,
                 'greedy_mean': float(np.mean(greedy_kls)),
                 'random_mean': float(np.mean([np.mean(t) for t in rand_trials])),
                 'ai_cumkl': float(np.sum(ai_kls)),
+                'bandit_cumkl': float(np.sum(bandit_kls)),
                 'greedy_cumkl': float(np.sum(greedy_kls)),
                 'random_cumkl': float(np.mean([np.sum(t) for t in rand_trials])),
                 'oracle_cumkl': float(np.sum(oracle_kls)),
@@ -675,6 +737,7 @@ def run_domain_experiment(
             })
 
         ai_means     = [r['ai_mean'] for r in domain_results]
+        bandit_means = [r['bandit_mean'] for r in domain_results]
         greedy_means = [r['greedy_mean'] for r in domain_results]
         rand_means   = [r['random_mean'] for r in domain_results]
 
@@ -682,6 +745,7 @@ def run_domain_experiment(
             'per_prompt': domain_results,
             'layer_distribution': {'early': domain_early, 'mid': domain_mid, 'late': domain_late},
             'ai_mean_kl': float(np.mean(ai_means)),
+            'bandit_mean_kl': float(np.mean(bandit_means)),
             'greedy_mean_kl': float(np.mean(greedy_means)),
             'random_mean_kl': float(np.mean(rand_means)),
             'ai_vs_random_pct': float((np.mean(ai_means) - np.mean(rand_means)) / max(np.mean(rand_means), 1e-10) * 100),
@@ -689,6 +753,7 @@ def run_domain_experiment(
         }
 
     all_ai     = [d['ai_mean_kl'] for d in by_domain.values()]
+    all_bandit = [d['bandit_mean_kl'] for d in by_domain.values()]
     all_greedy = [d['greedy_mean_kl'] for d in by_domain.values()]
     all_rand   = [d['random_mean_kl'] for d in by_domain.values()]
 
@@ -698,6 +763,7 @@ def run_domain_experiment(
         'by_domain': by_domain,
         'aggregate': {
             'ai_mean_kl': float(np.mean(all_ai)),
+            'bandit_mean_kl': float(np.mean(all_bandit)),
             'greedy_mean_kl': float(np.mean(all_greedy)),
             'random_mean_kl': float(np.mean(all_rand)),
             'ai_vs_random_pct': float((np.mean(all_ai) - np.mean(all_rand)) / max(np.mean(all_rand), 1e-10) * 100),

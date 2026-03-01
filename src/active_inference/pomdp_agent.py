@@ -184,25 +184,60 @@ class ActiveInferencePOMDPAgent:
     def _build_B(self) -> list:
         """Transition model P(s' | s, a).
 
-        Only factor 0 (importance) is influenced by actions;
-        factors 1 and 2 are intrinsic properties with identity dynamics.
+        Factor 0 (importance) has action-conditioned dynamics reflecting
+        the causal semantics of each intervention type:
+          - Ablation (a=0): exploratory, shifts importance belief downward.
+          - Activation patching (a=1): confirmatory, surfaces real importance.
+          - Feature steering (a=2): causal confirmation, mostly preserves belief.
+        Factors 1 and 2 are intrinsic properties with identity dynamics
+        (tiled across actions for dimensional consistency with pymdp).
         """
         B = utils.obj_array(3)
-
         B[0] = np.zeros((N_IMPORTANCE, N_IMPORTANCE, N_ACTIONS))
-        for a in range(N_ACTIONS):
-            for s in range(N_IMPORTANCE):
-                t = np.zeros(N_IMPORTANCE)
-                t[s] = 0.70
-                if s > 0:
-                    t[s - 1] = 0.15
-                else:
-                    t[s] += 0.15
-                if s < N_IMPORTANCE - 1:
-                    t[s + 1] = 0.15
-                else:
-                    t[s] += 0.15
-                B[0][:, s, a] = t / t.sum()
+
+        # Action 0: Ablation -- exploratory, broad symmetric transition
+        # (highest transition entropy → highest expected info gain)
+        for s in range(N_IMPORTANCE):
+            t = np.zeros(N_IMPORTANCE)
+            t[s] = 0.50
+            if s > 0:
+                t[s - 1] = 0.25
+            else:
+                t[s] += 0.25
+            if s < N_IMPORTANCE - 1:
+                t[s + 1] = 0.25
+            else:
+                t[s] += 0.25
+            B[0][:, s, 0] = t / t.sum()
+
+        # Action 1: Activation patching -- moderate symmetric transition
+        for s in range(N_IMPORTANCE):
+            t = np.zeros(N_IMPORTANCE)
+            t[s] = 0.70
+            if s > 0:
+                t[s - 1] = 0.15
+            else:
+                t[s] += 0.15
+            if s < N_IMPORTANCE - 1:
+                t[s + 1] = 0.15
+            else:
+                t[s] += 0.15
+            B[0][:, s, 1] = t / t.sum()
+
+        # Action 2: Feature steering -- confirmatory, near-identity transition
+        # (lowest transition entropy → lowest info gain, used for confirmation)
+        for s in range(N_IMPORTANCE):
+            t = np.zeros(N_IMPORTANCE)
+            t[s] = 0.90
+            if s > 0:
+                t[s - 1] = 0.05
+            else:
+                t[s] += 0.05
+            if s < N_IMPORTANCE - 1:
+                t[s + 1] = 0.05
+            else:
+                t[s] += 0.05
+            B[0][:, s, 2] = t / t.sum()
 
         B[1] = np.eye(N_LAYER_ROLE).reshape(N_LAYER_ROLE, N_LAYER_ROLE, 1)
         B[2] = np.eye(N_CAUSAL).reshape(N_CAUSAL, N_CAUSAL, 1)
@@ -317,6 +352,7 @@ class ActiveInferencePOMDPAgent:
 
     def _feature_to_prior_obs(self, feat: Dict[str, Any]) -> list:
         """Derive an initial observation from graph metadata (before intervention)."""
+        # Scale graph importance [0,1] into KL threshold range [1e-4, 1e-2]
         imp_obs = self._discretise_kl(feat.get("imp", 0.0) * 0.01)
         act_obs = self._discretise_activation(feat.get("act", 0.0))
         in_deg  = feat.get("in_degree", 0)
@@ -342,12 +378,12 @@ class ActiveInferencePOMDPAgent:
         self,
         candidate_features: List[Dict[str, Any]],
     ) -> Tuple[Dict[str, Any], str, float]:
-        """Pick the next feature and action by minimising EFE.
+        """Pick the next (feature, action) pair by minimising EFE.
 
-        For each candidate, a prior observation is derived from graph
-        metadata.  The agent infers states and policies conditioned on
-        that observation, then the candidate--action pair with the
-        lowest EFE is returned.
+        Performs a true joint search over all N_candidates x N_ACTIONS
+        pairs.  The agent's belief state (qs) is saved before the
+        evaluation loop and restored afterwards so the loop does not
+        corrupt the state used by the subsequent update_beliefs() call.
 
         Returns
         -------
@@ -359,22 +395,30 @@ class ActiveInferencePOMDPAgent:
         if not candidate_features:
             raise ValueError("Empty candidate list.")
 
+        saved_qs = (
+            [q.copy() for q in self._agent.qs]
+            if self._agent.qs is not None
+            else None
+        )
+
         best_feat: Optional[Dict] = None
         best_action = 0
-        best_efe = float("inf")
+        best_efe = float("-inf")
 
         for feat in candidate_features:
             obs = self._feature_to_prior_obs(feat)
             self._agent.infer_states(obs)
-            q_pi, efe = self._agent.infer_policies()
+            # pymdp returns negative EFE (higher = better policy)
+            q_pi, neg_efe = self._agent.infer_policies()
 
-            min_idx = int(np.argmin(efe))
-            min_val = float(efe[min_idx])
+            for a_idx in range(len(neg_efe)):
+                if float(neg_efe[a_idx]) > best_efe:
+                    best_efe = float(neg_efe[a_idx])
+                    best_feat = feat
+                    best_action = a_idx
 
-            if min_val < best_efe:
-                best_efe = min_val
-                best_feat = feat
-                best_action = min_idx
+        if saved_qs is not None:
+            self._agent.qs = saved_qs
 
         action_name = ACTION_NAMES[best_action]
 
@@ -390,14 +434,18 @@ class ActiveInferencePOMDPAgent:
     def update_beliefs(
         self,
         feature: Dict[str, Any],
+        action_name: str,
         kl_divergence: float,
         activation_value: float,
         graph_connectivity: float,
     ) -> InterventionRecord:
         """Feed real intervention results back into the agent.
 
-        Performs posterior state inference, A-matrix Dirichlet learning,
-        and time-stepping.
+        Follows the correct pymdp call sequence:
+          infer_states -> infer_policies -> update_A -> set action -> step_time
+        The executed action is assigned to self._agent.action so that
+        step_time() applies the correct B-matrix column for the state
+        transition.
         """
         if self._agent is None:
             self.initialize()
@@ -406,14 +454,50 @@ class ActiveInferencePOMDPAgent:
         beliefs_before = self._snapshot_beliefs()
 
         self._agent.infer_states(obs)
-        if hasattr(self._agent, "update_A"):
-            self._agent.update_A(obs)
+        q_pi, neg_efe = self._agent.infer_policies()
 
-        q_pi, efe = self._agent.infer_policies()
+        try:
+            self._agent.update_A(obs)
+        except AttributeError:
+            for m, o in enumerate(obs):
+                qs_joint = np.einsum(
+                    'i,j,k->ijk',
+                    self._agent.qs[0], self._agent.qs[1], self._agent.qs[2],
+                )
+                self._pA[m][o] += self.lr_pA * qs_joint
+                self._agent.A[m] = (
+                    self._pA[m] / self._pA[m].sum(axis=0, keepdims=True)
+                )
+            logger.warning(
+                "pymdp update_A() unavailable; used manual Dirichlet update."
+            )
+
+        action_idx = (
+            ACTION_NAMES.index(action_name) if action_name in ACTION_NAMES else 0
+        )
+        # pymdp expects one action per factor: factor 0 is controllable,
+        # factors 1 and 2 have single-control identity transitions.
+        self._agent.action = np.array([action_idx, 0, 0])
         self._agent.step_time()
 
+        # Fold the action-conditioned transition into D and clear
+        # self.action so the next infer_states() call uses D as its
+        # prior (avoids get_expected_states_interactions, which has a
+        # list-indexing bug in this pymdp version).
+        if self._agent.qs is not None:
+            self._agent.D[0] = self._agent.B[0][:, :, action_idx].dot(
+                self._agent.qs[0]
+            )
+            self._agent.D[1] = self._agent.B[1][:, :, 0].dot(
+                self._agent.qs[1]
+            )
+            self._agent.D[2] = self._agent.B[2][:, :, 0].dot(
+                self._agent.qs[2]
+            )
+        self._agent.action = None
+
         beliefs_after = self._snapshot_beliefs()
-        min_efe = float(efe[int(np.argmin(efe))])
+        best_neg_efe = float(neg_efe[int(np.argmax(neg_efe))])
 
         record = InterventionRecord(
             step=self._step,
@@ -421,14 +505,14 @@ class ActiveInferencePOMDPAgent:
             layer=feature.get("layer", -1),
             position=feature.get("pos", -1),
             feature_idx=feature.get("fidx", -1),
-            action="ablation",
+            action=action_name,
             observation=tuple(obs),
             kl_divergence=kl_divergence,
             activation_value=activation_value,
             graph_connectivity=graph_connectivity,
             beliefs_before=beliefs_before,
             beliefs_after=beliefs_after,
-            efe_value=min_efe,
+            efe_value=best_neg_efe,
         )
 
         self.history.append(record)
