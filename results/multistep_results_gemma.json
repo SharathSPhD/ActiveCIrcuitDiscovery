@@ -767,7 +767,9 @@
     "ai_vs_bandit_pct": 1153.1073888232197,
     "ai_oracle_efficiency": 983.0463527247464,
     "ai_abl_oracle_efficiency": 73.0384353221605,
-    "bandit_oracle_efficiency": 78.44869174763348
+    "bandit_oracle_efficiency": 78.44869174763348,
+    "random_oracle_efficiency": 52.95892579832683,
+    "greedy_oracle_efficiency": 79.42257339871259
   },
   "elapsed_seconds": 150.58761048316956,
   "model": "google/gemma-2-2b"

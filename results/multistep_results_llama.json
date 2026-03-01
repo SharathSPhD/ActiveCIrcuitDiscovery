@@ -767,7 +767,9 @@
     "ai_vs_bandit_pct": -56.05289664287311,
     "ai_oracle_efficiency": 33.59706669911351,
     "ai_abl_oracle_efficiency": 9.263161938342437,
-    "bandit_oracle_efficiency": 76.44887633684073
+    "bandit_oracle_efficiency": 76.44887633684073,
+    "random_oracle_efficiency": 51.60762003067782,
+    "greedy_oracle_efficiency": 9.470864656053912
   },
   "elapsed_seconds": 104.39034652709961,
   "model": "meta-llama/Llama-3.2-1B"

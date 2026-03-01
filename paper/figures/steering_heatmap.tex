@@ -16,8 +16,9 @@
     title style={font=\scriptsize\bfseries},
     legend style={
         font=\tiny,
-        at={(0.02,0.98)},
-        anchor=north west
+        at={(0.5,-0.25)},
+        anchor=north,
+        legend columns=3
     },
     xtick={0,2,5,10},
 ]
@@ -26,12 +27,16 @@
 \addplot[blue, thick, mark=*] coordinates { (0.0,0.000249) (2.0,0.000571) (5.0,0.004278) (10.0,0.010184) };
 \addplot[red, thick, mark=*] coordinates { (0.0,0.001281) (2.0,0.001446) (5.0,0.024365) (10.0,0.162296) };
 \addplot[green!60!black, thick, mark=*] coordinates { (0.0,0.000136) (2.0,0.000102) (5.0,0.002692) (10.0,0.008660) };
-\legend{The Golden Gate Brid, The Eiffel Tower is, Mount Everest is the}
+\addplot[purple, thick, mark=*] coordinates { (0.0,0.003460) (2.0,0.003683) (5.0,0.063126) (10.0,0.455828) };
+\addplot[brown, thick, mark=*] coordinates { (0.0,0.000386) (2.0,0.000623) (5.0,0.006513) (10.0,0.024498) };
+\legend{Golden Gate Bridge, Eiffel Tower, Mount Everest, Great Wall of China, Statue of Liberty}
 
 \nextgroupplot[title={Llama-3.2-1B}]
 \addplot[blue, thick, mark=*] coordinates { (0.0,0.003609) (2.0,0.001486) (5.0,0.029852) (10.0,0.193760) };
 \addplot[red, thick, mark=*] coordinates { (0.0,0.000730) (2.0,0.000461) (5.0,0.008967) (10.0,0.080968) };
 \addplot[green!60!black, thick, mark=*] coordinates { (0.0,0.001963) (2.0,0.001359) (5.0,0.010197) (10.0,0.123166) };
+\addplot[purple, thick, mark=*] coordinates { (0.0,0.011569) (2.0,0.006607) (5.0,0.087774) (10.0,0.143479) };
+\addplot[brown, thick, mark=*] coordinates { (0.0,0.007696) (2.0,0.003893) (5.0,0.065916) (10.0,0.446384) };
 
 \end{groupplot}
 \end{tikzpicture}

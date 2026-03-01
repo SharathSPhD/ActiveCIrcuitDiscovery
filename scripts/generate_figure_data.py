@@ -138,8 +138,8 @@ def write_cumulative_kl(gemma_data: dict, llama_data: Optional[dict], out_path: 
                 "    title style={font=\\scriptsize\\bfseries},\n"
                 "    legend style={\n"
                 "        font=\\tiny,\n"
-                "        at={(0.02,0.98)},\n"
-                "        anchor=north west\n"
+                "        at={(0.98,0.02)},\n"
+                "        anchor=south east\n"
                 "    },\n"
                 "]\n\n"
             )
@@ -159,8 +159,8 @@ def write_cumulative_kl(gemma_data: dict, llama_data: Optional[dict], out_path: 
                 "    tick label style={font=\\scriptsize},\n"
                 "    legend style={\n"
                 "        font=\\tiny,\n"
-                "        at={(0.02,0.98)},\n"
-                "        anchor=north west\n"
+                "        at={(0.98,0.02)},\n"
+                "        anchor=south east\n"
                 "    },\n"
                 f"    xmin=1, xmax={g_budget},\n"
                 "]\n\n"
@@ -337,10 +337,10 @@ def write_ioi_comparison(
 # ======================================================================
 
 def _steering_coords(data: dict, multipliers: list) -> list:
-    """Return list of (concept_label, coords_string) for up to 3 concepts."""
+    """Return list of (concept_label, coords_string) for all concepts."""
     prompts = data["per_prompt"]
     result = []
-    for idx, p in enumerate(prompts[:3]):
+    for idx, p in enumerate(prompts):
         mean_kls = p.get("mean_kl_per_multiplier", None)
         if mean_kls is None or len(mean_kls) != len(multipliers):
             features = p.get("features", [])
@@ -354,14 +354,14 @@ def _steering_coords(data: dict, multipliers: list) -> list:
                 mean_kls.append(float(np.mean(kls)) if kls else 0.0)
         coords_str = " ".join(f"({m},{kl:.6f})" for m, kl in zip(multipliers, mean_kls))
         concept = p.get("concept", p.get("prompt", f"Concept {idx+1}"))
-        label = concept[:20].replace("_", " ").strip()
+        label = concept.replace("The ", "").replace("_", " ").split(" is")[0].split(" was")[0].split(" stands")[0].split(" connects")[0].strip()
         result.append((label, coords_str))
     return result
 
 
 def write_steering_heatmap(gemma_data: dict, llama_data: Optional[dict], out_path: str):
     multipliers = gemma_data.get("multipliers", [0, 2, 5, 10])
-    colors = ["blue", "red", "green!60!black"]
+    colors = ["blue", "red", "green!60!black", "purple", "brown"]
 
     with open(out_path, "w") as f:
         f.write("% Auto-generated from experiment results.\n")
@@ -387,8 +387,9 @@ def write_steering_heatmap(gemma_data: dict, llama_data: Optional[dict], out_pat
                 "    title style={font=\\scriptsize\\bfseries},\n"
                 "    legend style={\n"
                 "        font=\\tiny,\n"
-                "        at={(0.02,0.98)},\n"
-                "        anchor=north west\n"
+                "        at={(0.5,-0.25)},\n"
+                "        anchor=north,\n"
+                "        legend columns=3\n"
                 "    },\n"
                 "    xtick={0,2,5,10},\n"
                 "]\n\n"
@@ -396,14 +397,14 @@ def write_steering_heatmap(gemma_data: dict, llama_data: Optional[dict], out_pat
             # Gemma panel
             f.write("\\nextgroupplot[title={Gemma-2-2B}]\n")
             for idx, (label, cs) in enumerate(g_coords):
-                f.write(f"\\addplot[{colors[idx]}, thick, mark=*] coordinates {{ {cs} }};\n")
+                f.write(f"\\addplot[{colors[idx % len(colors)]}, thick, mark=*] coordinates {{ {cs} }};\n")
             legends = ", ".join(lbl for lbl, _ in g_coords)
             f.write(f"\\legend{{{legends}}}\n\n")
 
             # Llama panel
             f.write("\\nextgroupplot[title={Llama-3.2-1B}]\n")
             for idx, (label, cs) in enumerate(l_coords):
-                f.write(f"\\addplot[{colors[idx]}, thick, mark=*] coordinates {{ {cs} }};\n")
+                f.write(f"\\addplot[{colors[idx % len(colors)]}, thick, mark=*] coordinates {{ {cs} }};\n")
             f.write("\n")
 
             f.write("\\end{groupplot}\n\\end{tikzpicture}\n")
@@ -420,15 +421,16 @@ def write_steering_heatmap(gemma_data: dict, llama_data: Optional[dict], out_pat
                 "    tick label style={font=\\scriptsize},\n"
                 "    legend style={\n"
                 "        font=\\tiny,\n"
-                "        at={(0.02,0.98)},\n"
-                "        anchor=north west\n"
+                "        at={(0.5,-0.25)},\n"
+                "        anchor=north,\n"
+                "        legend columns=3\n"
                 "    },\n"
                 "    xtick={0,2,5,10},\n"
                 "]\n\n"
             )
             g_coords = _steering_coords(gemma_data, multipliers)
             for idx, (label, cs) in enumerate(g_coords):
-                f.write(f"\\addplot[{colors[idx]}, thick, mark=*] coordinates {{ {cs} }};\n")
+                f.write(f"\\addplot[{colors[idx % len(colors)]}, thick, mark=*] coordinates {{ {cs} }};\n")
             legends = ", ".join(lbl for lbl, _ in g_coords)
             f.write(f"\\legend{{{legends}}}\n\n")
             f.write("\\end{axis}\n\\end{tikzpicture}\n")

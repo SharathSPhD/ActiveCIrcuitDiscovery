@@ -134,43 +134,73 @@ directories.  The container installs \texttt{circuit-tracer} from source
 and pins all dependencies via \texttt{requirements.txt}.
 
 
-\section{Code-Level Fixes Applied}
-\label{app:fixes}
+\section{Experimental Prompts}
+\label{app:prompts}
 
-Table~\ref{tab:fixes} summarises the critical API fixes discovered
-during the implementation and validation process.
+All prompts used in the experiments are listed below.  These are
+defined in \texttt{src/experiments/run\_real\_experiments.py} and
+correspond exactly to the prompts whose results appear in the JSON
+outputs under \texttt{results/}.
 
-\begin{table*}[t]
-  \centering
-  \caption{Summary of critical API fixes applied to the \ACD{} codebase.}
-  \label{tab:fixes}
-  \footnotesize
-  \newcolumntype{L}{>{\raggedright\arraybackslash}X}
-  \begin{tabularx}{\textwidth}{l l L L}
-    \toprule
-    \textbf{File} & \textbf{Issue} & \textbf{Error} & \textbf{Fix} \\
-    \midrule
-    \texttt{ct\_backend.py} & LogitTarget attr.\ &
-      \texttt{.token} does not exist on \texttt{LogitTarget} &
-      Changed to \texttt{.token\_str} \\
-    \texttt{ct\_backend.py} & PruneResult &
-      Assumed \texttt{prune\_result.graph} exists &
-      Apply masks to raw adjacency matrix \\
-    \texttt{interv\_engine.py} & Model access &
-      \texttt{model.model.cfg} fails &
-      Use \texttt{model.cfg} directly \\
-    \texttt{interv\_engine.py} & Intervention &
-      Used \texttt{run\_with\_hooks} (residual stream) &
-      Use \texttt{feature\_intervention} API \\
-    \texttt{runner.py} & Fake data &
-      \texttt{np.random.beta/normal} for validation &
-      Real measurements only \\
-    \texttt{pomdp\_agent.py} & Skip bias &
-      ``skip'' action 90\% of the time &
-      pymdp EFE-based multi-action selection with online Dirichlet learning \\
-    \bottomrule
-  \end{tabularx}
-\end{table*}
+\subsection*{IOI Circuit Recovery (5 prompts)}
+
+\begin{enumerate}
+  \item ``When John and Mary went to the store, John gave the bag to''
+  \item ``After Alice and Bob finished lunch, Alice handed the receipt to''
+  \item ``While Sarah and Tom were at the park, Sarah threw the ball to''
+  \item ``When Emma and David arrived at the office, Emma passed the keys to''
+  \item ``As Lisa and Mike left the restaurant, Lisa returned the coat to''
+\end{enumerate}
+
+\subsection*{Multi-step Reasoning (3 prompts)}
+
+\begin{enumerate}
+  \item ``If Alice is taller than Bob, and Bob is taller than Carol, then the tallest person is''
+  \item ``The capital of France is Paris. Paris is in Europe. The continent containing Paris is''
+  \item ``All dogs are animals. Fido is a dog. Therefore Fido is''
+\end{enumerate}
+
+\subsection*{Feature Steering (5 concept prompts)}
+
+\begin{enumerate}
+  \item \textbf{Golden Gate Bridge}: ``The Golden Gate Bridge is''
+  \item \textbf{Eiffel Tower}: ``The Eiffel Tower is located in''
+  \item \textbf{Mount Everest}: ``Mount Everest is the tallest''
+  \item \textbf{Great Wall of China}: ``The Great Wall of China was built''
+  \item \textbf{Statue of Liberty}: ``The Statue of Liberty stands in''
+\end{enumerate}
+
+\subsection*{Multi-Domain Benchmark (10 prompts, 2 per domain)}
+
+\textbf{Geography:}
+\begin{enumerate}
+  \item ``The capital of France is''
+  \item ``The Golden Gate Bridge connects San Francisco to''
+\end{enumerate}
+
+\textbf{Mathematics:}
+\begin{enumerate}
+  \item ``The square root of 64 is''
+  \item ``If 2 + 3 = 5 then 3 + 4 =''
+\end{enumerate}
+
+\textbf{Science:}
+\begin{enumerate}
+  \item ``Water is made of hydrogen and''
+  \item ``The speed of light is approximately''
+\end{enumerate}
+
+\textbf{Logic:}
+\begin{enumerate}
+  \item ``All mammals are warm-blooded. A whale is a mammal. Therefore a whale is''
+  \item ``All birds have wings. A penguin is a bird. Therefore a penguin has''
+\end{enumerate}
+
+\textbf{History:}
+\begin{enumerate}
+  \item ``The year World War II ended was''
+  \item ``The first person to walk on the moon was''
+\end{enumerate}
 
 
 \section{Experimental Reproducibility Checklist}

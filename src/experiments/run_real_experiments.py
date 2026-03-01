@@ -656,6 +656,8 @@ def run_multistep_experiment(
     ai_cum     = safe_mean([r['ai_cumkl'] for r in all_results])
     ai_abl_cum = safe_mean([r['ai_abl_cumkl'] for r in all_results])
     bandit_cum = safe_mean([r['bandit_cumkl'] for r in all_results])
+    greedy_cum = safe_mean([r['greedy_cumkl'] for r in all_results])
+    rand_cum   = safe_mean([r['random_cumkl'] for r in all_results])
     oracle_cum = safe_mean([r['oracle_cumkl'] for r in all_results])
 
     return {
@@ -680,6 +682,8 @@ def run_multistep_experiment(
             'ai_oracle_efficiency': float(ai_cum / max(oracle_cum, 1e-10) * 100),
             'ai_abl_oracle_efficiency': float(ai_abl_cum / max(oracle_cum, 1e-10) * 100),
             'bandit_oracle_efficiency': float(bandit_cum / max(oracle_cum, 1e-10) * 100),
+            'greedy_oracle_efficiency': float(greedy_cum / max(oracle_cum, 1e-10) * 100),
+            'random_oracle_efficiency': float(rand_cum / max(oracle_cum, 1e-10) * 100),
         }
     }
 

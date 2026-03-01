@@ -179,7 +179,10 @@ influence threshold; Llama-3.2-1B activates approximately 8\,000,
 with roughly 1\,600 surviving.  On Gemma, causally important features
 span all 26 layers but concentrate in layers 0--6 and 24--25, whereas
 on Llama the distribution is more compressed, with early layers
-(0--4) dominant.  Attribution graph generation takes approximately
+(0--4) dominant.  By feature count, early-layer features (0--8)
+form the plurality of the top-10, while the single highest-impact
+features by KL are consistently found in layers 24--25.
+Attribution graph generation takes approximately
 18\,s on Gemma and 12\,s on Llama; each
 \texttt{feature\_intervention} call takes approximately 0.03\,s.
 
@@ -436,10 +439,12 @@ levels.
 \subsection{Limitations}
 
 Several limitations of the current evaluation should be noted.
-On multi-step reasoning for Llama, the POMDP agent under-performs
-the bandit (33.6\% vs.\ 76.4\% oracle efficiency), likely because
-the compressed state space of the 16-layer architecture reduces the
-information gain advantage of the multi-action system.  Statistical
+On Llama multi-step, EFE-guided feature selection performs worse
+than random (9.3\% vs.\ 51.6\% oracle efficiency), suggesting that
+the 16-layer architecture's compressed state space causes the
+agent's prior beliefs to systematically mismatch the true causal
+structure of multi-hop reasoning prompts.  This motivates
+architecture-specific prior calibration as future work.  Statistical
 significance tests require larger prompt sets ($n \geq 30$) for
 reliable $p$-values, whereas the current evaluation uses only 2--5
 prompts per condition.  The Mount Everest prompt showed no steering
@@ -474,7 +479,7 @@ full multi-action POMDP and baseline strategies.
 POMDP (multi)      & 1255.0 & 983.0      & 90.6  & 33.6       \\
 POMDP-abl          & 82.0   & 73.0       & 52.1  & 9.3        \\
 Bandit             & 74.4   & 78.4       & 88.2  & 76.4       \\
-Random             & 51.5   & ---        & 37.1  & ---        \\
+Random             & 51.5   & 53.0       & 37.1  & 51.6       \\
 \bottomrule
 \end{tabular}
 \end{table}
