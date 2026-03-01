@@ -17,40 +17,33 @@ intervention engine.
 \label{fig:architecture}
 \end{figure}
 
-The framework consists of three layers:
-
-\begin{enumerate}
-\item \textbf{Attribution Graph Backend.} Anthropic's
-  \texttt{circuit-tracer} library~\cite{Anthropic2025CT} generates
-  attribution graphs via Edge Attribution Patching (EAP) with GemmaScope
-  transcoders for Gemma-2-2B.  The graph contains active transcoder
-  features, an adjacency matrix encoding feature interactions, and
-  activation values.
-
-\item \textbf{Active Inference POMDP Agent.}  A multi-factor POMDP agent
-  implemented with \texttt{pymdp}~\cite{Pymdp2022} maintains a generative
-  model of the circuit structure. The agent performs variational state
-  inference, evaluates candidate interventions via Expected Free Energy,
-  and learns its observation model online from real intervention data.
-
-\item \textbf{Intervention Engine.}  Executes feature-level ablations
-  and steering via the \texttt{feature\_intervention} API, which
-  intervenes at the transcoder level with proper network propagation
-  through the underlying TransformerLens~\cite{nanda2022transformerlens}
-  model.
-\end{enumerate}
+The framework consists of three layers.  The first is the
+\emph{attribution graph backend}, in which Anthropic's
+\texttt{circuit-tracer} library~\cite{Anthropic2025CT} generates
+attribution graphs via Edge Attribution Patching (EAP) with GemmaScope
+transcoders for Gemma-2-2B; the graph contains active transcoder
+features, an adjacency matrix encoding feature interactions, and
+activation values.  The second layer is the \emph{Active Inference
+POMDP agent}, a multi-factor POMDP implemented with
+\texttt{pymdp}~\cite{Pymdp2022} that maintains a generative model of
+the circuit structure, performs variational state inference, evaluates
+candidate interventions via Expected Free Energy, and learns its
+observation model online from real intervention data.  The third layer
+is the \emph{intervention engine}, which executes feature-level
+ablations and steering via the \texttt{feature\_intervention} API,
+intervening at the transcoder level with proper network propagation
+through the underlying
+TransformerLens~\cite{nanda2022transformerlens} model.
 
 
 \subsection{Candidate Feature Extraction}
 
-Given a prompt, the attribution graph backend produces:
-\begin{itemize}
-\item Active features $\{(l_i, p_i, f_i)\}$ where $l$ is layer, $p$
-  is token position, and $f$ is feature index.
-\item Adjacency matrix $\mat{W} \in \mathbb{R}^{n \times n}$ encoding
-  feature-to-feature attribution weights.
-\item Activation values $\vect{a} \in \mathbb{R}^n$.
-\end{itemize}
+Given a prompt, the attribution graph backend produces three outputs:
+active features $\{(l_i, p_i, f_i)\}$ where $l$ is layer, $p$ is
+token position, and $f$ is feature index; an adjacency matrix
+$\mat{W} \in \mathbb{R}^{n \times n}$ encoding feature-to-feature
+attribution weights; and activation values
+$\vect{a} \in \mathbb{R}^n$.
 
 The graph is pruned to retain features with influence above a threshold
 (default 80\%).  Each retained feature $i$ receives a normalised
@@ -83,75 +76,58 @@ following structure.
 
 \subsubsection{Hidden State Factors}
 
-Three hidden state factors capture distinct aspects of each
-candidate feature:
-\begin{itemize}
-\item \textbf{Factor 0: Feature importance}
-  $s_0 \in \{\text{negligible}, \text{low}, \text{moderate}, \text{high}\}$
-  (4 levels). Represents the causal contribution of a feature to the
-  model's output on the current prompt.
-\item \textbf{Factor 1: Layer role}
-  $s_1 \in \{\text{early}, \text{middle}, \text{late}\}$ (3 levels).
-  Determined by the feature's position within the network
-  (layers are divided into thirds).
-\item \textbf{Factor 2: Causal influence}
-  $s_2 \in \{\text{weak}, \text{moderate}, \text{strong}\}$ (3 levels).
-  Reflects the feature's degree of causal control over downstream
-  computation, inferred from intervention effects.
-\end{itemize}
+Three hidden state factors capture distinct aspects of each candidate
+feature.  Factor~0 (\emph{feature importance},
+$s_0 \in \{\text{negligible}, \text{low}, \text{moderate},
+\text{high}\}$, 4~levels) represents the causal contribution of a
+feature to the model's output on the current prompt.  Factor~1
+(\emph{layer role},
+$s_1 \in \{\text{early}, \text{middle}, \text{late}\}$, 3~levels) is
+determined by the feature's position within the network, with layers
+divided into thirds.  Factor~2 (\emph{causal influence},
+$s_2 \in \{\text{weak}, \text{moderate}, \text{strong}\}$, 3~levels)
+reflects the feature's degree of causal control over downstream
+computation, inferred from intervention effects.
 
 \subsubsection{Observation Modalities}
 
 Three observation modalities provide complementary evidence about
-hidden states:
-\begin{itemize}
-\item \textbf{Modality 0: KL divergence magnitude.} The KL divergence
-  between the clean and intervened output distributions, discretised
-  into 4 levels: $\{$negligible ($<10^{-4}$), small ($<10^{-3}$),
-  medium ($<10^{-2}$), large ($\geq 10^{-2}$)$\}$.
-\item \textbf{Modality 1: Activation magnitude.} The absolute activation
-  value of the feature, discretised into 4 levels.
-\item \textbf{Modality 2: Graph connectivity.} The sum of in-degree
-  and out-degree of the feature in the attribution graph, discretised
-  into 3 levels: $\{$sparse, moderate, dense$\}$.
-\end{itemize}
+hidden states.  Modality~0 (\emph{KL divergence magnitude}) is the
+KL divergence between the clean and intervened output distributions,
+discretised into four levels: negligible ($<10^{-4}$), small
+($<10^{-3}$), medium ($<10^{-2}$), and large ($\geq 10^{-2}$).
+Modality~1 (\emph{activation magnitude}) is the absolute activation
+value of the feature, also discretised into four levels.  Modality~2
+(\emph{graph connectivity}) is the sum of in-degree and out-degree
+of the feature in the attribution graph, discretised into three
+levels (sparse, moderate, dense).
 
 \subsubsection{Actions}
 
-Three intervention types are available:
-\begin{itemize}
-\item \textbf{Ablation}: set the transcoder feature activation to zero.
-\item \textbf{Activation patching}: replace the feature activation with
-  a reference value from a different prompt.
-\item \textbf{Feature steering}: scale the activation by a multiplier
-  $m \in \{0, 2, 5, 10\}$.
-\end{itemize}
+Three intervention types are available: \emph{ablation}, which sets
+the transcoder feature activation to zero; \emph{activation patching},
+which replaces the feature activation with a reference value from a
+different prompt; and \emph{feature steering}, which scales the
+activation by a multiplier $m \in \{0, 2, 5, 10\}$.
 
 \subsubsection{Generative Model}
 
 The generative model consists of four components, following the
-standard Active Inference formulation~\cite{Friston2017,Parr2022}:
-
-\begin{itemize}
-\item $\mat{A}$: \textbf{Observation likelihood} $P(o_m \mid s_0, s_1, s_2)$
-  for each modality $m$. Encodes domain-informed priors about how hidden
-  feature states produce observable intervention effects. The A matrix
-  is learned online via Dirichlet concentration updates from each
-  observation.
-
-\item $\mat{B}$: \textbf{Transition model} $P(s' \mid s, a)$.
-  Factor~0 (importance) is controlled by the three actions;
-  Factors~1 and~2 have identity transitions (intrinsic properties that
-  do not change upon intervention).
-
-\item $\mat{C}$: \textbf{Preference model} (log-prior over preferred
-  observations). Higher KL divergence and higher activation are
-  preferred, encoding the goal of finding causally important features.
-
-\item $\mat{D}$: \textbf{Prior beliefs} over hidden states. Biased
-  toward low importance (most features are not causally critical) and
-  uniform over layer role.
-\end{itemize}
+standard Active Inference formulation~\cite{Friston2017,Parr2022}.
+The observation likelihood $\mat{A}$ specifies
+$P(o_m \mid s_0, s_1, s_2)$ for each modality~$m$, encoding
+domain-informed priors about how hidden feature states produce
+observable intervention effects; this matrix is learned online via
+Dirichlet concentration updates from each observation.  The
+transition model $\mat{B}$ specifies $P(s' \mid s, a)$: Factor~0
+(importance) is controlled by the three actions, while Factors~1
+and~2 have identity transitions reflecting intrinsic properties that
+do not change upon intervention.  The preference model $\mat{C}$
+is a log-prior over preferred observations in which higher KL
+divergence and higher activation are favoured, encoding the goal of
+finding causally important features.  Finally, the prior $\mat{D}$
+over hidden states is biased toward low importance---since most
+features are not causally critical---and uniform over layer role.
 
 
 \subsection{Intervention Selection via Expected Free Energy}
@@ -177,24 +153,19 @@ observations, namely high KL divergence).
 \subsection{Belief Updating and Learning}
 
 After executing the selected intervention and observing the resulting
-KL divergence, activation magnitude, and graph connectivity, the agent:
-
-\begin{enumerate}
-\item \textbf{Infers posterior states.} The pymdp agent performs
-  variational inference to update $q(s_0, s_1, s_2 \mid o_0, o_1, o_2)$.
-
-\item \textbf{Updates the observation model.} The Dirichlet
-  concentration parameters $\mat{p_A}$ are updated:
-  \begin{equation}
-    p_{A_m}(o_m, s_0, s_1, s_2) \mathrel{+}= \eta \cdot q(s_0) \cdot q(s_1) \cdot q(s_2)
-  \end{equation}
-  where $\eta$ is the learning rate. This enables the agent to improve
-  its mapping from hidden states to observations as it accumulates
-  intervention data.
-
-\item \textbf{Steps the time index.} The agent advances its internal
-  clock and resets the observation buffer for the next step.
-\end{enumerate}
+KL divergence, activation magnitude, and graph connectivity, the agent
+performs three updates.  First, it infers posterior states: the pymdp
+agent performs variational inference to update
+$q(s_0, s_1, s_2 \mid o_0, o_1, o_2)$.  Second, it updates the
+observation model by incrementing the Dirichlet concentration
+parameters:
+\begin{equation}
+  p_{A_m}(o_m, s_0, s_1, s_2) \mathrel{+}= \eta \cdot q(s_0) \cdot q(s_1) \cdot q(s_2)
+\end{equation}
+where $\eta$ is the learning rate; this enables the agent to improve
+its mapping from hidden states to observations as it accumulates
+intervention data.  Third, it advances its internal time index and
+resets the observation buffer for the next step.
 
 
 \subsection{Convergence Detection}

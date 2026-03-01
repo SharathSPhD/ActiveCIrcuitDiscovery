@@ -1,37 +1,43 @@
 % Auto-generated from experiment results.
 \begin{tikzpicture}
-\begin{axis}[
-    ybar,
-    width=\columnwidth,
-    height=5cm,
-    bar width=10pt,
+\begin{groupplot}[
+    group style={
+        group size=2 by 1,
+        horizontal sep=1.2cm,
+        ylabels at=edge left,
+    },
+    width=0.52\columnwidth,
+    height=4.5cm,
     ylabel={Count (top-10 features)},
     symbolic x coords={Early, Mid, Late},
     xtick=data,
     x tick label style={font=\scriptsize},
     y tick label style={font=\scriptsize},
     ylabel style={font=\scriptsize},
-    legend style={
-        font=\scriptsize,
-        at={(0.5,-0.22)},
-        anchor=north,
-        legend columns=2
-    },
+    title style={font=\scriptsize\bfseries},
     ymin=0,
     enlarge x limits=0.3,
     nodes near coords,
     nodes near coords style={font=\tiny},
+    legend style={
+        font=\tiny,
+        at={(0.5,-0.28)},
+        anchor=north,
+        legend columns=2
+    },
 ]
 
+\nextgroupplot[ybar, bar width=8pt, title={Gemma-2-2B}]
 \addplot[fill=blue!40, draw=blue!60] coordinates {
     (Early, 23) (Mid, 3) (Late, 4)
 };
 
-\addplot[fill=red!40, draw=red!60] coordinates {
-    (Early, 14) (Mid, 0) (Late, 6)
+\legend{Multi-step, IOI}
+
+\nextgroupplot[ybar, bar width=8pt, title={Llama-3.2-1B}]
+\addplot[fill=blue!40, draw=blue!60] coordinates {
+    (Early, 16) (Mid, 4) (Late, 10)
 };
 
-\legend{Multi-step (Gemma), IOI (Gemma)}
-
-\end{axis}
+\end{groupplot}
 \end{tikzpicture}

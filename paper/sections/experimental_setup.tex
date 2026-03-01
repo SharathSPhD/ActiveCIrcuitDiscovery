@@ -1,14 +1,12 @@
 \subsection{Models and Hardware}
 
-The framework is evaluated on two transformer architectures:
-\begin{itemize}
-\item \textbf{Gemma-2-2B}~\cite{team2024gemma}: 26 layers, 2304-dim,
-  8 heads.  Transcoders from GemmaScope
-  (\texttt{mwhanna/gemma-scope-transcoders}).
-\item \textbf{Llama-3.2-1B}~\cite{Dubey2024llama}: 16 layers, 2048-dim,
-  32 heads with GQA.  Transcoders from
-  \texttt{mntss/transcoder-Llama-3.2-1B}.
-\end{itemize}
+The framework is evaluated on two transformer architectures.
+Gemma-2-2B~\cite{team2024gemma} has 26 layers, a 2304-dimensional
+hidden size, and 8 attention heads; its transcoders are drawn from
+GemmaScope (\texttt{mwhanna/gemma-scope-transcoders}).
+Llama-3.2-1B~\cite{Dubey2024llama} has 16 layers, a 2048-dimensional
+hidden size, and 32 heads with grouped-query attention; its
+transcoders are from \texttt{mntss/transcoder-Llama-3.2-1B}.
 Both models use the \texttt{circuit-tracer} library~\cite{Anthropic2025CT}
 with the TransformerLens backend for attribution graph construction
 and transcoder-level interventions.
@@ -49,31 +47,26 @@ are measured.
 
 Following the Initial Research Proposal, the framework is evaluated
 across five cognitive domains with two prompts each:
-\begin{itemize}
-\item \textbf{Geography}: ``The capital of France is'', ``The Golden Gate Bridge connects San Francisco to''
-\item \textbf{Mathematics}: ``The square root of 64 is'', ``If 2 + 3 = 5 then 3 + 4 =''
-\item \textbf{Science}: ``Water is made of hydrogen and'', ``The speed of light is approximately''
-\item \textbf{Logic}: syllogistic reasoning (``All mammals are warm-blooded\ldots'')
-\item \textbf{History}: ``The year World War II ended was'', ``The first person to walk on the moon was''
-\end{itemize}
+geography (e.g.\ ``The capital of France is''),
+mathematics (e.g.\ ``The square root of 64 is''),
+science (e.g.\ ``Water is made of hydrogen and''),
+logic (syllogistic reasoning), and
+history (e.g.\ ``The year World War II ended was'').
 This allows cross-domain comparison of circuit structure and layer
 distribution.
 
 \subsection{Baselines}
 
-\begin{itemize}
-\item \textbf{Random:} Features are selected uniformly at random (10 trials,
-  results averaged).
-\item \textbf{Greedy:} Features are selected in descending order of graph
-  node influence (sum of absolute adjacency weights).
-\item \textbf{Bandit:} A UCB-style heuristic selector that combines
-  graph importance with a decaying uncertainty bonus and learned
-  per-layer priors. This provides a comparison point that separates
-  the contribution of Active Inference from simpler uncertainty
-  heuristics.
-\item \textbf{Oracle:} Features are selected in descending order of
-  true KL divergence (upper bound requiring all ablations in advance).
-\end{itemize}
+Four baselines are compared.  \emph{Random} selection draws features
+uniformly at random (10 trials, results averaged).  \emph{Greedy}
+selection ranks features in descending order of graph node influence
+(sum of absolute adjacency weights).  The \emph{bandit} selector
+combines graph importance with a decaying uncertainty bonus and
+learned per-layer priors, providing a comparison point that separates
+the contribution of Active Inference from simpler uncertainty
+heuristics.  The \emph{oracle} selects features in descending order
+of true KL divergence, an upper bound that requires all ablations
+in advance.
 
 All methods use the same \texttt{feature\_intervention} API and
 KL divergence metric.  Budgets are fixed at $B=20$ interventions
@@ -81,38 +74,27 @@ per prompt.
 
 \subsection{Metrics}
 
-\begin{itemize}
-\item \textbf{Mean KL per intervention:}  Average KL divergence across
-  selected features.  Higher values indicate the method finds more
-  causally important features.
-
-\item \textbf{Cumulative KL:}  Total information gained over the
-  budget.  Compared against oracle to compute efficiency.
-
-\item \textbf{Oracle efficiency:}  $\text{Cum.~KL} / \text{Oracle~Cum.~KL}
-  \times 100\%$.  Measures how close a method is to optimal.
-
-\item \textbf{Prediction change rate:}  Fraction of steering
-  experiments where the model's top-1 prediction changes.
-\end{itemize}
+Four metrics are reported.  \emph{Mean KL per intervention} is the
+average KL divergence across selected features, where higher values
+indicate that the method finds more causally important features.
+\emph{Cumulative KL} is the total information gained over the budget,
+compared against the oracle to compute \emph{oracle efficiency},
+defined as $\text{Cum.~KL} / \text{Oracle~Cum.~KL} \times 100\%$
+and indicating how close a method is to optimal.  The
+\emph{prediction change rate} is the fraction of steering experiments
+in which the model's top-1 prediction changes.
 
 \subsection{POMDP Agent Configuration}
 
-The Active Inference POMDP agent is configured as follows:
-\begin{itemize}
-\item \textbf{State factors:} 4 importance levels $\times$
-  3 layer roles $\times$ 3 causal influence levels = 36 joint states.
-\item \textbf{Observation modalities:} 4 KL levels, 4 activation levels,
-  3 connectivity levels.
-\item \textbf{Actions:} 3 (ablation, patching, steering).
-\item \textbf{Policy length:} 1 (single-step lookahead).
-\item \textbf{Action selection:} stochastic (softmax over negative EFE,
-  $\gamma = 16.0$).
-\item \textbf{Learning:} Dirichlet updates on all observation modalities
-  ($\eta = 1.0$).
-\item \textbf{Inference:} variational (vanilla, as implemented
-  in pymdp).
-\end{itemize}
+The Active Inference POMDP agent uses 4 importance levels $\times$
+3 layer roles $\times$ 3 causal influence levels for a total of 36
+joint hidden states.  Observations comprise 4 KL levels, 4 activation
+levels, and 3 connectivity levels.  The agent selects among 3 actions
+(ablation, patching, steering) using a single-step lookahead policy
+with stochastic selection via softmax over negative EFE
+($\gamma = 16.0$).  The observation model is learned online through
+Dirichlet updates on all modalities ($\eta = 1.0$), and inference
+uses the vanilla variational scheme implemented in pymdp.
 
 \subsection{Reproducibility}
 

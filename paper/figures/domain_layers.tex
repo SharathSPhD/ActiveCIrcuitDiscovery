@@ -1,39 +1,42 @@
 % Auto-generated from experiment results.
 \begin{tikzpicture}
-\begin{axis}[
-    ybar,
-    width=\columnwidth,
-    height=5.5cm,
-    bar width=5pt,
+\begin{groupplot}[
+    group style={
+        group size=2 by 1,
+        horizontal sep=1.2cm,
+        ylabels at=edge left,
+    },
+    width=0.52\columnwidth,
+    height=5cm,
     ylabel={Count (top-10 features)},
     symbolic x coords={Geo., Math, Sci., Logic, Hist.},
     xtick=data,
-    x tick label style={font=\scriptsize},
+    x tick label style={font=\tiny},
     y tick label style={font=\scriptsize},
     ylabel style={font=\scriptsize},
-    legend style={
-        font=\tiny,
-        at={(0.5,-0.25)},
-        anchor=north,
-        legend columns=3
-    },
+    title style={font=\scriptsize\bfseries},
     ymin=0,
     enlarge x limits=0.15,
     nodes near coords,
     nodes near coords style={font=\tiny, rotate=90, anchor=west},
+    legend style={
+        font=\tiny,
+        at={(0.5,-0.30)},
+        anchor=north,
+        legend columns=3
+    },
 ]
 
-\addplot[fill=blue!50, draw=blue!70] coordinates {
-    (Geo., 14) (Math, 16) (Sci., 11) (Logic, 14) (Hist., 15)
-};
-\addplot[fill=green!40, draw=green!60] coordinates {
-    (Geo., 0) (Math, 1) (Sci., 3) (Logic, 1) (Hist., 2)
-};
-\addplot[fill=red!40, draw=red!60] coordinates {
-    (Geo., 6) (Math, 3) (Sci., 6) (Logic, 5) (Hist., 3)
-};
+\nextgroupplot[ybar, bar width=4pt, title={Gemma-2-2B}]
+\addplot[fill=blue!50, draw=blue!70] coordinates { (Geo., 14) (Math, 0) (Sci., 11) (Logic, 14) (Hist., 15) };
+\addplot[fill=green!40, draw=green!60] coordinates { (Geo., 0) (Math, 0) (Sci., 3) (Logic, 1) (Hist., 2) };
+\addplot[fill=red!40, draw=red!60] coordinates { (Geo., 6) (Math, 0) (Sci., 6) (Logic, 5) (Hist., 3) };
+\legend{Early, Mid, Late}
 
-\legend{Early (Gemma), Mid (Gemma), Late (Gemma)}
+\nextgroupplot[ybar, bar width=4pt, title={Llama-3.2-1B}]
+\addplot[fill=blue!50, draw=blue!70] coordinates { (Geo., 7) (Math, 0) (Sci., 12) (Logic, 15) (Hist., 14) };
+\addplot[fill=green!40, draw=green!60] coordinates { (Geo., 3) (Math, 0) (Sci., 2) (Logic, 3) (Hist., 4) };
+\addplot[fill=red!40, draw=red!60] coordinates { (Geo., 10) (Math, 0) (Sci., 6) (Logic, 2) (Hist., 2) };
 
-\end{axis}
+\end{groupplot}
 \end{tikzpicture}

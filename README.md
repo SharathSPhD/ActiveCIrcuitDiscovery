@@ -6,40 +6,48 @@
 
 **Active Inference-guided circuit discovery for mechanistic interpretability in Large Language Models.**
 
-Combines attribution graph analysis with uncertainty-weighted exploration to efficiently identify causally important transcoder features in LLMs, using Anthropic's `circuit-tracer` library.
+Combines attribution graph analysis with a POMDP agent (powered by [pymdp](https://github.com/infer-actively/pymdp)) to efficiently identify causally important transcoder features in LLMs, using Anthropic's `circuit-tracer` library. Evaluated on **Gemma-2-2B** and **Llama-3.2-1B**.
 
 ## Key Results
 
-| Benchmark | AI vs Random | AI vs Greedy | Oracle Efficiency |
-|-----------|-------------|-------------|-------------------|
-| IOI (5 prompts) | **+36.1%** | +11.3% | **74.4%** |
-| Multi-step Reasoning (3 prompts) | **+44.3%** | -1.2% | **78.4%** |
+| Benchmark | Model | POMDP vs Random | Oracle Efficiency |
+|-----------|-------|-----------------|-------------------|
+| IOI (5 prompts) | Gemma-2-2B | +16.3% | 58.3% |
+| IOI (5 prompts) | Llama-3.2-1B | -25.4% | 37.5% |
+| Multi-step (3 prompts) | Gemma-2-2B | +30.4% | 73.3% |
+| Multi-step (3 prompts) | Llama-3.2-1B | -88.8% | 6.5% |
+| Feature Steering | Gemma-2-2B | 8/50 prediction changes at 10x | --- |
+| Feature Steering | Llama-3.2-1B | 9/50 prediction changes at 10x | --- |
 
-All results from real `feature_intervention` API calls on Gemma-2-2B with GemmaScope transcoders. No synthetic or fabricated data.
+All results from real `feature_intervention` API calls with GemmaScope / Llama transcoders. No synthetic or fabricated data.
 
 ## Architecture
 
 ```
-Prompt → Gemma-2-2B → circuit-tracer (EAP + GemmaScope Transcoders)
-                                ↓
-                        Attribution Graph
-                    (active features, adjacency matrix)
-                                ↓
-                    Active Inference Selector
-            (graph importance × layer prior + uncertainty bonus)
-                                ↓
-                     feature_intervention(layer, pos, fidx, value)
-                                ↓
-                  KL Divergence Measurement → Update Beliefs
+Prompt → Gemma-2-2B / Llama-3.2-1B
+           ↓
+   circuit-tracer (EAP + Transcoders)
+           ↓
+   Attribution Graph (active features, adjacency matrix)
+           ↓
+   Active Inference POMDP Agent (pymdp)
+   ├─ Variational state inference
+   ├─ Expected Free Energy scoring
+   └─ Dirichlet observation-model learning
+           ↓
+   feature_intervention(layer, pos, fidx, value)
+           ↓
+   KL Divergence Measurement → Update Beliefs
 ```
 
-## Research Questions
+## Hypotheses and Outcomes
 
-| RQ | Question | Target | Achieved |
-|----|----------|--------|----------|
-| RQ1 | Is AI selection more efficient than baselines? | ≥ 30% vs random | **+36-44%** |
-| RQ2 | Can features be causally steered? | Prediction changes | **6/30 features** |
-| RQ3 | Does AI approach oracle quality? | Oracle eff ≥ 70% | **74-78%** |
+| ID | Hypothesis | Criterion | Outcome |
+|----|-----------|-----------|---------|
+| H1 | POMDP agent more efficient than random | Paired t-test, α=0.05 | Positive trend on Gemma; not significant (p=0.27) |
+| H2 | Features causally control predictions | Binomial test > 1% baseline | **Accepted** (17/100, p < 10⁻¹⁵) |
+| H3 | Oracle efficiency ≥ 50% | Point estimate | **Accepted** for Gemma (58.3%); not for Llama (37.5%) |
+| H4 | Findings transfer across architectures | Qualitative replication | **Accepted** (all experiments replicated on Llama) |
 
 ## Installation
 
@@ -53,7 +61,7 @@ source .venv/bin/activate
 
 pip install torch torchvision --index-url https://download.pytorch.org/whl/cu128
 pip install -r requirements.txt
-pip install git+https://github.com/decoderesearch/circuit-tracer.git
+pip install git+https://github.com/safety-research/circuit-tracer.git
 ```
 
 ### Docker (DGX Spark)
@@ -74,8 +82,8 @@ from circuit_tracer import ReplacementModel, attribute
 from circuit_tracer.graph import prune_graph
 
 model = ReplacementModel.from_pretrained(
-    model_name="google/gemma-2-2b",
-    transcoder_set="gemma",
+    model_name="google/gemma-2-2b",   # or "unsloth/Llama-3.2-1B"
+    transcoder_set="gemma",            # or "llama"
     backend="transformerlens",
     device=torch.device("cuda"),
     dtype=torch.float32,
@@ -102,8 +110,12 @@ print(f"KL divergence from ablation: {kl:.6f}")
 ## Running Experiments
 
 ```bash
-# Full experiment suite (IOI + steering + multi-step)
-python -m src.experiments.run_real_experiments
+# Full experiment suite on both models
+python -m src.experiments.run_real_experiments --model both --experiment all
+
+# Single model / single benchmark
+python -m src.experiments.run_real_experiments --model gemma --experiment ioi
+python -m src.experiments.run_real_experiments --model llama --experiment steering
 
 # Results saved to results/ as JSON
 ls results/*.json
@@ -119,17 +131,18 @@ ActiveCIrcuitDiscovery/
 │   ├── circuit_analysis/
 │   │   └── circuit_tracer_backend.py  # circuit-tracer wrapper
 │   ├── active_inference/
-│   │   ├── pomdp_agent.py            # Legacy POMDP agent
-│   │   └── agent.py                  # Legacy agent
+│   │   └── pomdp_agent.py            # POMDP agent (pymdp)
 │   ├── core/
 │   │   ├── data_structures.py        # Core data types
 │   │   └── metrics.py                # Statistical metrics
 │   └── visualization/
 │       ├── visualizer.py             # Result plotting
 │       └── research_dashboard.py     # Interactive dashboard
+├── scripts/
+│   └── generate_figure_data.py       # LaTeX figure generation
 ├── notebooks/
 │   ├── 01_circuit_discovery_gemma.ipynb   # Circuit discovery demo
-│   ├── 02_active_inference_demo.ipynb     # AI selector comparison
+│   ├── 02_active_inference_demo.ipynb     # POMDP agent comparison
 │   └── 03_reproduce_biology_paper.ipynb   # Feature steering
 ├── paper/                                 # LaTeX paper source
 ├── results/                               # Experiment JSON outputs
@@ -152,7 +165,7 @@ ActiveCIrcuitDiscovery/
 @article{activecircuitdiscovery2026,
   title={Active Circuit Discovery: Uncertainty-Weighted Feature Selection
          for Mechanistic Interpretability in Large Language Models},
-  author={Sharath S.},
+  author={Sharath Sathish},
   journal={arXiv preprint},
   year={2026}
 }

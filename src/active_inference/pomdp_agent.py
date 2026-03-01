@@ -38,7 +38,6 @@ from typing import Any, Dict, List, Optional, Tuple
 import numpy as np
 from pymdp.agent import Agent as PyMDPAgent
 from pymdp import utils
-from pymdp.maths import softmax as pymdp_softmax
 
 logger = logging.getLogger(__name__)
 

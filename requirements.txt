@@ -16,7 +16,7 @@ safetensors>=0.4.0
 inferactively-pymdp @ git+https://github.com/infer-actively/pymdp.git
 
 # Circuit Tracer (install from git)
-# pip install git+https://github.com/decoderesearch/circuit-tracer.git
+# pip install git+https://github.com/safety-research/circuit-tracer.git
 
 # Visualization
 plotly>=5.20.0

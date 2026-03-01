@@ -1,18 +1,27 @@
 % Auto-generated from experiment results.
 \begin{tikzpicture}
-\begin{axis}[
-    width=\columnwidth,
-    height=5cm,
-    xlabel={Intervention step},
-    ylabel={Cumulative KL},
+\begin{groupplot}[
+    group style={
+        group size=2 by 1,
+        horizontal sep=1.2cm,
+        ylabels at=edge left,
+    },
+    width=0.52\columnwidth,
+    height=4.5cm,
     x label style={font=\scriptsize},
     y label style={font=\scriptsize},
     tick label style={font=\scriptsize},
+    title style={font=\scriptsize\bfseries},
     legend style={
         font=\tiny,
         at={(0.02,0.98)},
         anchor=north west
     },
+]
+
+\nextgroupplot[title={Gemma-2-2B},
+    xlabel={Intervention step},
+    ylabel={Cumulative KL},
     xmin=1, xmax=20,
 ]
 
@@ -23,5 +32,16 @@
 
 \legend{Oracle, POMDP Agent, Bandit, Greedy}
 
-\end{axis}
+\nextgroupplot[title={Llama-3.2-1B},
+    xlabel={Intervention step},
+    ylabel={Cumulative KL},
+    xmin=1, xmax=20,
+]
+
+\addplot[black, dashed, thick] coordinates { (1,0.150922) (2,0.174142) (3,0.182066) (4,0.185418) (5,0.187425) (6,0.189116) (7,0.190533) (8,0.191621) (9,0.192344) (10,0.192876) (11,0.193291) (12,0.193617) (13,0.193901) (14,0.194161) (15,0.194402) (16,0.194627) (17,0.194784) (18,0.194906) (19,0.195004) (20,0.195095) };
+\addplot[red, thick] coordinates { (1,0.000132) (2,0.000285) (3,0.000365) (4,0.001177) (5,0.001366) (6,0.001545) (7,0.002038) (8,0.002644) (9,0.004207) (10,0.005222) (11,0.005655) (12,0.006092) (13,0.008708) (14,0.008972) (15,0.070524) (16,0.071054) (17,0.072088) (18,0.072982) (19,0.073038) (20,0.073168) };
+\addplot[orange, thick] coordinates { (1,0.000635) (2,0.002159) (3,0.003260) (4,0.056815) (5,0.056850) (6,0.070795) (7,0.070796) (8,0.070840) (9,0.070988) (10,0.091854) (11,0.092100) (12,0.095000) (13,0.099887) (14,0.100413) (15,0.100669) (16,0.101838) (17,0.102465) (18,0.171571) (19,0.171662) (20,0.172120) };
+\addplot[blue, thick] coordinates { (1,0.000635) (2,0.002851) (3,0.003814) (4,0.004144) (5,0.004313) (6,0.004715) (7,0.005854) (8,0.006438) (9,0.007958) (10,0.008415) (11,0.062141) (12,0.062909) (13,0.063706) (14,0.072875) (15,0.072998) (16,0.073181) (17,0.073229) (18,0.074028) (19,0.079534) (20,0.079641) };
+
+\end{groupplot}
 \end{tikzpicture}

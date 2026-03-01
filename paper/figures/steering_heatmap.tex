@@ -1,13 +1,19 @@
 % Auto-generated from experiment results.
 \begin{tikzpicture}
-\begin{axis}[
-    width=\columnwidth,
-    height=5cm,
+\begin{groupplot}[
+    group style={
+        group size=2 by 1,
+        horizontal sep=1.2cm,
+        ylabels at=edge left,
+    },
+    width=0.52\columnwidth,
+    height=4.5cm,
     xlabel={Steering multiplier $m$},
     ylabel={Mean KL divergence},
     x label style={font=\scriptsize},
     y label style={font=\scriptsize},
     tick label style={font=\scriptsize},
+    title style={font=\scriptsize\bfseries},
     legend style={
         font=\tiny,
         at={(0.02,0.98)},
@@ -16,10 +22,16 @@
     xtick={0,2,5,10},
 ]
 
+\nextgroupplot[title={Gemma-2-2B}]
 \addplot[blue, thick, mark=*] coordinates { (0.0,0.000249) (2.0,0.000571) (5.0,0.004278) (10.0,0.010184) };
 \addplot[red, thick, mark=*] coordinates { (0.0,0.001281) (2.0,0.001446) (5.0,0.024365) (10.0,0.162296) };
 \addplot[green!60!black, thick, mark=*] coordinates { (0.0,0.000136) (2.0,0.000102) (5.0,0.002692) (10.0,0.008660) };
-\legend{The Golden Gate Brid, The Eiffel Tower is , Mount Everest is the}
+\legend{The Golden Gate Brid, The Eiffel Tower is, Mount Everest is the}
 
-\end{axis}
+\nextgroupplot[title={Llama-3.2-1B}]
+\addplot[blue, thick, mark=*] coordinates { (0.0,0.003609) (2.0,0.001486) (5.0,0.029852) (10.0,0.193760) };
+\addplot[red, thick, mark=*] coordinates { (0.0,0.000730) (2.0,0.000461) (5.0,0.008967) (10.0,0.080968) };
+\addplot[green!60!black, thick, mark=*] coordinates { (0.0,0.001963) (2.0,0.001359) (5.0,0.010197) (10.0,0.123166) };
+
+\end{groupplot}
 \end{tikzpicture}

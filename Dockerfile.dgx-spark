@@ -34,7 +34,7 @@ COPY requirements.txt /workspace/requirements.txt
 RUN pip install --no-cache-dir --upgrade pip setuptools wheel && \
     pip install --no-cache-dir -r requirements.txt && \
     pip install --no-cache-dir \
-        git+https://github.com/decoderesearch/circuit-tracer.git
+        git+https://github.com/safety-research/circuit-tracer.git
 
 # Copy project files
 COPY . /workspace/
