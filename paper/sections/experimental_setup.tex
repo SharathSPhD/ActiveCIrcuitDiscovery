@@ -200,8 +200,10 @@ the steering \emph{action} (R1.7), we evaluate steering-enabled counterparts of 
 heuristics that use the identical selection order but apply the feature-steering
 intervention: \emph{Greedy+steer}, \emph{Bandit+steer}, and \emph{Random+steer}. We
 further include a \emph{Random-action} baseline that selects a feature uniformly at
-random \emph{and} chooses its intervention type (ablation/patching/steering)
-uniformly at random, isolating the value of learned action selection. The
+random \emph{and} chooses its intervention type uniformly at random, isolating the
+value of learned action selection. (Activation patching to the zero reference
+coincides with ablation in our setup, so this control effectively samples between
+ablation and steering.) The
 corresponding \emph{multi-action oracle} ranks features by
 $\max(\text{KL}^{\text{abl}}_i,\text{KL}^{\text{steer}}_i)$.
 
@@ -267,7 +269,7 @@ The Correspondence Metric is formally defined in Appendix~\ref{app:correspondenc
 
 \paragraph{Bootstrap confidence intervals.} Given the modest prompt counts and the
 high coefficient of variation of per-prompt KL, we accompany every reported mean,
-bounded efficiency, and RCK with a bias-corrected bootstrap 95\% confidence interval
+bounded efficiency, and RCK with a percentile bootstrap 95\% confidence interval
 obtained by resampling prompts with replacement ($10^4$ resamples; R2). Hypothesis
 H1 is assessed by both a one-sided paired $t$-test and an exact paired-permutation
 test of agent-vs-random per-prompt mean KL; we report a result as significant only

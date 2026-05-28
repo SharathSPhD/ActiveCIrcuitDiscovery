@@ -24,29 +24,33 @@ cumulative oracle KL, $\leq 100\%$ by construction) with bootstrap
 \begin{table}[H]
 \centering
 \caption{IOI feature discovery under the fair ablation-only protocol.
-Bounded oracle efficiency ($\leq 100\%$) with bootstrap 95\% CIs over
-5 prompts.  Oracle mean KL is the per-step ceiling.}
+Per-prompt mean KL with median and inter-quartile range [Q1, Q3], and
+bounded oracle efficiency ($\leq 100\%$) with bootstrap 95\% CIs over
+5 prompts.  The oracle's per-step mean KL is $0.000862$ (Gemma) and
+$0.009755$ (Llama); its cumulative KL over the 20-step budget is
+$0.0172$ (Gemma) and $0.1951$ (Llama), the denominators of the
+efficiency column.}
 \label{tab:ioi}
 {\small
-\begin{tabular}{llccc}
+\begin{tabular}{llcccc}
 \toprule
-\textbf{Model} & \textbf{Method} & \textbf{Mean KL} & \textbf{Median KL} & \textbf{Oracle Eff.\ [95\% CI]} \\
+\textbf{Model} & \textbf{Method} & \textbf{Mean KL} & \textbf{Median} & \textbf{[Q1, Q3]} & \textbf{Oracle Eff.\ [95\% CI]} \\
 \midrule
 \multirow{6}{*}{Gemma-2-2B}
- & Oracle      & 0.000862 & ---      & 100.0\% \\
- & EAP         & 0.000793 & 0.000436 & 91.9\% [82.1, 96.5] \\
- & POMDP-abl   & 0.000707 & 0.000404 & 82.0\% [73.8, 87.8] \\
- & Bandit      & 0.000642 & 0.000408 & 74.4\% [67.9, 79.0] \\
- & Greedy      & 0.000577 & 0.000492 & 66.9\% [47.5, 83.0] \\
- & Random      & 0.000493 & 0.000289 & 57.1\% [49.0, 60.2] \\
+ & Oracle      & 0.000862 & ---      & ---                    & 100.0\% \\
+ & EAP         & 0.000793 & 0.000436 & [0.000399, 0.001306]   & 91.9\% [82.1, 96.5] \\
+ & POMDP-abl   & 0.000707 & 0.000404 & [0.000335, 0.001115]   & 82.0\% [73.8, 87.8] \\
+ & Bandit      & 0.000642 & 0.000408 & [0.000294, 0.001145]   & 74.4\% [67.9, 79.0] \\
+ & Greedy      & 0.000577 & 0.000492 & [0.000260, 0.000583]   & 66.9\% [47.5, 83.0] \\
+ & Random      & 0.000493 & 0.000289 & [0.000202, 0.000867]   & 57.1\% [49.0, 60.2] \\
 \midrule
 \multirow{6}{*}{Llama-3.2-1B}
- & Oracle      & 0.009755 & ---      & 100.0\% \\
- & EAP         & 0.009291 & 0.005739 & 95.2\% [87.0, 97.7] \\
- & Bandit      & 0.008606 & 0.005999 & 88.2\% [79.0, 96.7] \\
- & POMDP-abl   & 0.005086 & 0.002679 & 52.1\% [17.4, 90.2] \\
- & Random      & 0.004720 & 0.001795 & 48.4\% [31.6, 64.7] \\
- & Greedy      & 0.003982 & 0.001923 & 40.8\% [11.7, 74.1] \\
+ & Oracle      & 0.009755 & ---      & ---                    & 100.0\% \\
+ & EAP         & 0.009291 & 0.005739 & [0.003297, 0.018357]   & 95.2\% [87.0, 97.7] \\
+ & Bandit      & 0.008606 & 0.005999 & [0.003302, 0.014895]   & 88.2\% [79.0, 96.7] \\
+ & POMDP-abl   & 0.005086 & 0.002679 & [0.001923, 0.006294]   & 52.1\% [17.4, 90.2] \\
+ & Random      & 0.004720 & 0.001795 & [0.001504, 0.007315]   & 48.4\% [31.6, 64.7] \\
+ & Greedy      & 0.003982 & 0.001923 & [0.000899, 0.002689]   & 40.8\% [11.7, 74.1] \\
 \bottomrule
 \end{tabular}
 }
@@ -317,7 +321,9 @@ reports bounded oracle efficiency under the fair ablation-only protocol.
 \begin{table}[H]
 \centering
 \caption{Multi-step reasoning under the fair ablation-only protocol:
-bounded oracle efficiency with bootstrap 95\% CIs over 3 prompts.}
+bounded oracle efficiency with bootstrap 95\% CIs over 3 prompts.
+The oracle's cumulative KL (efficiency denominator) is $0.0101$ (Gemma)
+and $0.2447$ (Llama).}
 \label{tab:multistep}
 {\small
 \begin{tabular}{llccc}
@@ -349,7 +355,12 @@ On Gemma, POMDP-abl (73.0\%) again beats random (56.2\%) and is
 competitive with the bandit (78.4\%) and greedy (79.4\%), with EAP
 strongest (98.1\%).  On Llama, however, the result is a genuine
 negative: POMDP-abl collapses to 9.3\%---below random (44.8\%) and far
-below the bandit (76.4\%).  Per-prompt diagnostics trace this to the
+below the bandit (76.4\%).  The per-prompt bounded efficiencies make the
+failure mode concrete: the agent reaches only 4.4\% and 15.2\% on the
+two prompts whose oracle cumulative KL is dominated by early-layer
+features (oracle CumKL $0.461$ and $0.257$), and recovers to 55.9\% only
+on the third prompt, whose causal mass sits in later layers (oracle
+CumKL $0.016$).  These per-prompt diagnostics trace the collapse to the
 coarse three-bin layer-role discretisation
 (Section~\ref{sec:setup}): in Llama's shallow 16-layer stack, the
 early/middle/late bins each span many functionally distinct layers, so
@@ -416,13 +427,14 @@ EAP and POMDP-abl vs.\ baselines.}
 }
 \end{table}
 
-Under the fair protocol POMDP-abl is a consistently strong selector
-across domains on \emph{both} models (77--94\% on Gemma, 57--98\% on
-Llama), always beating random and usually matching or beating the
-bandit and greedy.  EAP remains the strongest single baseline.  The
-domain results thus mirror the IOI picture: the agent reliably beats
-random and is competitive with greedy/bandit, while EAP attribution
-ranking is hard to beat.  (Absolute multi-action KL per domain is
+Under the fair protocol POMDP-abl is a solid selector across domains on
+\emph{both} models (77--94\% on Gemma, 57--98\% on Llama): it beats
+random in every domain and is competitive with the bandit and greedy,
+winning on some domains (e.g.\ Gemma logic/history, Llama science/logic)
+and trailing on others (e.g.\ Gemma math/science).  EAP remains the
+strongest single baseline.  The domain results thus mirror the IOI
+picture: the agent reliably beats random and is competitive with
+greedy/bandit, while EAP attribution ranking is hard to beat.  (Absolute multi-action KL per domain is
 steering-amplified and reported as RCK context, not as oracle
 efficiency.)
 
@@ -520,13 +532,14 @@ contrasts the two architectures under the fair ablation-only protocol.
 
 The agent transfers cleanly to Gemma's deeper stack, where POMDP-abl
 beats random and tracks the bandit.  On Llama it transfers only
-partially: it remains a strong selector on IOI and on the single-step
-domain tasks, but the coarse layer-role discretisation hurts it badly
-on multi-step reasoning (Section~\ref{sec:multistep}).  The bandit, by
-contrast, tracks the POMDP closely on Llama IOI and surpasses it on
-multi-step---so we describe the agent as \emph{competitive with},
-rather than dominating, action-matched baselines on the shallower
-architecture.
+partially: it remains competitive on the single-step domain tasks, but
+on IOI its efficiency (52.1\%) is only marginally above random (48.4\%)
+and well below the bandit (88.2\%) and EAP (95.2\%), and the coarse
+layer-role discretisation hurts it badly on multi-step reasoning
+(Section~\ref{sec:multistep}).  The bandit tracks or beats the POMDP on
+every Llama condition---so we describe the agent as \emph{competitive
+with at best, and on Llama often behind}, the action-matched baselines
+on the shallower architecture.
 
 
 \subsection{Hypothesis Evaluation}

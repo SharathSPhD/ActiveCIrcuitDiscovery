@@ -134,12 +134,13 @@ and we frame the contribution accordingly.
 
 The following testable hypotheses guide the evaluation.
 
-\emph{H1 (Efficiency).}  The POMDP agent identifies causally important
-features with higher cumulative KL divergence than random selection within
-a fixed budget of $B=20$ interventions. Assessed via a one-sided paired
-$t$-test and an exact one-sided paired permutation test across prompts
-($\alpha = 0.05$); we treat the permutation test as primary given the
-small prompt counts.
+\emph{H1 (Efficiency).}  The POMDP agent, restricted to the ablation
+action for a fair comparison (the ablation-only variant ``POMDP-abl''),
+identifies causally important features with higher cumulative KL
+divergence than random selection within a fixed budget of $B=20$
+interventions. Assessed via a one-sided paired $t$-test and an exact
+one-sided paired permutation test across prompts ($\alpha = 0.05$); we
+treat the permutation test as primary given the small prompt counts.
 
 \emph{H2 (Causal controllability).}  We separate two sub-claims.
 \emph{H2a (manipulability):} scaling transcoder features changes the

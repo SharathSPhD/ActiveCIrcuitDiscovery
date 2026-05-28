@@ -23,9 +23,11 @@ agent's $>100\%$ RCK is indeed contributed by the steering action itself---rando
 selection with steering already amplifies cumulative KL relative to the ablation
 oracle---so we are careful \emph{not} to present that amplification as evidence of
 better structure discovery. The evidence that EFE-guided \emph{selection} helps comes
-from the bounded POMDP-abl-vs-oracle comparison and from POMDP-abl outperforming the
-action-matched-free heuristics on the same ablation footing, not from the inflated
-RCK numbers.
+from the bounded POMDP-abl-vs-oracle comparison on the same ablation footing---where
+on Gemma POMDP-abl significantly beats random and is competitive with greedy and the
+bandit---not from the inflated RCK numbers. We note that this selection advantage is
+model-dependent: on Llama, POMDP-abl only matches random and trails the bandit and
+EAP, so the case for EFE selection rests primarily on the Gemma results.
 
 \subsection{Theoretical Connections}
 
@@ -40,13 +42,14 @@ A striking finding is the strong task-dependence of circuit layer distribution. 
 \subsection{Cross-Model Generality}
 
 Replication on Llama-3.2-1B~\cite{Dubey2024llama} indicates that the framework
-transfers across architecture families on most tasks: the agent attains high bounded
-oracle efficiency on Llama IOI and is competitive with the strongest heuristics on
-the domain benchmark (Table~\ref{tab:crossmodel}). We deliberately avoid the word
-``dominates'': on several Llama conditions the bandit tracks the agent closely
-(Fig.~\ref{fig:cumkl}), and we report those cases as ties rather than wins. The one
-clear negative result---Llama multi-step---is examined as a limitation in its own
-right below rather than explained away.
+transfers only partially across architecture families. The agent remains a useful
+selector on the Llama domain benchmark (competitive with the bandit and EAP), but on
+Llama IOI its bounded oracle efficiency is modest (52.1\%, CI [17.4, 90.2])---barely
+above random (48.4\%) and clearly below the bandit (88.2\%) and EAP (95.2\%). We
+deliberately avoid the word ``dominates'': on several Llama conditions the bandit
+tracks or beats the agent (Fig.~\ref{fig:cumkl}), and we report those as ties or
+losses rather than wins. The one clear negative result---Llama multi-step---is
+examined as a limitation in its own right below rather than explained away.
 
 \subsection{Limitations}
 
