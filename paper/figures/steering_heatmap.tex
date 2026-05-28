@@ -3,11 +3,11 @@
 \begin{groupplot}[
     group style={
         group size=2 by 1,
-        horizontal sep=0.5cm,
+        horizontal sep=1.2cm,
         ylabels at=edge left,
     },
-    width=0.48\linewidth,
-    height=6cm,
+    width=0.52\columnwidth,
+    height=4.5cm,
     xlabel={Steering multiplier $m$},
     ylabel={Mean KL divergence},
     x label style={font=\scriptsize},
@@ -16,29 +16,27 @@
     title style={font=\scriptsize\bfseries},
     legend style={
         font=\tiny,
-        at={(0.5,-0.33)},
+        at={(0.5,-0.25)},
         anchor=north,
         legend columns=3
     },
     xtick={0,2,5,10},
-    ymajorgrids=true,
-    grid style={dashed, gray!30},
 ]
 
 \nextgroupplot[title={Gemma-2-2B}]
-\addplot[blue, thick, mark=*] coordinates { (0.0,0.000249) (2.0,0.000571) (5.0,0.004278) (10.0,0.010184) };
-\addplot[red, thick, mark=*] coordinates { (0.0,0.001281) (2.0,0.001446) (5.0,0.024365) (10.0,0.162296) };
-\addplot[green!60!black, thick, mark=*] coordinates { (0.0,0.000136) (2.0,0.000102) (5.0,0.002692) (10.0,0.008660) };
-\addplot[purple, thick, mark=*] coordinates { (0.0,0.003460) (2.0,0.003683) (5.0,0.063126) (10.0,0.455828) };
-\addplot[brown, thick, mark=*] coordinates { (0.0,0.000386) (2.0,0.000623) (5.0,0.006513) (10.0,0.024498) };
+\addplot[blue, thick, mark=*] coordinates { (0.0,0.000249) (1.5,0.000130) (2.0,0.000571) (3.0,0.001968) (5.0,0.004278) (10.0,0.010184) };
+\addplot[red, thick, mark=*] coordinates { (0.0,0.001352) (1.5,0.000352) (2.0,0.001520) (3.0,0.008043) (5.0,0.069690) (10.0,0.697324) };
+\addplot[green!60!black, thick, mark=*] coordinates { (0.0,0.000136) (1.5,0.000026) (2.0,0.000102) (3.0,0.000365) (5.0,0.002692) (10.0,0.008660) };
+\addplot[purple, thick, mark=*] coordinates { (0.0,0.003536) (1.5,0.000906) (2.0,0.003722) (3.0,0.016692) (5.0,0.067487) (10.0,0.485322) };
+\addplot[brown, thick, mark=*] coordinates { (0.0,0.000898) (1.5,0.000303) (2.0,0.001338) (3.0,0.006564) (5.0,0.051704) (10.0,0.631355) };
 \legend{Golden Gate Bridge, Eiffel Tower, Mount Everest, Great Wall of China, Statue of Liberty}
 
 \nextgroupplot[title={Llama-3.2-1B}]
-\addplot[blue, thick, mark=*] coordinates { (0.0,0.003609) (2.0,0.001486) (5.0,0.029852) (10.0,0.193760) };
-\addplot[red, thick, mark=*] coordinates { (0.0,0.000730) (2.0,0.000461) (5.0,0.008967) (10.0,0.080968) };
-\addplot[green!60!black, thick, mark=*] coordinates { (0.0,0.001963) (2.0,0.001359) (5.0,0.010197) (10.0,0.123166) };
-\addplot[purple, thick, mark=*] coordinates { (0.0,0.011569) (2.0,0.006607) (5.0,0.087774) (10.0,0.143479) };
-\addplot[brown, thick, mark=*] coordinates { (0.0,0.007696) (2.0,0.003893) (5.0,0.065916) (10.0,0.446384) };
+\addplot[blue, thick, mark=*] coordinates { (0.0,0.003609) (1.5,0.000365) (2.0,0.001486) (3.0,0.006794) (5.0,0.029852) (10.0,0.193760) };
+\addplot[red, thick, mark=*] coordinates { (0.0,0.003216) (1.5,0.000556) (2.0,0.002070) (3.0,0.008155) (5.0,0.033345) (10.0,0.285773) };
+\addplot[green!60!black, thick, mark=*] coordinates { (0.0,0.001963) (1.5,0.000378) (2.0,0.001359) (3.0,0.003709) (5.0,0.010197) (10.0,0.123166) };
+\addplot[purple, thick, mark=*] coordinates { (0.0,0.008333) (1.5,0.000816) (2.0,0.004294) (3.0,0.022110) (5.0,0.076030) (10.0,0.113099) };
+\addplot[brown, thick, mark=*] coordinates { (0.0,0.007696) (1.5,0.001065) (2.0,0.003893) (3.0,0.014201) (5.0,0.065916) (10.0,0.446384) };
 
 \end{groupplot}
 \end{tikzpicture}

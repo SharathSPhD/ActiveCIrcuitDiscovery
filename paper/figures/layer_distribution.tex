@@ -3,11 +3,11 @@
 \begin{groupplot}[
     group style={
         group size=2 by 1,
-        horizontal sep=0.5cm,
+        horizontal sep=1.2cm,
         ylabels at=edge left,
     },
-    width=0.48\linewidth,
-    height=6cm,
+    width=0.52\columnwidth,
+    height=4.5cm,
     ylabel={Count (top-10 features)},
     symbolic x coords={Early, Mid, Late},
     xtick=data,
@@ -21,12 +21,10 @@
     nodes near coords style={font=\tiny},
     legend style={
         font=\tiny,
-        at={(0.5,-0.36)},
+        at={(0.5,-0.28)},
         anchor=north,
         legend columns=2
     },
-    ymajorgrids=true,
-    grid style={dashed, gray!30},
 ]
 
 \nextgroupplot[ybar, bar width=8pt, title={Gemma-2-2B}]
