@@ -44,7 +44,9 @@ def compute_ioi_aggregate(data: dict) -> dict:
         return sum(p.get(key, 0) for p in prompts) / n
 
     ai_cum     = avg("ai_cumkl")
+    ai_abl_cum = avg("ai_abl_cumkl") if "ai_abl_cumkl" in prompts[0] else avg("ai_cumkl")
     bandit_cum = avg("bandit_cumkl") if "bandit_cumkl" in prompts[0] else avg("ai_cumkl")
+    eap_cum    = avg("eap_cumkl") if "eap_cumkl" in prompts[0] else avg("greedy_cumkl")
     greedy_cum = avg("greedy_cumkl")
     random_cum = avg("random_cumkl")
     oracle_cum = avg("oracle_cumkl")
@@ -57,10 +59,18 @@ def compute_ioi_aggregate(data: dict) -> dict:
         "bandit_mean": avg("bandit_mean") if "bandit_mean" in prompts[0] else avg("ai_mean"),
         "greedy_mean": avg("greedy_mean"),
         "random_mean": avg("random_mean"),
-        "ai_oracle_eff": eff(ai_cum),
+        # bounded oracle efficiency (ablation-only methods, <=100%)
+        "ai_abl_oracle_eff": eff(ai_abl_cum),
+        "eap_oracle_eff": eff(eap_cum),
         "bandit_oracle_eff": eff(bandit_cum),
         "greedy_oracle_eff": eff(greedy_cum),
         "random_oracle_eff": eff(random_cum),
+        # multi-action relative cumulative KL (RCK, may exceed 100%)
+        "ai_rck": eff(ai_cum),
+        "greedy_steer_rck": eff(avg("greedy_steer_cumkl")) if "greedy_steer_cumkl" in prompts[0] else 0,
+        "bandit_steer_rck": eff(avg("bandit_steer_cumkl")) if "bandit_steer_cumkl" in prompts[0] else 0,
+        "random_steer_rck": eff(avg("random_steer_cumkl")) if "random_steer_cumkl" in prompts[0] else 0,
+        "random_action_rck": eff(avg("random_action_cumkl")) if "random_action_cumkl" in prompts[0] else 0,
     }
 
 
@@ -69,37 +79,46 @@ def compute_ioi_aggregate(data: dict) -> dict:
 # ======================================================================
 
 def _compute_cumkl_arrays(data: dict) -> Tuple[np.ndarray, ...]:
+    """Fair, ablation-only cumulative KL curves.
+
+    All curves use ablation KL so the comparison against the ablation oracle is
+    on a single scale: Oracle, POMDP-abl (EFE selection, ablation only), Bandit,
+    EAP, Greedy.  The steering-inflated multi-action curve is intentionally not
+    plotted here (it lives on the separate RCK figure).
+    """
     prompts = data["per_prompt"]
     budget = data.get("budget", 20)
     n = len(prompts)
 
-    ai_cum     = np.zeros(budget)
+    ai_abl_cum = np.zeros(budget)
     bandit_cum = np.zeros(budget)
+    eap_cum    = np.zeros(budget)
     greedy_cum = np.zeros(budget)
     oracle_cum = np.zeros(budget)
 
     for p in prompts:
-        ai_kl     = p.get("ai_kls", [])
-        bandit_kl = p.get("bandit_kls", ai_kl)
+        ai_abl_kl = p.get("ai_abl_kls", p.get("ai_kls", []))
+        bandit_kl = p.get("bandit_kls", ai_abl_kl)
+        eap_kl    = p.get("eap_kls", p.get("greedy_kls", []))
         greedy_kl = p.get("greedy_kls", [])
         oracle_kl = p.get("oracle_kls", [])
 
         for arr, cum in [
-            (ai_kl, ai_cum), (bandit_kl, bandit_cum),
+            (ai_abl_kl, ai_abl_cum), (bandit_kl, bandit_cum), (eap_kl, eap_cum),
             (greedy_kl, greedy_cum), (oracle_kl, oracle_cum),
         ]:
             for i in range(min(budget, len(arr))):
                 cum[i] += sum(arr[: i + 1]) / n
 
-    return oracle_cum, ai_cum, bandit_cum, greedy_cum, budget
+    return oracle_cum, ai_abl_cum, bandit_cum, eap_cum, greedy_cum, budget
 
 
-def _write_axis_block(f, oracle, ai, bandit, greedy, budget, title, show_legend=True):
-    """Write a single axis block for cumulative KL."""
+def _write_axis_block(f, oracle, ai_abl, bandit, eap, greedy, budget, title, show_legend=True):
+    """Write a single axis block for fair (ablation-only) cumulative KL."""
     f.write(
         f"\\nextgroupplot[title={{{title}}},\n"
         f"    xlabel={{Intervention step}},\n"
-        f"    ylabel={{Cumulative KL}},\n"
+        f"    ylabel={{Cumulative ablation KL}},\n"
         f"    xmin=1, xmax={budget},\n"
         f"]\n\n"
     )
@@ -107,21 +126,22 @@ def _write_axis_block(f, oracle, ai, bandit, greedy, budget, title, show_legend=
         return " ".join(f"({i+1},{v:.6f})" for i, v in enumerate(vals))
 
     f.write(f"\\addplot[black, dashed, thick] coordinates {{ {coords(oracle)} }};\n")
-    f.write(f"\\addplot[red, thick] coordinates {{ {coords(ai)} }};\n")
+    f.write(f"\\addplot[red, thick] coordinates {{ {coords(ai_abl)} }};\n")
     f.write(f"\\addplot[orange, thick] coordinates {{ {coords(bandit)} }};\n")
+    f.write(f"\\addplot[teal, thick] coordinates {{ {coords(eap)} }};\n")
     f.write(f"\\addplot[blue, thick] coordinates {{ {coords(greedy)} }};\n\n")
     if show_legend:
-        f.write("\\legend{Oracle, POMDP Agent, Bandit, Greedy}\n\n")
+        f.write("\\legend{Oracle, POMDP-abl, Bandit, EAP, Greedy}\n\n")
 
 
 def write_cumulative_kl(gemma_data: dict, llama_data: Optional[dict], out_path: str):
-    g_oracle, g_ai, g_bandit, g_greedy, g_budget = _compute_cumkl_arrays(gemma_data)
+    g_oracle, g_ai, g_bandit, g_eap, g_greedy, g_budget = _compute_cumkl_arrays(gemma_data)
 
     with open(out_path, "w") as f:
         f.write("% Auto-generated from experiment results.\n")
 
         if llama_data:
-            l_oracle, l_ai, l_bandit, l_greedy, l_budget = _compute_cumkl_arrays(llama_data)
+            l_oracle, l_ai, l_bandit, l_eap, l_greedy, l_budget = _compute_cumkl_arrays(llama_data)
             f.write(
                 "\\begin{tikzpicture}\n"
                 "\\begin{groupplot}[\n"
@@ -143,8 +163,8 @@ def write_cumulative_kl(gemma_data: dict, llama_data: Optional[dict], out_path: 
                 "    },\n"
                 "]\n\n"
             )
-            _write_axis_block(f, g_oracle, g_ai, g_bandit, g_greedy, g_budget, "Gemma-2-2B", show_legend=True)
-            _write_axis_block(f, l_oracle, l_ai, l_bandit, l_greedy, l_budget, "Llama-3.2-1B", show_legend=False)
+            _write_axis_block(f, g_oracle, g_ai, g_bandit, g_eap, g_greedy, g_budget, "Gemma-2-2B", show_legend=True)
+            _write_axis_block(f, l_oracle, l_ai, l_bandit, l_eap, l_greedy, l_budget, "Llama-3.2-1B", show_legend=False)
             f.write("\\end{groupplot}\n\\end{tikzpicture}\n")
         else:
             f.write(
@@ -153,7 +173,7 @@ def write_cumulative_kl(gemma_data: dict, llama_data: Optional[dict], out_path: 
                 "    width=\\columnwidth,\n"
                 "    height=5cm,\n"
                 "    xlabel={Intervention step},\n"
-                "    ylabel={Cumulative KL},\n"
+                "    ylabel={Cumulative ablation KL},\n"
                 "    x label style={font=\\scriptsize},\n"
                 "    y label style={font=\\scriptsize},\n"
                 "    tick label style={font=\\scriptsize},\n"
@@ -170,8 +190,9 @@ def write_cumulative_kl(gemma_data: dict, llama_data: Optional[dict], out_path: 
             f.write(f"\\addplot[black, dashed, thick] coordinates {{ {coords(g_oracle)} }};\n")
             f.write(f"\\addplot[red, thick] coordinates {{ {coords(g_ai)} }};\n")
             f.write(f"\\addplot[orange, thick] coordinates {{ {coords(g_bandit)} }};\n")
+            f.write(f"\\addplot[teal, thick] coordinates {{ {coords(g_eap)} }};\n")
             f.write(f"\\addplot[blue, thick] coordinates {{ {coords(g_greedy)} }};\n\n")
-            f.write("\\legend{Oracle, POMDP Agent, Bandit, Greedy}\n\n")
+            f.write("\\legend{Oracle, POMDP-abl, Bandit, EAP, Greedy}\n\n")
             f.write("\\end{axis}\n\\end{tikzpicture}\n")
 
     print(f"  Wrote {out_path}")
@@ -181,18 +202,27 @@ def write_cumulative_kl(gemma_data: dict, llama_data: Optional[dict], out_path: 
 # IOI comparison bar chart (Gemma + Llama grouped)
 # ======================================================================
 
+_BOUNDED_KEYS = ('random_oracle_eff', 'greedy_oracle_eff', 'eap_oracle_eff',
+                 'bandit_oracle_eff', 'ai_abl_oracle_eff')
+_BOUNDED_COORDS = (('Random', 'random_oracle_eff'), ('Greedy', 'greedy_oracle_eff'),
+                   ('EAP', 'eap_oracle_eff'), ('Bandit', 'bandit_oracle_eff'),
+                   ('POMDP-abl', 'ai_abl_oracle_eff'))
+
+
 def _panel_ymax(aggs: list) -> float:
-    """Compute a sensible ymax from a list of aggregate dicts."""
+    """Compute a sensible ymax for bounded-efficiency bars (capped near 100%)."""
     vals = []
     for a in aggs:
         if a is None:
             continue
-        for k in ('random_oracle_eff', 'greedy_oracle_eff',
-                  'bandit_oracle_eff', 'ai_oracle_eff'):
+        for k in _BOUNDED_KEYS:
             vals.append(a.get(k, 0))
     peak = max(vals) if vals else 100
-    headroom = peak * 1.15
-    return max(headroom, 110)
+    return max(peak * 1.15, 105)
+
+
+def _bar_coords(agg: dict) -> str:
+    return " ".join(f"({lbl}, {agg.get(key, 0):.1f})" for lbl, key in _BOUNDED_COORDS)
 
 
 def write_ioi_comparison(
@@ -200,134 +230,123 @@ def write_ioi_comparison(
     l_ioi_agg: Optional[dict], l_ms_agg: Optional[dict],
     out_path: str
 ):
-    with open(out_path, "w") as f:
-        f.write("% Auto-generated from experiment results.\n")
+    """Bounded oracle-efficiency bars (ablation-only methods) for IOI + multi-step."""
+    common = (
+        "    ylabel={Bounded oracle eff.\\ (\\%)},\n"
+        "    symbolic x coords={Random, Greedy, EAP, Bandit, POMDP-abl},\n"
+        "    xtick=data,\n"
+        "    x tick label style={font=\\tiny, rotate=25, anchor=east},\n"
+        "    y tick label style={font=\\scriptsize},\n"
+        "    ylabel style={font=\\scriptsize},\n"
+        "    title style={font=\\scriptsize\\bfseries},\n"
+        "    ymin=0,\n"
+        "    enlarge x limits=0.15,\n"
+        "    nodes near coords,\n"
+        "    nodes near coords style={font=\\tiny},\n"
+        "    every node near coord/.append style={/pgf/number format/fixed,\n"
+        "        /pgf/number format/precision=1},\n"
+    )
 
+    def panel(f, title, ioi_agg, ms_agg, ymax):
+        f.write(f"\\nextgroupplot[ybar, bar width=4pt, title={{{title}}}, ymax={ymax:.0f}]\n")
+        f.write(f"\\addplot[fill=blue!40, draw=blue!60] coordinates {{ {_bar_coords(ioi_agg)} }};\n")
+        if ms_agg:
+            f.write(f"\\addplot[fill=red!40, draw=red!60] coordinates {{ {_bar_coords(ms_agg)} }};\n")
+
+    with open(out_path, "w") as f:
+        f.write("% Auto-generated from experiment results (bounded oracle efficiency).\n")
         if l_ioi_agg:
             g_ymax = _panel_ymax([g_ioi_agg, g_ms_agg])
             l_ymax = _panel_ymax([l_ioi_agg, l_ms_agg])
             f.write(
-                "\\begin{tikzpicture}\n"
-                "\\begin{groupplot}[\n"
-                "    group style={\n"
-                "        group size=2 by 1,\n"
-                "        horizontal sep=1.2cm,\n"
-                "        ylabels at=edge left,\n"
-                "    },\n"
-                "    width=0.52\\columnwidth,\n"
-                "    height=4.5cm,\n"
-                "    ylabel={Oracle Efficiency (\\%)},\n"
-                "    symbolic x coords={Random, Greedy, Bandit, POMDP},\n"
-                "    xtick=data,\n"
-                "    x tick label style={font=\\tiny},\n"
-                "    y tick label style={font=\\scriptsize},\n"
-                "    ylabel style={font=\\scriptsize},\n"
-                "    title style={font=\\scriptsize\\bfseries},\n"
-                "    ymin=0,\n"
-                "    enlarge x limits=0.2,\n"
-                "    nodes near coords,\n"
-                "    nodes near coords style={font=\\tiny},\n"
-                "    every node near coord/.append style={/pgf/number format/fixed,\n"
-                "        /pgf/number format/precision=1},\n"
-                "    legend style={\n"
-                "        font=\\tiny,\n"
-                "        at={(0.5,-0.28)},\n"
-                "        anchor=north,\n"
-                "        legend columns=2\n"
-                "    },\n"
+                "\\begin{tikzpicture}\n\\begin{groupplot}[\n"
+                "    group style={group size=2 by 1, horizontal sep=1.2cm, ylabels at=edge left},\n"
+                "    width=0.52\\columnwidth, height=4.7cm,\n"
+                + common +
+                "    legend style={font=\\tiny, at={(0.5,-0.42)}, anchor=north, legend columns=2},\n"
                 "]\n\n"
             )
-            # Gemma panel
-            f.write(f"\\nextgroupplot[ybar, bar width=5pt, title={{Gemma-2-2B}}, ymax={g_ymax:.0f}]\n")
-            f.write(
-                f"\\addplot[fill=blue!40, draw=blue!60] coordinates {{\n"
-                f"    (Random, {g_ioi_agg['random_oracle_eff']:.1f}) "
-                f"(Greedy, {g_ioi_agg['greedy_oracle_eff']:.1f}) "
-                f"(Bandit, {g_ioi_agg['bandit_oracle_eff']:.1f}) "
-                f"(POMDP, {g_ioi_agg['ai_oracle_eff']:.1f})\n"
-                f"}};\n\n"
-            )
-            if g_ms_agg:
-                f.write(
-                    f"\\addplot[fill=red!40, draw=red!60] coordinates {{\n"
-                    f"    (Random, {g_ms_agg['random_oracle_eff']:.1f}) "
-                    f"(Greedy, {g_ms_agg['greedy_oracle_eff']:.1f}) "
-                    f"(Bandit, {g_ms_agg['bandit_oracle_eff']:.1f}) "
-                    f"(POMDP, {g_ms_agg['ai_oracle_eff']:.1f})\n"
-                    f"}};\n\n"
-                )
+            panel(f, "Gemma-2-2B", g_ioi_agg, g_ms_agg, g_ymax)
             f.write("\\legend{IOI, Multi-step}\n\n")
-
-            # Llama panel
-            f.write(f"\\nextgroupplot[ybar, bar width=5pt, title={{Llama-3.2-1B}}, ymax={l_ymax:.0f}]\n")
-            f.write(
-                f"\\addplot[fill=blue!40, draw=blue!60] coordinates {{\n"
-                f"    (Random, {l_ioi_agg['random_oracle_eff']:.1f}) "
-                f"(Greedy, {l_ioi_agg['greedy_oracle_eff']:.1f}) "
-                f"(Bandit, {l_ioi_agg['bandit_oracle_eff']:.1f}) "
-                f"(POMDP, {l_ioi_agg['ai_oracle_eff']:.1f})\n"
-                f"}};\n\n"
-            )
-            if l_ms_agg:
-                f.write(
-                    f"\\addplot[fill=red!40, draw=red!60] coordinates {{\n"
-                    f"    (Random, {l_ms_agg['random_oracle_eff']:.1f}) "
-                    f"(Greedy, {l_ms_agg['greedy_oracle_eff']:.1f}) "
-                    f"(Bandit, {l_ms_agg['bandit_oracle_eff']:.1f}) "
-                    f"(POMDP, {l_ms_agg['ai_oracle_eff']:.1f})\n"
-                    f"}};\n\n"
-                )
+            panel(f, "Llama-3.2-1B", l_ioi_agg, l_ms_agg, l_ymax)
             f.write("\\end{groupplot}\n\\end{tikzpicture}\n")
         else:
-            # Gemma-only fallback
             g_ymax = _panel_ymax([g_ioi_agg, g_ms_agg])
             f.write(
-                "\\begin{tikzpicture}\n"
-                "\\begin{axis}[\n"
-                "    ybar,\n"
-                "    width=\\columnwidth,\n"
-                "    height=5cm,\n"
-                "    bar width=6pt,\n"
-                "    ylabel={Oracle Efficiency (\\%)},\n"
-                "    symbolic x coords={Random, Greedy, Bandit, POMDP},\n"
-                "    xtick=data,\n"
-                "    x tick label style={font=\\scriptsize},\n"
-                "    y tick label style={font=\\scriptsize},\n"
-                "    ylabel style={font=\\scriptsize},\n"
-                "    legend style={\n"
-                "        font=\\scriptsize,\n"
-                "        at={(0.5,-0.22)},\n"
-                "        anchor=north,\n"
-                "        legend columns=2\n"
-                "    },\n"
-                f"    ymin=0, ymax={g_ymax:.0f},\n"
-                "    enlarge x limits=0.2,\n"
-                "    nodes near coords,\n"
-                "    nodes near coords style={font=\\tiny},\n"
-                "    every node near coord/.append style={/pgf/number format/fixed,\n"
-                "        /pgf/number format/precision=1},\n"
-                "]\n\n"
+                "\\begin{tikzpicture}\n\\begin{axis}[\n"
+                "    ybar, width=\\columnwidth, height=5cm, bar width=6pt,\n"
+                + common +
+                "    legend style={font=\\scriptsize, at={(0.5,-0.32)}, anchor=north, legend columns=2},\n"
+                f"    ymax={g_ymax:.0f},\n]\n\n"
             )
-            f.write(
-                f"\\addplot[fill=blue!40, draw=blue!60] coordinates {{\n"
-                f"    (Random, {g_ioi_agg['random_oracle_eff']:.1f}) "
-                f"(Greedy, {g_ioi_agg['greedy_oracle_eff']:.1f}) "
-                f"(Bandit, {g_ioi_agg['bandit_oracle_eff']:.1f}) "
-                f"(POMDP, {g_ioi_agg['ai_oracle_eff']:.1f})\n"
-                f"}};\n\n"
-            )
+            f.write(f"\\addplot[fill=blue!40, draw=blue!60] coordinates {{ {_bar_coords(g_ioi_agg)} }};\n")
             if g_ms_agg:
-                f.write(
-                    f"\\addplot[fill=red!40, draw=red!60] coordinates {{\n"
-                    f"    (Random, {g_ms_agg['random_oracle_eff']:.1f}) "
-                    f"(Greedy, {g_ms_agg['greedy_oracle_eff']:.1f}) "
-                    f"(Bandit, {g_ms_agg['bandit_oracle_eff']:.1f}) "
-                    f"(POMDP, {g_ms_agg['ai_oracle_eff']:.1f})\n"
-                    f"}};\n\n"
-                )
+                f.write(f"\\addplot[fill=red!40, draw=red!60] coordinates {{ {_bar_coords(g_ms_agg)} }};\n")
                 f.write("\\legend{IOI, Multi-step}\n\n")
             else:
                 f.write("\\legend{IOI}\n\n")
+            f.write("\\end{axis}\n\\end{tikzpicture}\n")
+    print(f"  Wrote {out_path}")
+
+
+def write_rck_comparison(
+    g_ioi_agg: dict, l_ioi_agg: Optional[dict], out_path: str
+):
+    """Relative Cumulative KL (multi-action) bars: decomposes selection vs steering.
+
+    Shows POMDP (multi-action) against action-matched baselines (Greedy+steer,
+    Bandit+steer, Random+steer, Random-action) on the RCK scale, all relative to
+    the ablation oracle (100%, drawn as a reference line).
+    """
+    coord_keys = (('POMDP', 'ai_rck'), ('Gr+st', 'greedy_steer_rck'),
+                  ('Ba+st', 'bandit_steer_rck'), ('Rnd+st', 'random_steer_rck'),
+                  ('RndAct', 'random_action_rck'))
+
+    def coords(agg):
+        return " ".join(f"({lbl}, {agg.get(k, 0):.1f})" for lbl, k in coord_keys)
+
+    def ymax(*aggs):
+        vals = [a.get(k, 0) for a in aggs if a for _, k in coord_keys]
+        return max(max(vals) * 1.15, 120) if vals else 120
+
+    common = (
+        "    ylabel={Relative Cumulative KL (\\%)},\n"
+        "    symbolic x coords={POMDP, Gr+st, Ba+st, Rnd+st, RndAct},\n"
+        "    xtick=data,\n"
+        "    x tick label style={font=\\tiny, rotate=25, anchor=east},\n"
+        "    y tick label style={font=\\scriptsize},\n"
+        "    ylabel style={font=\\scriptsize},\n"
+        "    title style={font=\\scriptsize\\bfseries},\n"
+        "    ymin=0, enlarge x limits=0.15,\n"
+        "    nodes near coords, nodes near coords style={font=\\tiny},\n"
+        "    every node near coord/.append style={/pgf/number format/fixed,\n"
+        "        /pgf/number format/precision=0},\n"
+    )
+
+    def panel(f, title, agg, ym):
+        f.write(f"\\nextgroupplot[ybar, bar width=6pt, title={{{title}}}, ymax={ym:.0f}]\n")
+        f.write(f"\\addplot[fill=green!45, draw=green!60!black] coordinates {{ {coords(agg)} }};\n")
+        f.write(f"\\draw[black, dashed, thick] ({{rel axis cs:0,0}}|-{{axis cs:POMDP,100}}) -- "
+                f"({{rel axis cs:1,0}}|-{{axis cs:POMDP,100}});\n")
+
+    with open(out_path, "w") as f:
+        f.write("% Auto-generated: RCK (multi-action) vs ablation oracle (100% dashed line).\n")
+        if l_ioi_agg:
+            f.write(
+                "\\begin{tikzpicture}\n\\begin{groupplot}[\n"
+                "    group style={group size=2 by 1, horizontal sep=1.2cm, ylabels at=edge left},\n"
+                "    width=0.52\\columnwidth, height=4.7cm,\n" + common + "]\n\n"
+            )
+            panel(f, "Gemma-2-2B IOI", g_ioi_agg, ymax(g_ioi_agg))
+            panel(f, "Llama-3.2-1B IOI", l_ioi_agg, ymax(l_ioi_agg))
+            f.write("\\end{groupplot}\n\\end{tikzpicture}\n")
+        else:
+            f.write(
+                "\\begin{tikzpicture}\n\\begin{axis}[\n"
+                "    ybar, width=\\columnwidth, height=5cm, bar width=8pt,\n" + common +
+                f"    ymax={ymax(g_ioi_agg):.0f},\n]\n\n"
+            )
+            f.write(f"\\addplot[fill=green!45, draw=green!60!black] coordinates {{ {coords(g_ioi_agg)} }};\n")
             f.write("\\end{axis}\n\\end{tikzpicture}\n")
     print(f"  Wrote {out_path}")
 
@@ -810,27 +829,30 @@ def main():
     # --- Cumulative KL (Fig 4) ---
     if g_ioi:
         g_ioi_agg = compute_ioi_aggregate(g_ioi)
-        print(f"\n  IOI Gemma: POMDP oracle_eff={g_ioi_agg['ai_oracle_eff']:.1f}%")
+        print(f"\n  IOI Gemma: POMDP-abl eff={g_ioi_agg['ai_abl_oracle_eff']:.1f}%  RCK={g_ioi_agg['ai_rck']:.1f}%")
         write_cumulative_kl(g_ioi, l_ioi, str(figures_dir / "cumulative_kl.tex"))
     else:
         print("  WARNING: No Gemma IOI results found")
 
     if l_ioi:
         l_ioi_agg = compute_ioi_aggregate(l_ioi)
-        print(f"  IOI Llama: POMDP oracle_eff={l_ioi_agg['ai_oracle_eff']:.1f}%")
+        print(f"  IOI Llama: POMDP-abl eff={l_ioi_agg['ai_abl_oracle_eff']:.1f}%  RCK={l_ioi_agg['ai_rck']:.1f}%")
 
     # --- Multi-step aggregation ---
     if g_ms:
         g_ms_agg = compute_ioi_aggregate(g_ms)
-        print(f"  Multi-step Gemma: POMDP oracle_eff={g_ms_agg['ai_oracle_eff']:.1f}%")
+        print(f"  Multi-step Gemma: POMDP-abl eff={g_ms_agg['ai_abl_oracle_eff']:.1f}%")
     if l_ms:
         l_ms_agg = compute_ioi_aggregate(l_ms)
-        print(f"  Multi-step Llama: POMDP oracle_eff={l_ms_agg['ai_oracle_eff']:.1f}%")
+        print(f"  Multi-step Llama: POMDP-abl eff={l_ms_agg['ai_abl_oracle_eff']:.1f}%")
 
-    # --- IOI comparison bar chart (Fig 6) ---
+    # --- IOI comparison bar chart (Fig 6, bounded oracle efficiency) ---
     if g_ioi_agg:
         write_ioi_comparison(g_ioi_agg, g_ms_agg, l_ioi_agg, l_ms_agg,
                              str(figures_dir / "ioi_comparison.tex"))
+        # --- RCK decomposition (multi-action) ---
+        write_rck_comparison(g_ioi_agg, l_ioi_agg,
+                             str(figures_dir / "rck_comparison.tex"))
 
     # --- Steering heatmap (Fig 7) ---
     if g_steer:

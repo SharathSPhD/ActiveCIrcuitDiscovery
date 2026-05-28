@@ -4,20 +4,24 @@ intervention engine.
 
 \subsection{Architecture Overview}
 
-\begin{figure}[t]
+The \ACD{} framework is organised as a three-layer pipeline in which an
+attribution backend supplies a pruned set of candidate transcoder
+features, an Active Inference POMDP agent chooses which feature to
+probe and which intervention to apply, and an intervention engine
+executes the chosen action and returns an observation that drives the
+next belief update.  Figure~\ref{fig:architecture} shows the end-to-end
+data flow between these three layers.
+
+\begin{figure}[H]
 \centering
-\resizebox{\columnwidth}{!}{%
+\resizebox{\linewidth}{!}{%
 \input{figures/architecture}%
 }
-\caption{System architecture of \ACD{}. The \texttt{circuit-tracer}
-  pipeline (left) extracts candidate features via EAP and pruning.
-  The Active Inference POMDP agent (right) selects interventions by
-  minimising Expected Free Energy, updates beliefs from observations,
-  and learns its observation model via Dirichlet updates.}
+\caption{System architecture of \ACD{}: attribution backend (left) and POMDP agent loop (right).}
 \label{fig:architecture}
 \end{figure}
 
-The framework consists of three layers.  The first is the
+In more detail, the first layer is the
 \emph{attribution graph backend}, in which Anthropic's
 \texttt{circuit-tracer} library~\cite{Anthropic2025CT} generates
 attribution graphs via Edge Attribution Patching (EAP) with GemmaScope
@@ -49,6 +53,7 @@ The graph is pruned to retain features with influence above a threshold
 (default 80\%).  Each retained feature $i$ receives a normalised
 importance score:
 \begin{equation}
+  \label{eq:importance}
   \text{imp}(i) = \frac{\sum_j |W_{ij}| + \sum_j |W_{ji}|}
                        {\max_k \left(\sum_j |W_{kj}| + \sum_j |W_{jk}|\right)}
 \end{equation}
@@ -59,20 +64,23 @@ diversity.
 
 \subsection{POMDP Formulation}
 
-\begin{figure}[t]
+Circuit discovery is cast as a discrete Partially Observable Markov
+Decision Process (POMDP) in which each candidate feature carries a
+small set of unobserved attributes (importance, layer role, causal
+influence) and each intervention produces noisy, discretised
+observations that refine the agent's belief over those attributes.
+The overall inference--evaluation--action--learning loop is illustrated
+in Figure~\ref{fig:scoring}, and the individual factors are formalised
+in the subsections that follow.
+
+\begin{figure}[H]
 \centering
-\resizebox{\columnwidth}{!}{%
+\resizebox{\linewidth}{!}{%
 \input{figures/efe_pipeline}%
 }
-\caption{POMDP agent pipeline. At each step, the agent infers
-  hidden states from observations, evaluates all action--candidate
-  pairs via EFE, selects the pair with lowest EFE, executes the
-  intervention, and updates its generative model via Dirichlet learning.}
+\caption{Active Inference POMDP agent pipeline: inference, EFE evaluation, and action selection.}
 \label{fig:scoring}
 \end{figure}
-
-The circuit discovery problem is cast as a discrete POMDP with the
-following structure.
 
 \subsubsection{Hidden State Factors}
 
@@ -145,10 +153,10 @@ features are not causally critical---and uniform over layer role.
 
 At each step, the agent evaluates each unobserved candidate feature $i$
 and each action $a$ by computing the Expected Free Energy:
-\begin{multline}
-  G(i, a) = \underbrace{\mathbb{E}_{q}\!\bigl[\log q(s_\tau | \pi) - \log q(s_\tau | o_\tau, \pi)\bigr]}_{\text{epistemic: information gain}} \\
-  + \underbrace{\mathbb{E}_{q}\!\bigl[\log p(o_\tau) - \log q(o_\tau | \pi)\bigr]}_{\text{pragmatic: preference satisfaction}}
-\end{multline}
+\begin{equation}
+  \label{eq:efe_agent}
+  G(i, a) = \underbrace{\mathbb{E}_{q}\!\bigl[\log q(s_\tau | \pi) - \log q(s_\tau | o_\tau, \pi)\bigr]}_{\text{epistemic}} + \underbrace{\mathbb{E}_{q}\!\bigl[\log p(o_\tau) - \log q(o_\tau | \pi)\bigr]}_{\text{pragmatic}}
+\end{equation}
 
 The candidate--action pair with the lowest EFE is selected:
 \begin{equation}
@@ -189,25 +197,37 @@ revise the inferred circuit structure.
 
 
 \subsection{Intervention Engine}
+\label{sec:intervention_engine}
 
-\begin{figure}[t]
+The intervention engine is the execution layer of \ACD{}: it realises
+the abstract action selected by the POMDP agent as a concrete,
+causally correct manipulation of a single transcoder feature.  At each
+step it (i)~receives the chosen (feature, action) pair from the
+agent, (ii)~dispatches it through the \texttt{feature\_intervention}
+API at the exact $(l, p, f)$ coordinate, (iii)~measures the KL
+divergence between the clean and intervened next-token distributions,
+and (iv)~returns the resulting observation tuple (KL magnitude,
+activation magnitude, graph connectivity) that drives the Dirichlet
+update of the observation model.  The full per-step flow, including
+candidate extraction, EFE evaluation, intervention dispatch, and
+belief/parameter updates, is summarised in Figure~\ref{fig:flow}.
+
+\begin{figure}[H]
 \centering
-\resizebox{0.85\columnwidth}{!}{%
+\resizebox{!}{0.82\textheight}{%
 \input{figures/circuit_flow}%
 }
-\caption{Flow of a single intervention step. The POMDP agent
-  evaluates all candidate--action pairs via EFE, selects the best,
-  executes the intervention via \texttt{feature\_intervention}, and
-  updates its generative model from the resulting observations.}
+\caption{Flow of a single intervention step in Active Circuit Discovery.}
 \label{fig:flow}
 \end{figure}
 
-The intervention engine implements three manipulation types via the
-\texttt{feature\_intervention} API, dispatched according to the
+The engine implements three manipulation types, each dispatched
+via the \texttt{feature\_in\-ter\-ven\-tion} API according to the
 action selected by the POMDP agent at each step:
 
 \textbf{Ablation:} Sets transcoder feature $(l, p, f)$ to zero:
 \begin{equation}
+  \label{eq:ablation}
   \text{logits}_{\text{abl}} = \text{feature\_intervention}(\text{prompt},
   [(l, p, f, 0)])
 \end{equation}
@@ -215,12 +235,14 @@ action selected by the POMDP agent at each step:
 \textbf{Activation Patching:} Replaces feature activation with a
 mean-centred reference value $r$:
 \begin{equation}
+  \label{eq:patching}
   \text{logits}_{\text{patch}} = \text{feature\_intervention}(\text{prompt},
   [(l, p, f, r)])
 \end{equation}
 
 \textbf{Feature Steering:} Scales activation by multiplier $m$:
 \begin{equation}
+  \label{eq:steering}
   \text{logits}_{\text{steer}} = \text{feature\_intervention}(\text{prompt},
   [(l, p, f, a_i \cdot m)])
 \end{equation}
@@ -230,6 +252,7 @@ where $a_i$ is the clean activation value of feature $i$.
 Effect is measured via KL divergence between the clean and intervened
 output distributions:
 \begin{equation}
+  \label{eq:kl_intervention}
   \text{KL}_i = D_{\text{KL}}\!\left(
     \text{softmax}(\text{logits}_{\text{interv}})
     \;\|\;

@@ -1,0 +1,11 @@
+flowchart TD
+  Start(["Start step t"]) --> Cand["EAP + Prune\nAttribution Graph\n-> candidate features\n{(l,p,f)} + imp(i)"]
+  Cand --> PriorObs["Derive Prior\nObservation from\nimp(i) (scaled)"]
+  PriorObs --> Eval["Compute EFE\nG(i,a) for all\ncandidate-action pairs"]
+  Eval --> SelectStep["Select\n(i*, a*) = arg min G(i,a)"]
+  SelectStep --> Interv["Execute Intervention\nfeature_intervention\n(l*, p*, f*, value)"]
+  Interv --> Measure["Measure KL\nDivergence,\nActivation,\nConnectivity"]
+  Measure --> Update["Update q(s),\nA(o|s), u(i),\nlayer priors"]
+  Update --> Check{"t < B and\nnot converged?"}
+  Check -->|Yes| NextStep["Increment t"] --> Start
+  Check -->|No| StopNode(["Stop\n(output circuit)"])

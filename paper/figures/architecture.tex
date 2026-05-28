@@ -1,92 +1,102 @@
-% figures/architecture.tex -- System architecture diagram (TikZ)
-% Compact layout for IEEE single-column
-
+% figures/architecture.tex -- ACD System Architecture (journal-quality TikZ)
+% Redrawn for clarity: orthogonal routing, no crossing arrows.  The three
+% layers (attribution backend, POMDP agent, intervention engine) read top-down
+% on each side; the two feedback paths are routed around the outer perimeter.
 \begin{tikzpicture}[
-    font=\scriptsize,
-    node distance = 0.55cm and 0.8cm,
-    box/.style = {
-        rectangle, draw=black!70, fill=blue!8,
-        rounded corners=2pt, minimum width=2.0cm, minimum height=0.55cm,
-        align=center, line width=0.4pt
+    font=\small,
+    box/.style={
+        rectangle, draw=black!60, fill=blue!6,
+        rounded corners=3pt, minimum width=3.0cm, minimum height=0.72cm,
+        align=center, line width=0.5pt, font=\small
     },
-    redbox/.style = {
-        rectangle, draw=red!60!black, fill=red!8,
-        rounded corners=2pt, minimum width=2.0cm, minimum height=0.55cm,
-        align=center, line width=0.4pt
+    agentbox/.style={
+        rectangle, draw=black!60, fill=red!5,
+        rounded corners=3pt, minimum width=3.0cm, minimum height=0.72cm,
+        align=center, line width=0.5pt, font=\small
     },
-    greenbox/.style = {
-        rectangle, draw=green!50!black, fill=green!8,
-        rounded corners=2pt, minimum width=2.0cm, minimum height=0.55cm,
-        align=center, line width=0.4pt
+    matbox/.style={
+        rectangle, draw=black!50, fill=gray!8,
+        rounded corners=2pt, minimum width=1.55cm, minimum height=0.62cm,
+        align=center, line width=0.4pt, font=\scriptsize
     },
-    greybox/.style = {
-        rectangle, draw=black!40, fill=black!4,
-        rounded corners=2pt, minimum width=2.0cm, minimum height=0.55cm,
-        align=center, line width=0.4pt
+    outbox/.style={
+        rectangle, draw=green!50!black, fill=green!6,
+        rounded corners=3pt, minimum width=3.0cm, minimum height=0.72cm,
+        align=center, line width=0.5pt, font=\small
     },
-    arr/.style = {-{Latex[length=1.5mm]}, semithick, draw=black!60},
-    darr/.style = {{Latex[length=1.5mm]}-{Latex[length=1.5mm]}, semithick, draw=black!40, dashed},
-    groupbox/.style = {
-        draw=black!30, dashed, fill=none, rounded corners=4pt, inner sep=4pt
-    }
+    arr/.style={-{Latex[length=2mm]}, thick, draw=black!55},
+    fb/.style={-{Latex[length=2mm]}, thick, draw=black!45, dashed},
+    groupbox/.style={
+        draw=black!35, dashed, fill=none, rounded corners=5pt, inner sep=7pt
+    },
+    grouplabel/.style={font=\scriptsize\bfseries, text=black!60},
 ]
 
-% ---- Input ----
-\node[box] (prompt) {Prompt $x$};
+% ===== Left column: Attribution Graph Backend (x = 0) =====
+\node[box] (prompt)    at (0, 0)    {Prompt $x$};
+\node[box] (llm)       at (0,-1.25) {LLM with Transcoders};
+\node[box] (eap)       at (0,-2.50) {circuit-tracer / EAP};
+\node[box] (attrgraph) at (0,-3.75) {Attribution Graph\\$\{(\ell,p,f)\},\ \mathbf{W},\ \mathbf{a}$};
+\node[box] (prune)     at (0,-5.00) {Pruning ($\geq$80\% influence)};
+\node[box] (cand)      at (0,-6.25) {Candidate Features + $\mathrm{imp}(i)$};
 
-% ---- Attribution column ----
-\node[greybox, below=0.5cm of prompt] (model) {Gemma-2-2B\\+ Transcoders};
-\node[greybox, below=0.45cm of model] (eap) {EAP};
-\node[greybox, below=0.45cm of eap] (prune) {Prune graph};
-\node[greybox, below=0.45cm of prune] (candidates) {Candidates\\$\{(l_i, p_i, f_i)\}$};
-
-% ---- AI Selector column (right) ----
-\node[redbox, right=1.6cm of model] (importance) {Graph imp.\\$\text{imp}(i)$};
-\node[redbox, below=0.45cm of importance] (scoring) {Score = prag.\\+ epist.};
-\node[redbox, below=0.45cm of scoring] (select) {Select $i^*$};
-\node[redbox, below=0.45cm of select] (intervene) {Ablate via\\$\texttt{feat\_interv.}$};
-\node[redbox, below=0.45cm of intervene] (update) {Update $u(i)$,\\$\lambda_\ell$};
-
-% ---- Output column ----
-\node[greenbox, below=0.5cm of candidates, xshift=1.8cm] (kl) {KL measurements};
-\node[greenbox, below=0.35cm of kl] (ranking) {Feature ranking};
-
-% ---- Labels ----
-\node[above=0.05cm of importance, font=\tiny\itshape, text=red!70!black]
-    {Active Inference Selector};
-
-% ---- Grouping boxes ----
 \begin{scope}[on background layer]
-  \node[groupbox, fit=(model)(eap)(prune)(candidates),
-        label={[font=\tiny, text=black!50]above:\texttt{circuit-tracer}}] {};
-  \node[groupbox, draw=red!40, fit=(importance)(scoring)(select)(intervene)(update),
-        label={[font=\tiny, text=red!60!black]above:Uncertainty loop}] {};
-  \node[groupbox, draw=green!40, fit=(kl)(ranking),
-        label={[font=\tiny, text=green!60!black]above:Outputs}] {};
+  \node[groupbox, fit=(prompt)(llm)(eap)(attrgraph)(prune)(cand),
+        label={[grouplabel, yshift=2pt]above:Attribution Graph Backend}] (backendgrp) {};
 \end{scope}
 
-% ---- Arrows ----
-\draw[arr] (prompt) -- (model);
-\draw[arr] (model) -- (eap);
-\draw[arr] (eap) -- (prune);
-\draw[arr] (prune) -- (candidates);
+% ===== Right column: POMDP Agent (x = 6.6) =====
+% Generative model grouped into a single container (one arrow out).
+\node[matbox] (Amat) at (5.85, 0.00) {$\mathbf{A}$: $P(o|s)$};
+\node[matbox] (Bmat) at (7.55, 0.00) {$\mathbf{B}(a)$: $P(s'|s,a)$};
+\node[matbox] (Cmat) at (5.85,-0.78) {$\mathbf{C}$: $P(o)$};
+\node[matbox] (Dmat) at (7.55,-0.78) {$\mathbf{D}$: $P(s)$};
+\begin{scope}[on background layer]
+  \node[groupbox, draw=red!35, fit=(Amat)(Bmat)(Cmat)(Dmat),
+        label={[grouplabel, text=red!50!black, yshift=1pt]above:Generative Model}] (genmodel) {};
+\end{scope}
 
-\draw[arr] (candidates.east) -- ++(0.3,0) |- (importance.west)
-    node[midway, above, font=\tiny]{init};
+\node[agentbox] (infer)  at (6.70,-2.30) {Variational Inference $q(s|o)$};
+\node[agentbox] (efe)    at (6.70,-3.55) {EFE $G(i,a)$: epistemic\,+\,pragmatic};
+\node[agentbox] (select) at (6.70,-4.80) {Select $(i^*,a^*)=\arg\min G$};
 
-\draw[arr] (importance) -- (scoring);
-\draw[arr] (scoring) -- (select);
+\begin{scope}[on background layer]
+  \node[groupbox, draw=red!30, fit=(genmodel)(infer)(efe)(select),
+        label={[grouplabel, text=red!50!black]above:Active Inference POMDP Agent}] (agentgrp) {};
+\end{scope}
+
+% ===== Bottom: Intervention engine (centred under agent) =====
+\node[outbox] (intervene) at (6.70,-6.25) {\texttt{feature\_intervention}\\(ablation / patching / steering)};
+\node[outbox] (obs)       at (6.70,-7.55) {KL divergence + observation $o$};
+
+% ===== Backend vertical flow =====
+\draw[arr] (prompt)    -- (llm);
+\draw[arr] (llm)       -- (eap);
+\draw[arr] (eap)       -- (attrgraph);
+\draw[arr] (attrgraph) -- (prune);
+\draw[arr] (prune)     -- (cand);
+
+% ===== Candidates -> agent (clean elbow, lane at x=2.7) =====
+\draw[arr] (cand.east) -| (2.7,-2.30) -- (infer.west)
+    node[pos=0.72, above, font=\scriptsize]{candidates};
+
+% ===== Generative model -> inference (single arrow) =====
+\draw[arr] (genmodel.south) -- (infer.north);
+
+% ===== Agent pipeline =====
+\draw[arr] (infer)  -- (efe);
+\draw[arr] (efe)    -- (select);
 \draw[arr] (select) -- (intervene);
-\draw[arr] (intervene.west) -- ++(-0.35,0) |- (model.east)
-    node[pos=0.3, right, font=\tiny]{$(l,p,f,0)$};
-\draw[arr] (intervene) -- (update);
-\draw[arr] (update.north) -- ++(0, 0.1) -| (scoring.south east)
-    node[pos=0.1, right, font=\tiny]{$\lambda_\ell, u(i)$};
+\draw[arr] (intervene) -- (obs);
 
-\draw[darr] (update.east) -- ++(0.3,0)
-    node[right, font=\tiny]{budget?};
+% ===== Feedback 1: intervention spec -> LLM (perimeter, left side) =====
+% Down to a bottom lane, left around the backend, up the far-left edge to the LLM.
+\draw[fb] (intervene.west) -| (4.05,-7.25) -- (-2.40,-7.25) |- (llm.west)
+    node[pos=0.18, below, font=\scriptsize]{$(\ell,p,f,\mathrm{val})$};
 
-\draw[arr] (update.south) -- ++(0,-0.2) -| (kl.north);
-\draw[arr] (kl) -- (ranking);
+% ===== Feedback 2: observation -> Dirichlet update of generative model =====
+% Right around the agent, up the far-right edge to the generative-model block.
+\draw[fb] (obs.east) -| (8.95,0.0) -- (Bmat.east)
+    node[pos=0.16, right, font=\scriptsize]{Dirichlet update};
 
 \end{tikzpicture}

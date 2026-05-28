@@ -1,0 +1,10 @@
+flowchart LR
+  GM["Generative Model\nA, B(a), C, D"] --> Belief["Current Belief\nq(st)"]
+  Obs["Observation ot\n(KL, activation,\nconnectivity)"] --> InferNode["Variational\nInference\nq(st|ot)"]
+  Belief --> InferNode
+  InferNode --> EFE["Policy Evaluation\nG(i,a) over\ncandidates"]
+  EFE --> SelectNode["Action Selection\nsoftmax(-G), gamma"]
+  SelectNode --> Act["Intervention via\nfeature_intervention\non feature i*,\naction a*"]
+  Act --> Out["Observed KL +\nupdated activations"]
+  Out --> Learn["Online Learning\nDirichlet update\nof A(o|s)"]
+  Learn --> GM

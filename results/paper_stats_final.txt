@@ -1,0 +1,78 @@
+========================================================================
+PAPER STATISTICS SUMMARY
+========================================================================
+
+### GEMMA
+
+  [ioi] n=5  oracle mean KL=0.000862  oracle cumKL=0.017249
+    ai_abl         meanKL=0.000707 (med=0.000404) eff=82.0% [73.8, 87.8]
+    bandit         meanKL=0.000642 (med=0.000408) eff=74.4% [67.9, 79.0]
+    eap            meanKL=0.000793 (med=0.000436) eff=91.9% [82.1, 96.5]
+    greedy         meanKL=0.000577 (med=0.000492) eff=66.9% [47.5, 83.0]
+    random         meanKL=0.000493 (med=0.000289) eff=57.1% [49.0, 60.2]
+    ai             meanKL=0.010824 (med=0.011547) RCK=1255.0% [973.5, 1671.2]
+    greedy_steer   meanKL=0.000000 (med=0.000000) RCK=881.1% [604.8, 1675.2]
+    bandit_steer   meanKL=0.000000 (med=0.000000) RCK=1185.3% [780.2, 1796.6]
+    random_steer   meanKL=0.000000 (med=0.000000) RCK=888.2% [671.9, 1181.5]
+    random_action  meanKL=0.003200 (med=0.003618) RCK=371.1% [264.2, 527.8]
+    H1 ai vs random: +2096.5%  p_t=0.0092  p_perm=0.0312
+    H1 ai_abl vs random: +43.5%  p_t=0.0216  p_perm=0.0312
+    actions total=100  counts={'ablation': 5, 'feature_steering': 94, 'activation_patching': 1}  post-first steering=94/95
+
+  [multistep] n=3  oracle mean KL=0.000505  oracle cumKL=0.010101
+    ai_abl         meanKL=0.000369 (med=0.000408) eff=73.0% [63.6, 84.2]
+    bandit         meanKL=0.000396 (med=0.000423) eff=78.4% [65.6, 87.4]
+    eap            meanKL=0.000495 (med=0.000482) eff=98.1% [97.2, 99.6]
+    greedy         meanKL=0.000401 (med=0.000455) eff=79.4% [56.6, 94.0]
+    random         meanKL=0.000284 (med=0.000269) eff=56.2% [52.4, 57.4]
+    ai             meanKL=0.004944 (med=0.005640) RCK=979.0% [792.1, 1374.1]
+    greedy_steer   meanKL=0.000000 (med=0.000000) RCK=1223.2% [707.1, 1906.7]
+    bandit_steer   meanKL=0.000000 (med=0.000000) RCK=1209.2% [797.7, 1935.2]
+    random_steer   meanKL=0.000000 (med=0.000000) RCK=736.7% [496.2, 1072.7]
+    random_action  meanKL=0.001256 (med=0.001433) RCK=248.7% [213.4, 295.9]
+    H1 ai vs random: +1641.8%  p_t=0.0299  p_perm=0.1250
+    H1 ai_abl vs random: +29.9%  p_t=0.0674  p_perm=0.1250
+    actions total=60  counts={'feature_steering': 56, 'ablation': 4}  post-first steering=55/57
+  [steering] H2 m=10.0: top 11/50 (p=2.61e-12); control 8/50
+
+### LLAMA
+
+  [ioi] n=5  oracle mean KL=0.009755  oracle cumKL=0.195095
+    ai_abl         meanKL=0.005086 (med=0.002679) eff=52.1% [17.4, 90.2]
+    bandit         meanKL=0.008606 (med=0.005999) eff=88.2% [79.0, 96.7]
+    eap            meanKL=0.009291 (med=0.005739) eff=95.2% [87.0, 97.7]
+    greedy         meanKL=0.003982 (med=0.001923) eff=40.8% [11.7, 74.1]
+    random         meanKL=0.004720 (med=0.001795) eff=48.4% [31.6, 64.7]
+    ai             meanKL=0.008833 (med=0.009407) RCK=90.6% [26.5, 319.9]
+    greedy_steer   meanKL=0.000000 (med=0.000000) RCK=352.8% [244.0, 482.3]
+    bandit_steer   meanKL=0.000000 (med=0.000000) RCK=1466.5% [329.4, 2847.5]
+    random_steer   meanKL=0.000000 (med=0.000000) RCK=960.5% [181.2, 1907.0]
+    random_action  meanKL=0.041848 (med=0.005373) RCK=429.0% [85.7, 810.5]
+    H1 ai vs random: +87.2%  p_t=0.2095  p_perm=0.2188
+    H1 ai_abl vs random: +7.8%  p_t=0.4548  p_perm=0.4062
+    actions total=100  counts={'ablation': 70, 'feature_steering': 28, 'activation_patching': 2}  post-first steering=28/95
+
+  [multistep] n=3  oracle mean KL=0.012233  oracle cumKL=0.244656
+    ai_abl         meanKL=0.001133 (med=0.001003) eff=9.3% [4.4, 55.9]
+    bandit         meanKL=0.009352 (med=0.008046) eff=76.4% [62.5, 89.6]
+    eap            meanKL=0.011938 (med=0.012794) eff=97.6% [62.8, 99.4]
+    greedy         meanKL=0.001159 (med=0.001074) eff=9.5% [4.7, 56.6]
+    random         meanKL=0.005476 (med=0.007020) eff=44.8% [39.1, 54.5]
+    ai             meanKL=0.004110 (med=0.002387) RCK=33.6% [18.5, 55.9]
+    greedy_steer   meanKL=0.000000 (med=0.000000) RCK=140.3% [54.8, 292.5]
+    bandit_steer   meanKL=0.000000 (med=0.000000) RCK=278.8% [202.9, 411.9]
+    random_steer   meanKL=0.000000 (med=0.000000) RCK=380.5% [114.9, 868.4]
+    random_action  meanKL=0.020075 (med=0.015569) RCK=164.1% [67.6, 340.4]
+    H1 ai vs random: +-24.9%  p_t=0.7540  p_perm=0.6250
+    H1 ai_abl vs random: +-79.3%  p_t=0.8967  p_perm=0.8750
+    actions total=60  counts={'ablation': 41, 'feature_steering': 18, 'activation_patching': 1}  post-first steering=18/57
+  [steering] H2 m=10.0: top 9/50 (p=1.73e-09); control 6/50
+  [multistep finebins] POMDP-abl eff=37.8%
+
+### SENSITIVITY (IOI)
+  ioi_results_gemma_sens_act0.8: kwargs={} POMDP-abl eff=86.20761680839341
+  ioi_results_gemma_sens_act1.2: kwargs={} POMDP-abl eff=80.25819458407007
+  ioi_results_gemma_sens_kl0.8: kwargs={} POMDP-abl eff=60.21614728010562
+  ioi_results_gemma_sens_kl1.2: kwargs={} POMDP-abl eff=81.97986329066507
+
+Wrote results/paper_stats.json

@@ -107,6 +107,8 @@ class ActiveInferencePOMDPAgent:
         lr_pA: float = 1.0,
         gamma: float = 16.0,
         policy_len: int = 1,
+        n_layer_role: int = N_LAYER_ROLE,
+        imp_scale: float = 0.01,
     ):
         self.n_layers = n_layers
         self.epistemic_weight = epistemic_weight
@@ -114,6 +116,12 @@ class ActiveInferencePOMDPAgent:
         self.lr_pA = lr_pA
         self.gamma = gamma
         self.policy_len = policy_len
+        # Number of layer-role bins (Factor 1).  Default is 3 (early/middle/late);
+        # the finer-layer-bin remedy uses larger values for deeper diversity.
+        self.n_layer_role = int(n_layer_role)
+        # Scaling that maps normalised graph importance [0,1] into the KL
+        # threshold range before discretisation (default 0.01).
+        self.imp_scale = float(imp_scale)
 
         self._agent: Optional[PyMDPAgent] = None
         self._step = 0
@@ -131,14 +139,27 @@ class ActiveInferencePOMDPAgent:
     # Generative model construction
     # ------------------------------------------------------------------
 
+    def _role_density(self, s1: int) -> float:
+        """Connectivity density profile across layer-role bins.
+
+        Symmetric triangular profile peaking in the middle bins (intermediate
+        layers tend to be denser), generalised to any number of role bins.
+        For the default 3 bins this yields [0.2, 0.5, 0.2].
+        """
+        if self.n_layer_role == 1:
+            return 0.35
+        frac = s1 / (self.n_layer_role - 1)
+        return 0.2 + 0.3 * (1.0 - abs(2.0 * frac - 1.0))
+
     def _build_A(self) -> list:
         """Observation likelihood P(o_m | s_0, s_1, s_2) for each modality."""
         A = utils.obj_array(3)
+        n_role = self.n_layer_role
 
         # Modality 0 -- KL magnitude depends mainly on importance and causal
-        A[0] = np.zeros((N_KL_LEVELS, N_IMPORTANCE, N_LAYER_ROLE, N_CAUSAL))
+        A[0] = np.zeros((N_KL_LEVELS, N_IMPORTANCE, n_role, N_CAUSAL))
         for s0 in range(N_IMPORTANCE):
-            for s1 in range(N_LAYER_ROLE):
+            for s1 in range(n_role):
                 for s2 in range(N_CAUSAL):
                     strength = (s0 / (N_IMPORTANCE - 1) + s2 / (N_CAUSAL - 1)) / 2.0
                     p = np.array([
@@ -150,11 +171,11 @@ class ActiveInferencePOMDPAgent:
                     A[0][:, s0, s1, s2] = p / p.sum()
 
         # Modality 1 -- Activation magnitude depends on importance and role
-        A[1] = np.zeros((N_ACT_LEVELS, N_IMPORTANCE, N_LAYER_ROLE, N_CAUSAL))
+        A[1] = np.zeros((N_ACT_LEVELS, N_IMPORTANCE, n_role, N_CAUSAL))
         for s0 in range(N_IMPORTANCE):
-            for s1 in range(N_LAYER_ROLE):
+            for s1 in range(n_role):
                 for s2 in range(N_CAUSAL):
-                    role_boost = 0.1 * (s1 == 2)  # late-layer features tend higher
+                    role_boost = 0.1 * (s1 == n_role - 1)  # late-layer features tend higher
                     strength = s0 / (N_IMPORTANCE - 1) + role_boost
                     p = np.array([
                         max(0.05, 0.55 - 0.45 * strength),
@@ -165,12 +186,12 @@ class ActiveInferencePOMDPAgent:
                     A[1][:, s0, s1, s2] = p / p.sum()
 
         # Modality 2 -- Graph connectivity depends on role and causal
-        A[2] = np.zeros((N_CONN_LEVELS, N_IMPORTANCE, N_LAYER_ROLE, N_CAUSAL))
+        A[2] = np.zeros((N_CONN_LEVELS, N_IMPORTANCE, n_role, N_CAUSAL))
         for s0 in range(N_IMPORTANCE):
-            for s1 in range(N_LAYER_ROLE):
+            for s1 in range(n_role):
                 for s2 in range(N_CAUSAL):
                     # intermediate layers tend to be denser
-                    role_density = [0.2, 0.5, 0.3][s1]
+                    role_density = self._role_density(s1)
                     strength = (role_density + s2 / (N_CAUSAL - 1)) / 2.0
                     p = np.array([
                         max(0.05, 0.6 - 0.4 * strength),
@@ -239,7 +260,7 @@ class ActiveInferencePOMDPAgent:
                 t[s] += 0.05
             B[0][:, s, 2] = t / t.sum()
 
-        B[1] = np.eye(N_LAYER_ROLE).reshape(N_LAYER_ROLE, N_LAYER_ROLE, 1)
+        B[1] = np.eye(self.n_layer_role).reshape(self.n_layer_role, self.n_layer_role, 1)
         B[2] = np.eye(N_CAUSAL).reshape(N_CAUSAL, N_CAUSAL, 1)
 
         return B
@@ -262,7 +283,7 @@ class ActiveInferencePOMDPAgent:
         """
         D = utils.obj_array(3)
         D[0] = np.array([0.40, 0.30, 0.20, 0.10])
-        D[1] = np.ones(N_LAYER_ROLE) / N_LAYER_ROLE
+        D[1] = np.ones(self.n_layer_role) / self.n_layer_role
         D[2] = np.array([0.50, 0.30, 0.20])
         return D
 
@@ -342,18 +363,20 @@ class ActiveInferencePOMDPAgent:
         return 2
 
     def _layer_to_role(self, layer: int) -> int:
-        """Map absolute layer index to {early, middle, late}."""
-        third = self.n_layers / 3.0
-        if layer < third:
+        """Map absolute layer index to one of ``self.n_layer_role`` bins.
+
+        Generalises the early/middle/late split to an arbitrary number of
+        equal-width bins (used by the finer-layer-bin remedy on shallow models).
+        """
+        if self.n_layer_role <= 1 or self.n_layers <= 0:
             return 0
-        if layer < 2 * third:
-            return 1
-        return 2
+        role = int(layer / self.n_layers * self.n_layer_role)
+        return min(role, self.n_layer_role - 1)
 
     def _feature_to_prior_obs(self, feat: Dict[str, Any]) -> list:
         """Derive an initial observation from graph metadata (before intervention)."""
         # Scale graph importance [0,1] into KL threshold range [1e-4, 1e-2]
-        imp_obs = self._discretise_kl(feat.get("imp", 0.0) * 0.01)
+        imp_obs = self._discretise_kl(feat.get("imp", 0.0) * self.imp_scale)
         act_obs = self._discretise_activation(feat.get("act", 0.0))
         in_deg  = feat.get("in_degree", 0)
         out_deg = feat.get("out_degree", 0)
@@ -532,12 +555,12 @@ class ActiveInferencePOMDPAgent:
         if qs is None:
             return {
                 "importance": np.ones(N_IMPORTANCE) / N_IMPORTANCE,
-                "layer_role": np.ones(N_LAYER_ROLE) / N_LAYER_ROLE,
+                "layer_role": np.ones(self.n_layer_role) / self.n_layer_role,
                 "causal": np.ones(N_CAUSAL) / N_CAUSAL,
             }
         return {
             "importance": qs[0].copy() if len(qs) > 0 else np.ones(N_IMPORTANCE) / N_IMPORTANCE,
-            "layer_role": qs[1].copy() if len(qs) > 1 else np.ones(N_LAYER_ROLE) / N_LAYER_ROLE,
+            "layer_role": qs[1].copy() if len(qs) > 1 else np.ones(self.n_layer_role) / self.n_layer_role,
             "causal": qs[2].copy() if len(qs) > 2 else np.ones(N_CAUSAL) / N_CAUSAL,
         }
 
@@ -589,6 +612,39 @@ class ActiveInferencePOMDPAgent:
     def get_efe_history(self) -> List[float]:
         return [r.efe_value for r in self.history]
 
+    def dump_matrices(self) -> Dict[str, Any]:
+        """Return the full generative model (A, B, C, D) as nested lists.
+
+        Used to export the complete A/B/C/D specification for the paper
+        appendix.  Builds the matrices from the current configuration without
+        requiring a pymdp Agent instance.
+        """
+        A = self._A if self._A is not None else self._build_A()
+        B = self._B if self._B is not None else self._build_B()
+        C = self._C if self._C is not None else self._build_C()
+        D = self._D if self._D is not None else self._build_D()
+        return {
+            "config": {
+                "n_layers": self.n_layers,
+                "n_importance": N_IMPORTANCE,
+                "n_layer_role": self.n_layer_role,
+                "n_causal": N_CAUSAL,
+                "n_kl_levels": N_KL_LEVELS,
+                "n_act_levels": N_ACT_LEVELS,
+                "n_conn_levels": N_CONN_LEVELS,
+                "actions": list(ACTION_NAMES),
+                "gamma": self.gamma,
+                "lr_pA": self.lr_pA,
+                "imp_scale": self.imp_scale,
+                "kl_thresholds": list(KL_THRESHOLDS),
+                "act_thresholds": list(ACT_THRESHOLDS),
+            },
+            "A": [np.asarray(a).tolist() for a in A],
+            "B": [np.asarray(b).tolist() for b in B],
+            "C": [np.asarray(c).tolist() for c in C],
+            "D": [np.asarray(d).tolist() for d in D],
+        }
+
     def to_dict(self) -> Dict[str, Any]:
         """Serialise agent state for JSON logging."""
         return {
@@ -598,6 +654,8 @@ class ActiveInferencePOMDPAgent:
             "epistemic_weight": self.epistemic_weight,
             "pragmatic_weight": self.pragmatic_weight,
             "n_layers": self.n_layers,
+            "n_layer_role": self.n_layer_role,
+            "imp_scale": self.imp_scale,
             "feature_beliefs": {
                 fid: {k: v.tolist() for k, v in beliefs.items()}
                 for fid, beliefs in self._feature_beliefs.items()

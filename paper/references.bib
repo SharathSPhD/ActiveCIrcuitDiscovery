@@ -1,6 +1,6 @@
 % references.bib -- ActiveCircuitDiscovery IEEE paper
 % All entries correspond to real, published or preprinted work.
-% Verified February 2026.
+% Updated March 2026 with ICLR 2024, NeurIPS 2024, and recent 2025 references.
 
 @article{Friston2010,
   author    = {Karl J. Friston},
@@ -88,14 +88,15 @@
   url       = {https://arxiv.org/abs/2310.10348}
 }
 
-@article{Cunningham2023,
+@inproceedings{Cunningham2024,
   author    = {Hoagy Cunningham and Aidan Ewart and Logan Riggs
                and Robert Huben and Lee Sharkey},
   title     = {Sparse Autoencoders Find Highly Interpretable Features
                in Language Models},
-  journal   = {arXiv preprint arXiv:2309.08600},
-  year      = {2023},
-  url       = {https://arxiv.org/abs/2309.08600}
+  booktitle = {Proceedings of the International Conference on Learning Representations
+               ({ICLR})},
+  year      = {2024},
+  url       = {https://openreview.net/forum?id=F76bwRSLeK}
 }
 
 @article{Bricken2023,
@@ -192,6 +193,7 @@
   year      = {2025},
   address   = {Suzhou, China},
   publisher = {Association for Computational Linguistics},
+  doi       = {10.18653/v1/2025.blackboxnlp-1.14},
   url       = {https://aclanthology.org/2025.blackboxnlp-1.14/}
 }
 
@@ -323,7 +325,7 @@
 }
 
 @article{Bereska2024,
-  author    = {Lily Bereska and Efstratios Gavves},
+  author    = {Leonard Bereska and Efstratios Gavves},
   title     = {Mechanistic Interpretability for {AI} Safety -- A Review},
   journal   = {arXiv preprint arXiv:2404.14082},
   year      = {2024},
@@ -350,15 +352,6 @@
                ({ICLR})},
   year      = {2023},
   url       = {https://openreview.net/forum?id=9XFSbDZno3}
-}
-
-@article{Sun2024,
-  author    = {Xiaoliang Sun and Luca Rigotti and Lewis Hammond
-               and Michael Wooldridge},
-  title     = {Interpreting Neural Networks Through the Lens of Active Inference},
-  journal   = {arXiv preprint arXiv:2411.17268},
-  year      = {2024},
-  url       = {https://arxiv.org/abs/2411.17268}
 }
 
 @article{Friston2015,
@@ -395,13 +388,10 @@
   url       = {https://proceedings.neurips.cc/paper/2019/hash/bdbca288fee7f92f2bfa9f7012727740-Abstract.html}
 }
 
-@article{Templeton2024,
-  author    = {Adly Templeton and Tom Conerly and Jonathan Marcus and Jack Lindsey
-               and Trenton Bricken and Brian Chen and Adam Jermyn and Amanda Askell
-               and Robert Lasenby and Yifan Wu and Shauna Kravec and Nicholas Schiefer
-               and Tim Maxwell and Nicholas Joseph and Zac Hatfield-Dodds and Alex Tamkin
-               and Karina Nguyen and Brayden McLean and Josiah E. Burke and Tristan Hume
-               and Shan Carter and Tom Henighan and Chris Olah},
+@article{Gao2024,
+  author    = {Leo Gao and Tom Dupr{\'e} la Tour and Henk Tillman and Gabriel Goh
+               and Rajan Troll and Alec Radford and Ilya Sutskever and Jan Leike
+               and Jeffrey Wu},
   title     = {Scaling and evaluating sparse autoencoders},
   journal   = {arXiv preprint arXiv:2406.04093},
   year      = {2024},
@@ -409,9 +399,10 @@
 }
 
 @article{He2024,
-  author    = {Zongpeng He and Matthew Mahowald and David Bau},
+  author    = {Zhengfu He and Xuyang Ge and Qiong Tang and Tianxiang Sun
+               and Qinyuan Cheng and Xipeng Qiu},
   title     = {Dictionary Learning Improves Patch-Free Circuit Discovery in Mechanistic
-               Interpretability},
+               Interpretability: A Case Study on {Othello}-{GPT}},
   journal   = {arXiv preprint arXiv:2402.12201},
   year      = {2024},
   url       = {https://arxiv.org/abs/2402.12201}
@@ -434,4 +425,50 @@
   journal   = {arXiv preprint arXiv:2407.21783},
   year      = {2024},
   url       = {https://arxiv.org/abs/2407.21783}
+}
+
+@article{GemmaScope2024,
+  author    = {Tom Lieberum and Senthooran Rajamanoharan and Arthur Conmy
+               and Lewis Smith and Nicolas Sonnerat and Vikrant Varma
+               and J{\'a}nos Kram{\'a}r and Anca Dragan and Rohin Shah and Neel Nanda},
+  title     = {Gemma Scope: Open Sparse Autoencoders Everywhere All At Once on Gemma 2},
+  journal   = {arXiv preprint arXiv:2408.05147},
+  year      = {2024},
+  url       = {https://arxiv.org/abs/2408.05147}
+}
+
+@article{Makelov2024,
+  author    = {Aleksandar Makelov and George Lange and Neel Nanda},
+  title     = {Towards Principled Evaluations of Sparse Autoencoders for Interpretability
+               and Control},
+  journal   = {arXiv preprint arXiv:2405.08366},
+  year      = {2024},
+  url       = {https://arxiv.org/abs/2405.08366}
+}
+
+@article{Rajamanoharan2024,
+  author    = {Senthooran Rajamanoharan and Arthur Conmy and Lewis Smith
+               and Tom Lieberum and Vikrant Varma and J{\'a}nos Kram{\'a}r
+               and Rohin Shah and Neel Nanda},
+  title     = {Improving Dictionary Learning with Gated Sparse Autoencoders},
+  journal   = {arXiv preprint arXiv:2404.16014},
+  year      = {2024},
+  url       = {https://arxiv.org/abs/2404.16014}
+}
+
+@article{Paulo2024,
+  author    = {Gon{\c{c}}alo Paulo and Alex Mallen and Caden Juang and Nora Belrose},
+  title     = {Automatically Interpreting Millions of Features in Large Language Models},
+  journal   = {arXiv preprint arXiv:2410.13928},
+  year      = {2024},
+  url       = {https://arxiv.org/abs/2410.13928}
+}
+
+@article{McDougall2023,
+  author    = {Callum McDougall and Arthur Conmy and Cody Rushing and Thomas McGrath
+               and Neel Nanda},
+  title     = {Copy Suppression: Comprehensively Understanding an Attention Head},
+  journal   = {arXiv preprint arXiv:2310.04625},
+  year      = {2023},
+  url       = {https://arxiv.org/abs/2310.04625}
 }

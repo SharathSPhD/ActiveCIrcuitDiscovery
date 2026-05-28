@@ -14,19 +14,28 @@ intervention type (ablation, activation patching, or feature
 steering) at each step by minimising Expected Free Energy over the
 joint feature--action space. The agent learns its observation model
 online through Dirichlet parameter updates, enabling principled
-exploration--exploitation trade-offs in circuit discovery.
+exploration--exploitation trade-offs. We emphasise that \ACD{} is an
+\emph{intervention-selection} layer over existing attribution-graph tools rather
+than a new circuit-recovery method, and we do not claim state-of-the-art whole-circuit
+recovery.
 The framework is evaluated on two architectures, Gemma-2-2B (26 layers)
 and Llama-3.2-1B (16 layers), across four settings: Indirect Object
 Identification (IOI), multi-step reasoning, feature steering, and a
 multi-domain benchmark spanning geography, mathematics, science, logic,
-and history. With a budget of 20 interventions per prompt, the POMDP
-agent achieves 1255\% oracle efficiency on Gemma IOI and 90.6\% on
-Llama IOI, substantially outperforming random, greedy, and bandit
-baselines on both architectures.
-Feature steering confirms causal controllability: scaling individual
-features at $10\times$ activation changes predictions for 24 of 200
-tested features across both models ($p < 10^{-15}$, binomial test).
-Multi-domain analysis reveals task-dependent circuit structure: IOI
-circuits concentrate in late layers, while reasoning and scientific
-knowledge recruit early and middle layers.
-Code, notebooks, and experiment results are publicly available.
+and history. With a budget of 20 interventions per prompt, our primary
+\emph{fair} comparison---an ablation-only agent scored by \emph{bounded} oracle
+efficiency against the ablation oracle---shows that Expected-Free-Energy selection
+reliably beats random selection and is competitive with greedy and a UCB bandit,
+while a direct Edge-Attribution-Patching ranking is itself a strong baseline that we
+do not consistently surpass. On Llama the bandit is a close competitor, and Llama
+multi-step is a genuine negative result that we analyse rather than explain away. All comparisons report bootstrap 95\% confidence intervals,
+and we rename the previously reported ``$>100\%$ oracle efficiency'' to
+\emph{Relative Cumulative KL}, a steering-driven amplification factor reported
+separately from the bounded efficiency. Feature steering changes predictions in a clear dose-dependent manner, but a matched
+random-feature control shows that circuit-selected features are only marginally (not
+significantly) more steerable than random features at large multipliers---evidence
+that part of the effect is generic activation scaling, which we report transparently
+rather than overclaiming feature-specific control. Multi-domain analysis reveals task-dependent circuit structure: IOI circuits
+concentrate in late layers, while reasoning and scientific knowledge recruit early
+and middle layers. Code, notebooks (free T4), amd64/aarch64 Docker images, and raw
+results are publicly available.
