@@ -1,0 +1,29 @@
+flowchart LR
+  subgraph Backend["Attribution Graph Backend"]
+    A["Prompt x"] --> B["LLM\n(Gemma-2-2B /\nLlama-3.2-1B)\nwith transcoders"]
+    B --> C["circuit-tracer / EAP\n(Edge Attribution\nPatching)"]
+    C --> D["Attribution Graph\n{(l,p,f)}, W, a"]
+    D --> E["Pruning\n(>= 80% influence)"]
+    E --> F["Candidate Features\n+ graph importance\nimp(i)"]
+  end
+
+  subgraph Agent["Active Inference POMDP Agent (pymdp)"]
+    direction TB
+    subgraph GenModel["Generative Model"]
+      Aobs["A: Observation\nModel A(o|s)"]
+      Btrans["B: Transition\nModel B(s'|s,a)"]
+      Cpref["C: Preference\nModel C(o)"]
+      Dprior["D: Prior\nD(s)"]
+    end
+    Infer["Variational Inference\nq(s|o)"]
+    EFE["EFE Evaluation\nG(i,a) =\nepistemic + pragmatic"]
+    Select["Action Selection\n(feature i*, action a*)"]
+    GenModel --> Infer
+    Infer --> EFE
+    EFE --> Select
+  end
+
+  F --> Agent
+  Select --> G["feature_intervention API\n(ablation / patching /\nsteering)"]
+  G --> H["Intervened Logits\n+ KL Divergence"]
+  H --> Infer

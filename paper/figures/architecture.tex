@@ -1,92 +1,96 @@
-% figures/architecture.tex -- System architecture diagram (TikZ)
-% Compact layout for IEEE single-column
-
+% figures/architecture.tex -- ACD System Architecture (journal-quality TikZ)
 \begin{tikzpicture}[
-    font=\scriptsize,
-    node distance = 0.55cm and 0.8cm,
-    box/.style = {
-        rectangle, draw=black!70, fill=blue!8,
-        rounded corners=2pt, minimum width=2.0cm, minimum height=0.55cm,
-        align=center, line width=0.4pt
+    font=\small,
+    node distance=0.6cm and 1.0cm,
+    box/.style={
+        rectangle, draw=black!60, fill=blue!6,
+        rounded corners=3pt, minimum width=3.0cm, minimum height=0.7cm,
+        align=center, line width=0.5pt, font=\small
     },
-    redbox/.style = {
-        rectangle, draw=red!60!black, fill=red!8,
-        rounded corners=2pt, minimum width=2.0cm, minimum height=0.55cm,
-        align=center, line width=0.4pt
+    agentbox/.style={
+        rectangle, draw=black!60, fill=red!5,
+        rounded corners=3pt, minimum width=2.6cm, minimum height=0.7cm,
+        align=center, line width=0.5pt, font=\small
     },
-    greenbox/.style = {
-        rectangle, draw=green!50!black, fill=green!8,
-        rounded corners=2pt, minimum width=2.0cm, minimum height=0.55cm,
-        align=center, line width=0.4pt
+    matbox/.style={
+        rectangle, draw=black!50, fill=gray!8,
+        rounded corners=2pt, minimum width=1.8cm, minimum height=0.6cm,
+        align=center, line width=0.4pt, font=\scriptsize
     },
-    greybox/.style = {
-        rectangle, draw=black!40, fill=black!4,
-        rounded corners=2pt, minimum width=2.0cm, minimum height=0.55cm,
-        align=center, line width=0.4pt
+    outbox/.style={
+        rectangle, draw=green!50!black, fill=green!5,
+        rounded corners=3pt, minimum width=2.4cm, minimum height=0.7cm,
+        align=center, line width=0.5pt, font=\small
     },
-    arr/.style = {-{Latex[length=1.5mm]}, semithick, draw=black!60},
-    darr/.style = {{Latex[length=1.5mm]}-{Latex[length=1.5mm]}, semithick, draw=black!40, dashed},
-    groupbox/.style = {
-        draw=black!30, dashed, fill=none, rounded corners=4pt, inner sep=4pt
-    }
+    arr/.style={-{Latex[length=2mm]}, thick, draw=black!55},
+    dasharr/.style={-{Latex[length=2mm]}, thick, draw=black!40, dashed},
+    groupbox/.style={
+        draw=black!35, dashed, fill=none, rounded corners=5pt, inner sep=6pt
+    },
+    grouplabel/.style={font=\scriptsize\bfseries, text=black!60},
 ]
 
-% ---- Input ----
+% ---- Left: Attribution Graph Backend ----
 \node[box] (prompt) {Prompt $x$};
+\node[box, below=0.5cm of prompt] (llm) {LLM with Transcoders};
+\node[box, below=0.5cm of llm] (eap) {circuit-tracer / EAP};
+\node[box, below=0.5cm of eap] (attrgraph) {Attribution Graph\\$\{(\ell,p,f)\}$, $\mathbf{W}$, $\mathbf{a}$};
+\node[box, below=0.5cm of attrgraph] (prune) {Pruning ($\geq$80\% influence)};
+\node[box, below=0.5cm of prune] (cand) {Candidate Features\\+ $\mathrm{imp}(i)$};
 
-% ---- Attribution column ----
-\node[greybox, below=0.5cm of prompt] (model) {Gemma-2-2B\\+ Transcoders};
-\node[greybox, below=0.45cm of model] (eap) {EAP};
-\node[greybox, below=0.45cm of eap] (prune) {Prune graph};
-\node[greybox, below=0.45cm of prune] (candidates) {Candidates\\$\{(l_i, p_i, f_i)\}$};
-
-% ---- AI Selector column (right) ----
-\node[redbox, right=1.6cm of model] (importance) {Graph imp.\\$\text{imp}(i)$};
-\node[redbox, below=0.45cm of importance] (scoring) {Score = prag.\\+ epist.};
-\node[redbox, below=0.45cm of scoring] (select) {Select $i^*$};
-\node[redbox, below=0.45cm of select] (intervene) {Ablate via\\$\texttt{feat\_interv.}$};
-\node[redbox, below=0.45cm of intervene] (update) {Update $u(i)$,\\$\lambda_\ell$};
-
-% ---- Output column ----
-\node[greenbox, below=0.5cm of candidates, xshift=1.8cm] (kl) {KL measurements};
-\node[greenbox, below=0.35cm of kl] (ranking) {Feature ranking};
-
-% ---- Labels ----
-\node[above=0.05cm of importance, font=\tiny\itshape, text=red!70!black]
-    {Active Inference Selector};
-
-% ---- Grouping boxes ----
 \begin{scope}[on background layer]
-  \node[groupbox, fit=(model)(eap)(prune)(candidates),
-        label={[font=\tiny, text=black!50]above:\texttt{circuit-tracer}}] {};
-  \node[groupbox, draw=red!40, fit=(importance)(scoring)(select)(intervene)(update),
-        label={[font=\tiny, text=red!60!black]above:Uncertainty loop}] {};
-  \node[groupbox, draw=green!40, fit=(kl)(ranking),
-        label={[font=\tiny, text=green!60!black]above:Outputs}] {};
+  \node[groupbox, fit=(prompt)(llm)(eap)(attrgraph)(prune)(cand),
+        label={[grouplabel, yshift=2pt]above:Attribution Graph Backend}] (backendgrp) {};
 \end{scope}
 
-% ---- Arrows ----
-\draw[arr] (prompt) -- (model);
-\draw[arr] (model) -- (eap);
-\draw[arr] (eap) -- (prune);
-\draw[arr] (prune) -- (candidates);
+% ---- Right: POMDP Agent ----
+\node[matbox, right=3.5cm of llm] (Amat) {$\mathbf{A}$: Obs.\ model\\$A(o|s)$};
+\node[matbox, right=0.3cm of Amat] (Bmat) {$\mathbf{B}(a)$: Trans.\\$B(s'|s,a)$};
+\node[matbox, below=0.4cm of Amat] (Cmat) {$\mathbf{C}$: Preference\\$C(o)$};
+\node[matbox, below=0.4cm of Bmat] (Dmat) {$\mathbf{D}$: Prior\\$D(s)$};
 
-\draw[arr] (candidates.east) -- ++(0.3,0) |- (importance.west)
-    node[midway, above, font=\tiny]{init};
+\node[agentbox, below=0.6cm of Cmat, xshift=0.5cm] (infer) {Variational Inference\\$q(s|o)$};
+\node[agentbox, below=0.5cm of infer] (efe) {EFE: $G(i,a)$\\epistemic + pragmatic};
+\node[agentbox, below=0.5cm of efe] (select) {Select $(i^*,a^*)$\\$= \arg\min G$};
 
-\draw[arr] (importance) -- (scoring);
-\draw[arr] (scoring) -- (select);
+\begin{scope}[on background layer]
+  \node[groupbox, draw=red!30, fit=(Amat)(Bmat)(Cmat)(Dmat)(infer)(efe)(select),
+        label={[grouplabel, text=red!50!black]above:Active Inference POMDP Agent}] (agentgrp) {};
+\end{scope}
+
+% ---- Bottom: Intervention and Feedback ----
+\node[outbox, below=0.6cm of select] (intervene) {feature\_intervention\\(ablation / patching / steering)};
+\node[outbox, below=0.5cm of intervene] (obs) {KL Divergence\\+ Updated Observations};
+
+% ---- Arrows: Backend flow ----
+\draw[arr] (prompt) -- (llm);
+\draw[arr] (llm) -- (eap);
+\draw[arr] (eap) -- (attrgraph);
+\draw[arr] (attrgraph) -- (prune);
+\draw[arr] (prune) -- (cand);
+
+% ---- Arrow: Candidates to Agent ----
+\draw[arr] (cand.east) -- ++(1.0,0) |- (infer.west)
+    node[pos=0.55, above, font=\scriptsize]{candidates};
+
+% ---- Arrows: Generative model to inference/EFE ----
+\draw[arr] (Amat.south) -- ++(0,-0.15) -| ([xshift=-0.3cm]infer.north);
+\draw[arr] (Dmat.south) -- ++(0,-0.15) -| ([xshift=0.3cm]infer.north);
+\draw[arr] (Bmat.south) -- ++(0,-0.55) -| ([xshift=-0.3cm]efe.north);
+\draw[arr] (Cmat.south) -| ([xshift=0.3cm]efe.north);
+
+% ---- Arrows: Agent pipeline ----
+\draw[arr] (infer) -- (efe);
+\draw[arr] (efe) -- (select);
 \draw[arr] (select) -- (intervene);
-\draw[arr] (intervene.west) -- ++(-0.35,0) |- (model.east)
-    node[pos=0.3, right, font=\tiny]{$(l,p,f,0)$};
-\draw[arr] (intervene) -- (update);
-\draw[arr] (update.north) -- ++(0, 0.1) -| (scoring.south east)
-    node[pos=0.1, right, font=\tiny]{$\lambda_\ell, u(i)$};
 
-\draw[darr] (update.east) -- ++(0.3,0)
-    node[right, font=\tiny]{budget?};
+% ---- Arrow: Intervention to LLM ----
+\draw[dasharr] (intervene.west) -- ++(-2.2,0) |- (llm.west)
+    node[pos=0.08, above, font=\scriptsize]{$(l,p,f,\mathrm{val})$};
 
-\draw[arr] (update.south) -- ++(0,-0.2) -| (kl.north);
-\draw[arr] (kl) -- (ranking);
+% ---- Arrow: Observations feedback ----
+\draw[arr] (intervene) -- (obs);
+\draw[dasharr] (obs.east) -- ++(1.4,0) |- (Bmat.east)
+    node[pos=0.12, right, font=\scriptsize]{Dirichlet update};
 
 \end{tikzpicture}

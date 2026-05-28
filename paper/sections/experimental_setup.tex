@@ -29,10 +29,30 @@ the KL divergence caused by ablating each candidate feature via the
 \texttt{feature\_intervention} API is measured.
 
 \subsubsection{Multi-step Reasoning}
+\label{sec:multistep_benchmark}
 
-Three prompts requiring compositional reasoning across two or more
-hops: e.g.\ ``The capital of France is Paris. Paris is in Europe. The
-continent containing Paris is''.
+The multi-step reasoning benchmark probes whether the discovery agent
+can localise features that mediate compositional inference rather than
+the single-hop associations that dominate IOI.  Three prompts are
+used, each requiring the model to chain two or more intermediate facts
+before producing the target token: a transitive ordering prompt
+(``If Alice is taller than Bob, and Bob is taller than Carol, then
+the tallest person is''), a factual-chain prompt
+(``The capital of France is Paris.  Paris is in Europe.  The continent
+containing Paris is''), and a syllogistic prompt
+(``All dogs are animals.  Fido is a dog.  Therefore Fido is'').
+Unlike IOI, where causally critical features are concentrated in a
+small set of late-layer name-mover heads, compositional reasoning is
+expected to recruit earlier and middle layers that bind entities and
+propagate intermediate results through the residual stream.  This
+shifts the effective search distribution away from the tail of the
+attribution graph and stresses the agent's ability to allocate its
+budget across layers rather than exploit a known late-layer prior.
+For each prompt the KL divergence between the clean and intervened
+next-token distributions is measured, using the same $B=20$ budget
+and the same bandit, greedy, random, and oracle baselines as the IOI
+benchmark so that oracle efficiency is directly comparable across
+tasks.
 
 \subsubsection{Feature Steering}
 
@@ -55,18 +75,104 @@ history (e.g.\ ``The year World War II ended was'').
 This allows cross-domain comparison of circuit structure and layer
 distribution.
 
+\subsection{Experimental Prompts}
+
+All prompts used in the experiments are listed below.  These are
+defined in the experiment runner script (\texttt{run\_real\_experiments.py}) and
+correspond exactly to the prompts whose results appear in the JSON
+outputs under \texttt{results/}.
+
+\textbf{IOI Circuit Recovery (5 prompts):}
+\begin{quote}
+``When John and Mary went to the store, John gave the bag to''
+``After Alice and Bob finished lunch, Alice handed the receipt to''
+``While Sarah and Tom were at the park, Sarah threw the ball to''
+``When Emma and David arrived at the office, Emma passed the keys to''
+``As Lisa and Mike left the restaurant, Lisa returned the coat to''
+\end{quote}
+
+\textbf{Multi-step Reasoning (3 prompts):}
+\begin{quote}
+``If Alice is taller than Bob, and Bob is taller than Carol, then the tallest person is''
+``The capital of France is Paris. Paris is in Europe. The continent containing Paris is''
+``All dogs are animals. Fido is a dog. Therefore Fido is''
+\end{quote}
+
+\textbf{Feature Steering (5 concept prompts):}
+\begin{quote}
+``The Golden Gate Bridge is''
+``The Eiffel Tower is located in''
+``Mount Everest is the tallest''
+``The Great Wall of China was built''
+``The Statue of Liberty stands in''
+\end{quote}
+
+\textbf{Multi-Domain Benchmark (10 prompts, 2 per domain):}
+Geography prompts:
+\begin{quote}
+``The capital of France is''
+``The Golden Gate Bridge connects San Francisco to''
+\end{quote}
+
+Mathematics prompts:
+\begin{quote}
+``The square root of 64 is''
+``If 2 + 3 = 5 then 3 + 4 =''
+\end{quote}
+
+Science prompts:
+\begin{quote}
+``Water is made of hydrogen and''
+``The speed of light is approximately''
+\end{quote}
+
+Logic prompts:
+\begin{quote}
+``All mammals are warm-blooded. A whale is a mammal. Therefore a whale is''
+``All birds have wings. A penguin is a bird. Therefore a penguin has''
+\end{quote}
+
+History prompts:
+\begin{quote}
+``The year World War II ended was''
+``The first person to walk on the moon was''
+\end{quote}
+
 \subsection{Baselines}
 
 Four baselines are compared.  \emph{Random} selection draws features
-uniformly at random (10 trials, results averaged).  \emph{Greedy}
-selection ranks features in descending order of graph node influence
-(sum of absolute adjacency weights).  The \emph{bandit} selector
-combines graph importance with a decaying uncertainty bonus and
-learned per-layer priors, providing a comparison point that separates
-the contribution of Active Inference from simpler uncertainty
-heuristics.  The \emph{oracle} selects features in descending order
-of true KL divergence, an upper bound that requires all ablations
-in advance.
+uniformly at random (10 trials, results averaged), as in
+Equation~\ref{eq:random}:
+\begin{equation}
+  \label{eq:random}
+  a_t \sim \text{Uniform}(\mathcal{F})
+\end{equation}
+\emph{Greedy} selection ranks features in descending order of graph
+node influence (sum of absolute adjacency weights), per
+Equation~\ref{eq:greedy}:
+\begin{equation}
+  \label{eq:greedy}
+  i^* = \arg\max_i \text{imp}(i)
+\end{equation}
+where $\text{imp}(i)$ is the sum of absolute adjacency weights for node
+$i$ (defined in Equation~\ref{eq:importance}).  The \emph{bandit}
+selector combines graph importance with a decaying uncertainty bonus
+and learned per-layer priors, providing a comparison point that
+separates the contribution of Active Inference from simpler
+uncertainty heuristics:
+\begin{equation}
+  \label{eq:bandit}
+  S(i) = \text{imp}(i)\cdot\lambda_\ell + \omega_e \cdot u(i)
+\end{equation}
+where $u(i)$ is the uncertainty bonus (initialised to 1, decayed on
+visit) and $\lambda_\ell$ is the per-layer prior updated from
+observations.  The \emph{oracle} selects features in descending order
+of true KL divergence, an upper bound that requires all ablations in
+advance:
+\begin{equation}
+  \label{eq:oracle}
+  i^* = \arg\max_i \text{KL}_i^{\text{abl}}
+\end{equation}
 
 All methods use the same \texttt{feature\_intervention} API and
 KL divergence metric.  Budgets are fixed at $B=20$ interventions
@@ -78,10 +184,19 @@ Four metrics are reported.  \emph{Mean KL per intervention} is the
 average KL divergence across selected features, where higher values
 indicate that the method finds more causally important features.
 \emph{Cumulative KL} is the total information gained over the budget,
-compared against the oracle to compute \emph{oracle efficiency},
-defined as $\text{Cum.~KL} / \text{Oracle~Cum.~KL} \times 100\%$
-and indicating how close a method is to optimal.  The
-\emph{prediction change rate} is the fraction of steering experiments
+compared against the oracle to compute \emph{oracle efficiency}
+(Equation~\ref{eq:oracle_eff}):
+\begin{equation}
+  \label{eq:oracle_eff}
+  \eta = \frac{\text{CumKL}_{\text{agent}}}{\text{CumKL}_{\text{oracle}}} \times 100\%
+\end{equation}
+indicating how close a method is to optimal.  The KL divergence per
+intervention is computed as in Equation~\ref{eq:kl_def}:
+\begin{equation}
+  \label{eq:kl_def}
+  D_\mathrm{KL}(p \,\|\, q) = \sum_t p(t)\log\frac{p(t)}{q(t)}
+\end{equation}
+The \emph{prediction change rate} is the fraction of steering experiments
 in which the model's top-1 prediction changes.
 
 The oracle and all baselines use ablation-only KL divergences,
@@ -91,7 +206,7 @@ measures how well the agent identifies causally important features
 relative to an ablation-only upper bound.  This is a conservative
 comparison: the agent is penalised for exploratory patching or
 steering steps that may produce lower KL than ablation of the same
-feature.
+feature.  The Correspondence Metric is formally defined in Appendix~\ref{app:correspondence}.
 
 \subsection{POMDP Agent Configuration}
 
@@ -113,5 +228,26 @@ Colab notebooks reproduce the main experiments on a free T4 GPU.
 The experiment runner supports model selection via
 \texttt{-{}-model gemma|llama|both} and benchmark selection via
 \texttt{-{}-experiment ioi|steering|multistep|domain|all}.
-Docker images are provided for the DGX Spark environment.
 Raw experiment outputs are stored in \texttt{results/} as JSON.
+
+The \ACD{} framework is packaged as a Docker container targeting the
+NVIDIA DGX Spark platform (GB10 GPU, 128~GB unified memory, CUDA~12.8,
+aarch64 architecture).  The \texttt{docker-compose.yml} in the repository
+root provides volume mounts for model weights (cached from HuggingFace Hub)
+and result directories.  The container installs \texttt{circuit-tracer}
+from source and pins all dependencies via \texttt{requirements.txt}.
+
+Gemma-2-2B is available from HuggingFace Hub under the Gemma license
+(\texttt{google/\allowbreak gemma-2-2b}),
+and GemmaScope transcoders are fetched automatically by the \texttt{circuit-tracer} library.
+Experiments require a single NVIDIA GPU with at least 8~GB VRAM (tested on T4 with 16~GB in Colab
+and GB10 with 128~GB on DGX Spark). The model loads in float32 and requires approximately 5~GB VRAM.
+All dependencies are pinned in \texttt{requirements.txt}, with key packages including \texttt{circuit-tracer}
+(from git), \texttt{transformer-lens}, and \texttt{torch>=2.0}.
+
+Random baselines use \texttt{numpy.random.seed(42)}, while the Active Inference Selector is
+deterministic given the same candidates and exploration weight.
+Approximate runtime is 40--60 seconds per prompt on a single GPU (attribution graph generation: $\sim$18s;
+40 ablations at $\sim$30ms each: $\sim$1.2s; overhead: $\sim$20s for model setup on first prompt).
+All experiment outputs are saved as JSON in the \texttt{results/} directory, including per-prompt KL values
+for all methods, feature IDs, layer distributions, and steering outcomes.

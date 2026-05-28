@@ -3,15 +3,15 @@
 \begin{groupplot}[
     group style={
         group size=2 by 1,
-        horizontal sep=1.2cm,
+        horizontal sep=0.5cm,
         ylabels at=edge left,
     },
-    width=0.52\columnwidth,
-    height=4.5cm,
+    width=0.48\linewidth,
+    height=6cm,
     ylabel={Oracle Efficiency (\%)},
     symbolic x coords={Random, Greedy, Bandit, POMDP},
     xtick=data,
-    x tick label style={font=\tiny},
+    x tick label style={font=\scriptsize},
     y tick label style={font=\scriptsize},
     ylabel style={font=\scriptsize},
     title style={font=\scriptsize\bfseries},
@@ -23,10 +23,12 @@
         /pgf/number format/precision=1},
     legend style={
         font=\tiny,
-        at={(0.5,-0.28)},
+        at={(0.5,-0.36)},
         anchor=north,
         legend columns=2
     },
+    ymajorgrids=true,
+    grid style={dashed, gray!30},
 ]
 
 \nextgroupplot[ybar, bar width=5pt, title={Gemma-2-2B}, ymax=1443]

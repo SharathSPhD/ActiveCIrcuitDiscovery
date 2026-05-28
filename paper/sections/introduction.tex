@@ -10,7 +10,7 @@ activations are jointly necessary and sufficient to reproduce a specific model
 behaviour on a given family of inputs~\cite{Cammarata2020,Wang2022}.
 
 Circuit analysis has produced landmark findings. Wang et al.\ identified a
-fourteen-head circuit mediating Indirect Object Identification (IOI) in GPT-2
+26-head circuit mediating Indirect Object Identification (IOI) in GPT-2
 Small~\cite{Wang2022}; Hanna et al.\ localised a circuit for numerical
 greater-than comparisons~\cite{Hanna2023}; and Nanda et al.\ traced the emergence of
 modular arithmetic generalisation through a Fourier-space circuit during
@@ -27,6 +27,25 @@ approximating patch effects with integrated gradients, yet it trades correctness
 efficiency and may miss higher-order interactions. Neither method incorporates
 uncertainty about the circuit structure or adapts its search strategy based on what
 has already been discovered.
+
+Novelty of uncertainty-guided adaptive search.
+To date, automated circuit discovery has pursued either exhaustive search (as in
+\ACDC) or gradient-based ranking (as in \EAP and Causal Tracing~\cite{Meng2022}),
+with Sparse Feature Circuits~\cite{marks2024sparse} and Dictionary Learning
+approaches~\cite{He2024} following similar gradient-plus-pruning paradigms. None of
+these methods explicitly maintains a belief distribution over circuit components or
+uses uncertainty to guide adaptive, budget-aware exploration. This poses a practical
+problem: in production systems, the number of interventions is constrained by
+compute budgets, yet existing methods do not optimize for informativeness per
+intervention. The statistical literature on active learning and Bayesian experimental
+design~\cite{MacKay2003} has long established that uncertainty-guided selection
+outperforms passive ranking when the goal is to resolve ambiguity with minimal
+queries. The present work brings this principle to circuit discovery: by formulating
+the problem as a Partially Observable Markov Decision Process (POMDP) and selecting
+interventions to minimise Expected Free Energy (EFE), the framework achieves
+information-theoretically principled adaptation that trades off exploration
+(resolving circuit uncertainty) with exploitation (confirming known important
+features).
 
 Active Inference is a normative framework for perception and action in biological
 agents that unifies perception, learning, and planning under a single objective: the
@@ -49,7 +68,7 @@ with fewer total interventions than either random or gradient-ranked selection.
 
 The contributions of this paper are as follows.
 
-\textbf{(C1) Active Inference formulation.} Circuit discovery is cast as a
+\emph{(C1) Active Inference formulation.} Circuit discovery is cast as a
 partially observable Markov decision process (POMDP) with three hidden state
 factors (feature importance, layer role, causal influence), three observation
 modalities (KL divergence, activation magnitude, graph connectivity), and three
@@ -58,47 +77,60 @@ actions (ablation, patching, steering). The agent is implemented using the
 intervention selection and Dirichlet parameter updates enabling online learning
 of the observation model.
 
-\textbf{(C2) Framework implementation.} The Active Circuit Discovery (\ACD)
+\emph{(C2) Framework implementation.} The Active Circuit Discovery (\ACD)
 framework integrates Anthropic's
 \texttt{circuit-tracer}~\cite{Anthropic2025CT,Ameisen2025} for Edge Attribution Patching
 with GemmaScope transcoders and the \texttt{feature\_intervention} API for
 causally correct transcoder-level interventions.
 
-\textbf{(C3) Validated evaluation.} The POMDP agent is compared against a
+\emph{(C3) Validated evaluation.} The POMDP agent is compared against a
 heuristic bandit baseline, greedy importance ranking, random selection, and an
 oracle upper bound on two models (Gemma-2-2B and Llama-3.2-1B) across four
 benchmarks (IOI, multi-step reasoning, feature steering, and a five-domain
 cognitive benchmark).
 
-\textbf{(C4) Causal controllability.} Feature steering experiments demonstrate
+\emph{(C4) Causal controllability.} Feature steering experiments demonstrate
 that individual transcoder features causally control model behaviour, with
 prediction changes observed at $10\times$ activation scaling.
 
-\textbf{(C5) Reproducibility artifacts.} Three Google Colab notebooks, a Docker
+\emph{(C5) Reproducibility artifacts.} Three Google Colab notebooks, a Docker
 container for NVIDIA DGX Spark, and raw experiment results (JSON) are released
 for full reproduction.
 
+Positioning statement. To the best of the authors' knowledge, this is the first
+work to cast circuit discovery as a POMDP with principled Expected Free Energy
+minimization for uncertainty-guided adaptive intervention selection. Prior work has
+not combined (a) uncertainty-aware feature importance estimation via belief state
+evolution, (b) a multi-action intervention space with learnable action-type
+selection, (c) online generative model learning via Dirichlet posterior updates,
+and (d) transcoder-level causal interventions across the full feature space. These
+components together enable significantly more sample-efficient circuit discovery
+than exhaustive or gradient-based approaches.
+
 The following testable hypotheses guide the evaluation.
 
-\textbf{H1 (Efficiency).}  The POMDP agent identifies causally important
+\emph{H1 (Efficiency).}  The POMDP agent identifies causally important
 features with higher cumulative KL divergence than random selection within
 a fixed budget of $B=20$ interventions. Assessed via a one-sided paired
 $t$-test across prompts ($\alpha = 0.05$).
 
-\textbf{H2 (Causal controllability).}  Scaling individual transcoder features
+\emph{H2 (Causal controllability).}  Scaling individual transcoder features
 at $10\times$ activation changes the model's top-1 prediction for a
 non-trivial fraction of features. Assessed via a one-sided binomial test
 against a 1\% chance-level baseline ($\alpha = 0.05$).
 
-\textbf{H3 (Discovery quality).}  The POMDP agent achieves oracle
+\emph{H3 (Discovery quality).}  The POMDP agent achieves oracle
 efficiency $\geq 50\%$ with budget $B=20$. Assessed by point estimate and
 standard deviation across prompts.
 
-\textbf{H4 (Cross-architecture transfer).}  The qualitative findings
+\emph{H4 (Cross-architecture transfer).}  The qualitative findings
 obtained on Gemma-2-2B replicate on Llama-3.2-1B.
 
 The remainder of this paper is structured as follows. Section~\ref{sec:background}
-reviews related work on circuit analysis, Active Inference, and sparse
-autoencoders. Section~\ref{sec:method} describes the \ACD{} framework in detail.
-Section~\ref{sec:setup} specifies the experimental protocol. Section~\ref{sec:results}
-reports validated results. Section~\ref{sec:conclusion} concludes.
+reviews related work on circuit analysis, active learning and Bayesian
+experimental design, Active Inference, and sparse autoencoders. Section~\ref{sec:method}
+describes the \ACD{} framework in detail. Section~\ref{sec:setup} specifies the
+experimental protocol. Section~\ref{sec:results} reports validated results. Section~\ref{sec:discussion}
+provides an expanded discussion of findings, limitations, and future directions. Section~\ref{sec:conclusion}
+concludes. Additional implementation details and supplementary analyses are provided
+in the Appendix.

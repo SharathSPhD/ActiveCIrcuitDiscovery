@@ -3,28 +3,30 @@
 \begin{groupplot}[
     group style={
         group size=2 by 1,
-        horizontal sep=1.2cm,
+        horizontal sep=0.5cm,
         ylabels at=edge left,
     },
-    width=0.52\columnwidth,
-    height=5cm,
+    width=0.48\linewidth,
+    height=6cm,
     ylabel={Count (top-10 features)},
     symbolic x coords={Geo., Math, Sci., Logic, Hist.},
     xtick=data,
-    x tick label style={font=\tiny},
+    x tick label style={font=\scriptsize},
     y tick label style={font=\scriptsize},
     ylabel style={font=\scriptsize},
     title style={font=\scriptsize\bfseries},
     ymin=0,
     enlarge x limits=0.15,
     nodes near coords,
-    nodes near coords style={font=\tiny, rotate=90, anchor=west},
+    nodes near coords style={font=\tiny, anchor=north},
     legend style={
         font=\tiny,
-        at={(0.5,-0.30)},
+        at={(0.5,-0.38)},
         anchor=north,
         legend columns=3
     },
+    ymajorgrids=true,
+    grid style={dashed, gray!30},
 ]
 
 \nextgroupplot[ybar, bar width=4pt, title={Gemma-2-2B}]

@@ -1,79 +1,73 @@
-% figures/efe_pipeline.tex -- Active Inference POMDP pipeline (TikZ)
-% Shows generative model components, EFE computation, and action→B feedback
-
+% figures/efe_pipeline.tex -- POMDP Agent Pipeline (journal-quality TikZ)
 \begin{tikzpicture}[
-    font=\scriptsize,
-    node distance = 0.35cm and 0.55cm,
-    mat/.style = {
-        rectangle, draw=blue!60!black, fill=blue!8,
-        rounded corners=2pt, minimum width=1.1cm, minimum height=0.5cm,
-        align=center, line width=0.5pt, font=\scriptsize\bfseries
+    font=\small,
+    node distance=0.5cm and 0.7cm,
+    mat/.style={
+        rectangle, draw=blue!50!black, fill=blue!6,
+        rounded corners=3pt, minimum width=1.8cm, minimum height=0.7cm,
+        align=center, line width=0.5pt, font=\small\bfseries
     },
-    proc/.style = {
-        rectangle, draw=red!50!black, fill=red!6,
-        rounded corners=2pt, minimum width=1.6cm, minimum height=0.5cm,
-        align=center, line width=0.4pt
+    proc/.style={
+        rectangle, draw=red!40!black, fill=red!5,
+        rounded corners=3pt, minimum width=2.4cm, minimum height=0.7cm,
+        align=center, line width=0.5pt, font=\small
     },
-    io/.style = {
-        rectangle, draw=green!50!black, fill=green!7,
-        rounded corners=2pt, minimum width=1.4cm, minimum height=0.5cm,
-        align=center, line width=0.4pt
+    io/.style={
+        rectangle, draw=green!40!black, fill=green!5,
+        rounded corners=3pt, minimum width=2.2cm, minimum height=0.7cm,
+        align=center, line width=0.5pt, font=\small
     },
-    sel/.style = {
-        rectangle, draw=orange!70!black, fill=orange!8,
-        rounded corners=2pt, minimum width=1.8cm, minimum height=0.55cm,
-        align=center, line width=0.5pt
+    sel/.style={
+        rectangle, draw=orange!60!black, fill=orange!6,
+        rounded corners=3pt, minimum width=2.8cm, minimum height=0.7cm,
+        align=center, line width=0.5pt, font=\small
     },
-    arr/.style = {-{Latex[length=1.5mm]}, semithick, draw=black!55},
-    feed/.style = {-{Latex[length=1.5mm]}, semithick, draw=red!60!black, dashed},
+    arr/.style={-{Latex[length=2mm]}, thick, draw=black!50},
+    looparr/.style={-{Latex[length=2mm]}, thick, draw=black!35, dashed},
 ]
 
 % Row 1: Generative model matrices
-\node[mat] (A) {$\mat{A}$\\likelihood};
-\node[mat, right=0.4cm of A] (B) {$\mat{B}(a)$\\transition};
-\node[mat, right=0.4cm of B] (C) {$\mat{C}$\\preference};
-\node[mat, right=0.4cm of C] (D) {$\mat{D}$\\prior};
+\node[mat] (A) {$\mathbf{A}$\\likelihood};
+\node[mat, right=0.5cm of A] (B) {$\mathbf{B}(a)$\\transition};
+\node[mat, right=0.5cm of B] (C) {$\mathbf{C}$\\preference};
+\node[mat, right=0.5cm of C] (D) {$\mathbf{D}$\\prior};
 
 % Row 2: Inference and EFE
-\node[proc, below=0.55cm of A, xshift=0.6cm] (infer)
-    {Infer states\\$q(s \mid o)$};
-\node[proc, right=0.6cm of infer] (efe)
-    {EFE: $G(i,a)$\\epist.\ + pragm.};
+\node[proc, below=0.8cm of A, xshift=0.7cm] (infer) {Infer states\\$q(s \mid o)$};
+\node[proc, right=0.8cm of infer] (efe) {EFE: $G(i,a)$\\epistemic + pragmatic};
 
 % Row 3: Selection
-\node[sel, below=0.55cm of infer, xshift=1.5cm] (select)
-    {$(i^*,a^*) = \arg\min G$};
+\node[sel, below=0.7cm of infer, xshift=2.0cm] (select) {$(i^*,a^*) = \arg\min G$};
 
 % Row 4: Execute and observe
-\node[io, below left=0.55cm and 0.1cm of select] (exec)
-    {Execute $a^*$\\on feature $i^*$};
-\node[io, below right=0.55cm and 0.1cm of select] (obs)
-    {Observe\\KL, act, conn};
+\node[io, below left=0.7cm and 0.3cm of select] (exec) {Execute $a^*$\\on feature $i^*$};
+\node[io, below right=0.7cm and 0.3cm of select] (obs) {Observe\\KL, act., conn.};
 
-% Arrows: matrices → inference
-\draw[arr] (A.south) -- ++(0,-0.15) -| (infer.north west);
-\draw[arr] (D.south) -- ++(0,-0.15) -| (infer.north east);
+% Row 5: Online learning
+\node[io, below=0.6cm of select, yshift=-1.2cm] (learn) {Online Learning\\Dirichlet update $\mathbf{A}$};
 
-% Arrows: matrices → EFE
-\draw[arr] (B.south) -- ++(0,-0.15) -| (efe.north west);
-\draw[arr] (C.south) -- ++(0,-0.15) -| (efe.north east);
+% Arrows: matrices -> inference
+\draw[arr] (A.south) -- ++(0,-0.2) -| ([xshift=-0.3cm]infer.north);
+\draw[arr] (D.south) -- ++(0,-0.2) -| ([xshift=0.3cm]infer.north);
 
-% Inference → EFE
+% Arrows: matrices -> EFE
+\draw[arr] (B.south) -- ++(0,-0.2) -| ([xshift=-0.3cm]efe.north);
+\draw[arr] (C.south) -- ++(0,-0.2) -| ([xshift=0.3cm]efe.north);
+
+% Inference -> EFE -> Selection
 \draw[arr] (infer) -- (efe);
+\draw[arr] (efe.south) -- ++(0,-0.2) -| (select.north);
 
-% EFE → selection
-\draw[arr] (efe.south) -- ++(0,-0.15) -| (select.north);
+% Selection -> execute and observe
+\draw[arr] (select.south) -- ++(0,-0.2) -| (exec.north);
+\draw[arr] (select.south) -- ++(0,-0.2) -| (obs.north);
 
-% Selection → execute & observe
-\draw[arr] (select.south) -- ++(0,-0.15) -| (exec.north);
-\draw[arr] (select.south) -- ++(0,-0.15) -| (obs.north);
+% Execute and observe -> learning
+\draw[arr] (exec.south) -- ++(0,-0.25) -| (learn.west);
+\draw[arr] (obs.south) -- ++(0,-0.25) -| (learn.east);
 
-% Observe → update A (feedback)
-\draw[feed] (obs.east) -- ++(0.3,0) |- (A.east)
-    node[pos=0.35, right, font=\tiny]{update $\mat{A}$};
-
-% Execute → B feedback (action conditions transition)
-\draw[feed] (exec.west) -- ++(-0.3,0) |- (B.west)
-    node[pos=0.35, left, font=\tiny]{$a \to \mat{B}$};
+% Learning -> back to generative model (loop)
+\draw[looparr] (learn.west) -- ++(-1.6,0) |- (A.west)
+    node[pos=0.3, left, font=\scriptsize]{update $\mathbf{A}$, iterate};
 
 \end{tikzpicture}

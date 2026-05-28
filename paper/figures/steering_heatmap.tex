@@ -3,11 +3,11 @@
 \begin{groupplot}[
     group style={
         group size=2 by 1,
-        horizontal sep=1.2cm,
+        horizontal sep=0.5cm,
         ylabels at=edge left,
     },
-    width=0.52\columnwidth,
-    height=4.5cm,
+    width=0.48\linewidth,
+    height=6cm,
     xlabel={Steering multiplier $m$},
     ylabel={Mean KL divergence},
     x label style={font=\scriptsize},
@@ -16,11 +16,13 @@
     title style={font=\scriptsize\bfseries},
     legend style={
         font=\tiny,
-        at={(0.5,-0.25)},
+        at={(0.5,-0.33)},
         anchor=north,
         legend columns=3
     },
     xtick={0,2,5,10},
+    ymajorgrids=true,
+    grid style={dashed, gray!30},
 ]
 
 \nextgroupplot[title={Gemma-2-2B}]
