@@ -1,0 +1,57 @@
+# syntax=docker/dockerfile:1
+# ActiveCircuitDiscovery -- standard x86_64 (amd64) CUDA container.
+#
+# This is the portable counterpart to Dockerfile.dgx-spark (aarch64). It targets
+# any x86_64 host with an NVIDIA GPU (compute capability >= 7.5), including the
+# NVIDIA T4 (16 GB) available for free on Google Colab. The model loads in
+# float32 and needs ~5 GB of VRAM, so a single T4 is sufficient.
+#
+# Build:  docker build -f Dockerfile.amd64 -t acd:amd64 .
+# Run:    docker run --gpus all -e HF_TOKEN=$HF_TOKEN \
+#             -v $PWD/results:/workspace/ActiveCircuitDiscovery/results \
+#             acd:amd64 python -m src.experiments.run_real_experiments --model gemma --experiment ioi
+#
+# Or via compose:  docker compose -f docker-compose.amd64.yml up
+
+FROM pytorch/pytorch:2.4.0-cuda12.1-cudnn9-runtime
+
+LABEL maintainer="ActiveCircuitDiscovery"
+LABEL description="Active Inference Circuit Discovery in LLMs -- x86_64 / T4-compatible"
+LABEL version="2.0-amd64"
+
+ENV DEBIAN_FRONTEND=noninteractive \
+    PYTHONUNBUFFERED=1 \
+    TOKENIZERS_PARALLELISM=false
+
+# ---- System packages ----
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        git curl wget build-essential libgomp1 \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /workspace/ActiveCircuitDiscovery
+
+# ---- Python dependencies (layer-cache friendly) ----
+COPY requirements.txt ./
+RUN pip install --no-cache-dir --upgrade pip setuptools wheel && \
+    pip install --no-cache-dir -r requirements.txt && \
+    pip install --no-cache-dir "scipy>=1.12.0" "matplotlib>=3.8.0"
+
+# circuit-tracer is installed from source (not on PyPI).
+RUN pip install --no-cache-dir \
+        "git+https://github.com/safety-research/circuit-tracer.git"
+
+# ---- Application code ----
+COPY . .
+RUN pip install --no-cache-dir -e . 2>/dev/null || \
+    echo "[INFO] editable install skipped (no setup.py/pyproject); using PYTHONPATH"
+
+ENV PYTHONPATH=/workspace/ActiveCircuitDiscovery
+ENV HF_HOME=/workspace/ActiveCircuitDiscovery/.cache/huggingface
+
+RUN mkdir -p results logs
+
+# Smoke check: imports resolve and CUDA is visible when a GPU is attached.
+HEALTHCHECK --interval=60s --timeout=20s --start-period=60s --retries=3 \
+    CMD python -c "import torch, pymdp, numpy; print('cuda', torch.cuda.is_available())" || exit 1
+
+CMD ["bash"]

@@ -285,22 +285,51 @@ def analyse_steering(data: dict) -> dict:
     out["top_max_kl"] = _q(top_maxkl)
     out["control_max_kl"] = _q(ctrl_maxkl)
 
-    # H2 binomial test at the largest multiplier, vs 1% chance.
+    # H2 at the largest multiplier.  We report BOTH the (weak) test against a 1%
+    # chance baseline AND the (honest) test of selected vs matched random-feature
+    # control via Fisher's exact test, which is what the causal claim hinges on.
     if mults:
         m_max = max(mults)
         c = top_changes.get(m_max, {"changed": 0, "total": 0})
+        cc = ctrl_changes.get(m_max, {"changed": 0, "total": 0})
         if c["total"] > 0:
             bt = stats.binomtest(c["changed"], c["total"], 0.01, alternative="greater")
             out["H2_binomial"] = {
                 "multiplier": m_max,
                 "changed": c["changed"], "total": c["total"],
+                "rate": c["changed"] / c["total"],
                 "p_value": float(bt.pvalue),
             }
-        cc = ctrl_changes.get(m_max, {"changed": 0, "total": 0})
         out["H2_control"] = {
             "multiplier": m_max,
             "changed": cc["changed"], "total": cc["total"],
+            "rate": (cc["changed"] / cc["total"]) if cc["total"] else None,
         }
+        # selected vs control: one-sided Fisher exact (selected more likely to flip)
+        if c["total"] > 0 and cc["total"] > 0:
+            table = [[c["changed"], c["total"] - c["changed"]],
+                     [cc["changed"], cc["total"] - cc["changed"]]]
+            fe = stats.fisher_exact(table, alternative="greater")
+            out["H2_selected_vs_control"] = {
+                "multiplier": m_max,
+                "selected_rate": c["changed"] / c["total"],
+                "control_rate": cc["changed"] / cc["total"],
+                "odds_ratio": float(fe.statistic),
+                "p_value": float(fe.pvalue),
+            }
+        # pooled across all multipliers >= 2 (the steering regime)
+        steer_mults = [m for m in mults if m >= 2.0]
+        tc = sum(top_changes.get(m, {}).get("changed", 0) for m in steer_mults)
+        tt = sum(top_changes.get(m, {}).get("total", 0) for m in steer_mults)
+        ccc = sum(ctrl_changes.get(m, {}).get("changed", 0) for m in steer_mults)
+        cct = sum(ctrl_changes.get(m, {}).get("total", 0) for m in steer_mults)
+        if tt > 0 and cct > 0:
+            fe = stats.fisher_exact([[tc, tt - tc], [ccc, cct - ccc]], alternative="greater")
+            out["H2_pooled_selected_vs_control"] = {
+                "selected": f"{tc}/{tt}", "selected_rate": tc / tt,
+                "control": f"{ccc}/{cct}", "control_rate": ccc / cct,
+                "odds_ratio": float(fe.statistic), "p_value": float(fe.pvalue),
+            }
     return out
 
 

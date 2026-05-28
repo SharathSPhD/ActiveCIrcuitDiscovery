@@ -68,20 +68,24 @@ def main():
         lines.append("\\end{bmatrix}")
         lines.append("\\]")
 
-    # --- C preference vectors ---
+    # --- C preference vectors (stacked vertically to fit the column) ---
     lines.append("\\paragraph{Preferences $\\mathbf{C}$ (log-preference over observations).}")
     lines.append("\\[")
-    lines.append("\\mathbf{C}^{(\\mathrm{KL})} = \\begin{bmatrix}" + _vec(C[0]) + "\\end{bmatrix},\\quad")
-    lines.append("\\mathbf{C}^{(\\mathrm{act})} = \\begin{bmatrix}" + _vec(C[1]) + "\\end{bmatrix},\\quad")
-    lines.append("\\mathbf{C}^{(\\mathrm{conn})} = \\begin{bmatrix}" + _vec(C[2]) + "\\end{bmatrix}")
+    lines.append("\\begin{aligned}")
+    lines.append("\\mathbf{C}^{(\\mathrm{KL})} &= \\begin{bmatrix}" + _vec(C[0]) + "\\end{bmatrix}, &\\quad")
+    lines.append("\\mathbf{C}^{(\\mathrm{act})} &= \\begin{bmatrix}" + _vec(C[1]) + "\\end{bmatrix}, \\\\")
+    lines.append("\\mathbf{C}^{(\\mathrm{conn})} &= \\begin{bmatrix}" + _vec(C[2]) + "\\end{bmatrix}. &")
+    lines.append("\\end{aligned}")
     lines.append("\\]")
 
-    # --- D priors ---
+    # --- D priors (stacked vertically to fit the column) ---
     lines.append("\\paragraph{Priors $\\mathbf{D}$ over hidden states.}")
     lines.append("\\[")
-    lines.append("\\mathbf{D}^{(\\mathrm{imp})} = \\begin{bmatrix}" + _vec(D[0]) + "\\end{bmatrix},\\quad")
-    lines.append("\\mathbf{D}^{(\\mathrm{role})} = \\begin{bmatrix}" + _vec(D[1]) + "\\end{bmatrix},\\quad")
-    lines.append("\\mathbf{D}^{(\\mathrm{causal})} = \\begin{bmatrix}" + _vec(D[2]) + "\\end{bmatrix}")
+    lines.append("\\begin{aligned}")
+    lines.append("\\mathbf{D}^{(\\mathrm{imp})} &= \\begin{bmatrix}" + _vec(D[0]) + "\\end{bmatrix}, &\\quad")
+    lines.append("\\mathbf{D}^{(\\mathrm{role})} &= \\begin{bmatrix}" + _vec(D[1]) + "\\end{bmatrix}, \\\\")
+    lines.append("\\mathbf{D}^{(\\mathrm{causal})} &= \\begin{bmatrix}" + _vec(D[2]) + "\\end{bmatrix}. &")
+    lines.append("\\end{aligned}")
     lines.append("\\]")
 
     # --- A[0] representative slice: KL likelihood vs (importance, causal) at middle role ---
