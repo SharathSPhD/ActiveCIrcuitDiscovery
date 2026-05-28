@@ -64,15 +64,35 @@ pip install -r requirements.txt
 pip install git+https://github.com/safety-research/circuit-tracer.git
 ```
 
-### Docker (DGX Spark)
+### Docker (DGX Spark / aarch64)
 
 ```bash
 docker compose up active-circuit-discovery
 ```
 
-### Google Colab
+### Docker (standard x86_64 / amd64, T4-compatible)
 
-Click any Colab badge above -- dependencies install automatically.
+A portable image is provided for any x86_64 host with an NVIDIA GPU of
+compute capability >= 7.5 (including a single 16 GB T4):
+
+```bash
+# build
+docker build -f Dockerfile.amd64 -t acd:amd64 .
+
+# run one experiment (results land in ./results)
+docker compose -f docker-compose.amd64.yml run --rm acd \
+    python -m src.experiments.run_real_experiments --model gemma --experiment ioi
+```
+
+The model loads in float32 and uses ~5 GB VRAM, so the full pipeline fits on
+a T4. Absolute KL values may shift slightly across GPU generations and
+driver/cuDNN versions, but the relative method orderings are
+hardware-independent.
+
+### Google Colab (free T4)
+
+Click any Colab badge above -- dependencies install automatically and the
+notebooks reproduce the main experiments on a free T4 GPU.
 
 ## Quick Start
 
@@ -146,8 +166,10 @@ ActiveCIrcuitDiscovery/
 │   └── 03_reproduce_biology_paper.ipynb   # Feature steering
 ├── paper/                                 # LaTeX paper source
 ├── results/                               # Experiment JSON outputs
-├── Dockerfile.dgx-spark
-├── docker-compose.yml
+├── Dockerfile.dgx-spark                   # aarch64 / DGX Spark image
+├── Dockerfile.amd64                       # x86_64 / T4-compatible image
+├── docker-compose.yml                     # aarch64 compose target
+├── docker-compose.amd64.yml               # x86_64 compose target
 └── requirements.txt
 ```
 

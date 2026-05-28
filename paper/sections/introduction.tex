@@ -28,7 +28,14 @@ efficiency and may miss higher-order interactions. Neither method incorporates
 uncertainty about the circuit structure or adapts its search strategy based on what
 has already been discovered.
 
-Novelty of uncertainty-guided adaptive search.
+Novelty: an uncertainty-guided \emph{intervention-selection} layer, not a new
+attribution backend.
+We emphasise at the outset that \ACD{} is not a replacement for attribution-graph
+construction methods such as \EAP{} or \texttt{circuit-tracer}; it consumes their
+output (a pruned attribution graph over transcoder features) and contributes a
+\emph{policy for choosing which feature to intervene on next, and how}, under a fixed
+intervention budget. The novelty therefore lies in the adaptive search strategy
+rather than in how the candidate graph is built.
 To date, automated circuit discovery has pursued either exhaustive search (as in
 \ACDC) or gradient-based ranking (as in \EAP and Causal Tracing~\cite{Meng2022}),
 with Sparse Feature Circuits~\cite{marks2024sparse} and Dictionary Learning
@@ -83,19 +90,29 @@ framework integrates Anthropic's
 with GemmaScope transcoders and the \texttt{feature\_intervention} API for
 causally correct transcoder-level interventions.
 
-\emph{(C3) Validated evaluation.} The POMDP agent is compared against a
-heuristic bandit baseline, greedy importance ranking, random selection, and an
-oracle upper bound on two models (Gemma-2-2B and Llama-3.2-1B) across four
-benchmarks (IOI, multi-step reasoning, feature steering, and a five-domain
-cognitive benchmark).
+\emph{(C3) Validated evaluation with action-matched and attribution baselines.}
+The agent is compared against a heuristic bandit, greedy importance ranking, a
+direct Edge-Attribution-Patching (\EAP) ranking baseline computed from
+\texttt{circuit-tracer} attribution scores, random selection, and an oracle upper
+bound, on two models (Gemma-2-2B and Llama-3.2-1B) across four benchmarks (IOI,
+multi-step reasoning, feature steering, and a five-domain cognitive benchmark).
+To isolate the contribution of \emph{selection} from that of the intervention
+\emph{type}, we evaluate an ablation-only agent (POMDP-abl) against the ablation
+oracle as our primary, fair comparison, and report action-matched
+(steering-enabled) variants of the random, greedy, and bandit baselines separately.
 
-\emph{(C4) Causal controllability.} Feature steering experiments demonstrate
-that individual transcoder features causally control model behaviour, with
-prediction changes observed at $10\times$ activation scaling.
+\emph{(C4) Causal controllability, with controls.} Feature steering experiments
+show that scaling transcoder features changes predictions in a clear dose-dependent
+manner, far above chance. Crucially, our random-feature control reveals that
+circuit-selected features are only marginally---and \emph{not} significantly---more
+steerable than randomly chosen features at large multipliers, indicating that a
+substantial part of the effect is generic activation scaling rather than
+selection-specific causal control. We therefore state the causal claim cautiously
+and report the controls in full.
 
-\emph{(C5) Reproducibility artifacts.} Three Google Colab notebooks, a Docker
-container for NVIDIA DGX Spark, and raw experiment results (JSON) are released
-for full reproduction.
+\emph{(C5) Reproducibility artifacts.} Three Google Colab notebooks (free T4 GPU),
+both an aarch64 (DGX Spark) and a standard \texttt{x86\_64}/amd64 Docker image, and
+raw experiment results (JSON) are released for full reproduction.
 
 Positioning statement. To the best of the authors' knowledge, this is the first
 work to cast circuit discovery as a POMDP with principled Expected Free Energy
@@ -104,24 +121,41 @@ not combined (a) uncertainty-aware feature importance estimation via belief stat
 evolution, (b) a multi-action intervention space with learnable action-type
 selection, (c) online generative model learning via Dirichlet posterior updates,
 and (d) transcoder-level causal interventions across the full feature space. These
-components together enable significantly more sample-efficient circuit discovery
-than exhaustive or gradient-based approaches.
+components together constitute, to our knowledge, a previously unexplored design
+point for the \emph{intervention-selection} sub-problem. We do not claim
+state-of-the-art circuit recovery relative to \ACDC{} or \EAP{}. On a shared
+attribution-graph backend and a fixed budget, EFE-guided selection (POMDP-abl)
+reliably beats random and is competitive with greedy and a UCB bandit; however, a
+direct \EAP{} attribution ranking is itself a strong ablation-KL baseline and is not
+consistently beaten (Section~\ref{sec:results}). The agent's distinctive value is
+thus the explicit belief-state uncertainty, the multi-action space, and online model
+learning---capabilities the static baselines lack---rather than a raw efficiency win,
+and we frame the contribution accordingly.
 
 The following testable hypotheses guide the evaluation.
 
 \emph{H1 (Efficiency).}  The POMDP agent identifies causally important
 features with higher cumulative KL divergence than random selection within
 a fixed budget of $B=20$ interventions. Assessed via a one-sided paired
-$t$-test across prompts ($\alpha = 0.05$).
+$t$-test and an exact one-sided paired permutation test across prompts
+($\alpha = 0.05$); we treat the permutation test as primary given the
+small prompt counts.
 
-\emph{H2 (Causal controllability).}  Scaling individual transcoder features
-at $10\times$ activation changes the model's top-1 prediction for a
-non-trivial fraction of features. Assessed via a one-sided binomial test
-against a 1\% chance-level baseline ($\alpha = 0.05$).
+\emph{H2 (Causal controllability).}  We separate two sub-claims.
+\emph{H2a (manipulability):} scaling transcoder features changes the
+model's top-1 prediction far above chance, in a dose-dependent manner
+across the multiplier sweep (one-sided binomial test vs.\ a 1\%
+chance baseline). \emph{H2b (selectivity):} circuit-selected features
+are \emph{more} controllable than matched randomly chosen features
+(one-sided Fisher exact test of selected vs.\ control flip rates,
+$\alpha = 0.05$). Separating these lets the controls (R1.3) reveal how
+much of the steering effect is specific to selected features versus
+generic activation scaling.
 
-\emph{H3 (Discovery quality).}  The POMDP agent achieves oracle
-efficiency $\geq 50\%$ with budget $B=20$. Assessed by point estimate and
-standard deviation across prompts.
+\emph{H3 (Discovery quality).}  The ablation-only agent (POMDP-abl) recovers
+$\geq 50\%$ of the ablation oracle's cumulative KL with budget $B=20$
+(bounded oracle efficiency). Assessed by point estimate with a bootstrap
+95\% confidence interval across prompts.
 
 \emph{H4 (Cross-architecture transfer).}  The qualitative findings
 obtained on Gemma-2-2B replicate on Llama-3.2-1B.

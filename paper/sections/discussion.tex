@@ -2,7 +2,30 @@
 
 \subsection{Action Selection Dynamics}
 
-The temporal pattern of action selection reveals the exploration--exploitation trade-off predicted by Expected Free Energy theory. On Gemma IOI, the agent selects ablation at the first step (94\% of batches) for its maximal epistemic value, then transitions to feature steering (94\% of remaining steps), which carries lower epistemic but high pragmatic value. This progression is grounded in the action-conditioned B-matrix (Appendix~\ref{app:bmatrix}): ablation produces the highest transition entropy, while steering produces the lowest. Activation patching appears sporadically (1\%) at intermediate confidence levels. Notably, this three-way distribution is not prescribed but emerges from the generative model, suggesting that the EFE objective provides a principled mechanism for adaptive experiment design.
+The temporal pattern of action selection reveals the exploration--exploitation trade-off predicted by Expected Free Energy theory. On Gemma IOI, the agent selects ablation at the first step for its maximal epistemic value, then transitions predominantly to feature steering, which carries lower epistemic but high pragmatic value (exact per-step tallies in Figure~\ref{fig:action_dist}). This progression is grounded in the action-conditioned B-matrix (Appendix~\ref{app:bmatrix}): ablation produces the highest transition entropy, while steering produces the lowest. Activation patching appears only sporadically at intermediate confidence levels. Notably, this distribution is not prescribed but emerges from the generative model, suggesting that the EFE objective provides a principled mechanism for adaptive experiment design.
+
+\subsection{Structure Discovery vs.\ Steering-KL Exploitation}
+\label{sec:structure_vs_steering}
+
+A fair reading of the action dynamics above raises the question (R1.8) of whether
+the agent's headline performance reflects genuine \emph{circuit-structure discovery}
+or merely the \emph{exploitation of steering}, which mechanically produces larger KL
+shifts than ablation. We address this directly with two design choices. First, our
+primary discovery-quality metric is the \emph{ablation-only} agent (POMDP-abl) scored
+by bounded oracle efficiency against the ablation oracle
+(Equation~\ref{eq:oracle_eff}); here the agent and the oracle use the identical
+intervention, so any advantage is attributable to \emph{selection}, not to the
+steering action. Second, the action-matched baselines (Greedy+steer, Bandit+steer,
+Random+steer) grant the heuristics the \emph{same} steering action and are reported
+on the common RCK scale (Equation~\ref{eq:rck}). The decomposition in
+Section~\ref{sec:results} shows that a substantial part of the full multi-action
+agent's $>100\%$ RCK is indeed contributed by the steering action itself---random
+selection with steering already amplifies cumulative KL relative to the ablation
+oracle---so we are careful \emph{not} to present that amplification as evidence of
+better structure discovery. The evidence that EFE-guided \emph{selection} helps comes
+from the bounded POMDP-abl-vs-oracle comparison and from POMDP-abl outperforming the
+action-matched-free heuristics on the same ablation footing, not from the inflated
+RCK numbers.
 
 \subsection{Theoretical Connections}
 
@@ -16,15 +39,46 @@ A striking finding is the strong task-dependence of circuit layer distribution. 
 
 \subsection{Cross-Model Generality}
 
-Replication on Llama-3.2-1B~\cite{Dubey2024llama} demonstrates that the framework generalises across architecture families. The agent achieves 90.6\% oracle efficiency on Llama IOI and dominates baselines on domain tasks. However, the Llama multi-step failure (33.6\% vs.\ random at 51.6\%) reveals that the three-bin layer-role factor becomes too coarse for the 16-layer architecture, compressing the distributional diversity needed for multi-hop reasoning. Architecture-specific prior calibration---using hierarchical layer groupings or learned priors---is necessary for scaling to production-size models.
+Replication on Llama-3.2-1B~\cite{Dubey2024llama} indicates that the framework
+transfers across architecture families on most tasks: the agent attains high bounded
+oracle efficiency on Llama IOI and is competitive with the strongest heuristics on
+the domain benchmark (Table~\ref{tab:crossmodel}). We deliberately avoid the word
+``dominates'': on several Llama conditions the bandit tracks the agent closely
+(Fig.~\ref{fig:cumkl}), and we report those cases as ties rather than wins. The one
+clear negative result---Llama multi-step---is examined as a limitation in its own
+right below rather than explained away.
 
 \subsection{Limitations}
 
-\textbf{Multi-step reasoning on Llama.} The agent underperforms random on Llama multi-step (33.6\% vs.\ 51.6\%), the most significant limitation. The shallower architecture provides insufficient layer diversity for the three-bin layer-role factor, causing poorly calibrated priors. Architecture-specific calibration or learned priors initialised from smaller models could address this.
+\textbf{Multi-step reasoning on Llama (primary limitation).} On Llama multi-step the
+agent underperforms random selection (Table~\ref{tab:multistep}); we treat this as a
+genuine negative result, not as an architectural ``feature''. Per-prompt diagnostics
+(Section~\ref{sec:results}) show the failure concentrates on the prompts whose
+high-KL features sit in adjacent middle layers that the default three-bin layer-role
+factor collapses into a single ``middle'' state, so the agent cannot distinguish
+them. As a concrete remedy requested by reviewers, we re-ran the benchmark with the
+layer-role factor refined to six bins (\texttt{-{}-n-layer-role 6}); the outcome is
+reported in Section~\ref{sec:results}. Even with the remedy, we are explicit that
+multi-hop reasoning on shallow architectures remains the weakest setting for the
+current generative model, and that architecture-specific or learned layer groupings
+are needed before the method can be relied upon there.
 
-\textbf{Limited prompt sets.} The evaluation uses 5 IOI, 3 multi-step, and 10 domain prompts. Standard practice requires $n \geq 30$ for reliable significance testing. Gemma IOI reaches significance ($p=0.01$, $n=5$), but Llama IOI does not ($p=0.12$). Expanding to 30+ prompts per condition is essential.
+\textbf{Limited prompt sets and significance.} The evaluation uses 5 IOI, 3
+multi-step, and 10 domain prompts. Standard practice favours $n \geq 30$ for reliable
+significance testing; to compensate we report bootstrap 95\% confidence intervals and
+an exact paired-permutation test alongside the $t$-test
+(Section~\ref{sec:stats_protocol}). Where the permutation test is not significant
+(e.g.\ Llama IOI) we explicitly \emph{do not} accept H1. Expanding to 30+ prompts per
+condition remains important future work.
 
-\textbf{Discretisation sensitivity.} Observation thresholds are calibrated from Gemma experiments without sensitivity analysis. Adaptive quantile-based or learned discretisation boundaries could improve portability.
+\textbf{Discretisation sensitivity.} Observation thresholds were calibrated on Gemma.
+We now report a $\pm 20\%$ threshold sweep on Gemma IOI
+(Table~\ref{tab:sensitivity}); bounded efficiency is stable (80--86\%) under
+activation-threshold and $+20\%$ KL-threshold changes, but \emph{tightening} the KL
+thresholds by $20\%$ drops it to $60.2\%$, identifying the KL discretisation as the
+sensitive knob. The qualitative ordering (above random, competitive with the bandit,
+below EAP) is preserved in all configurations, but adaptive quantile-based or learned
+discretisation boundaries would improve robustness and portability.
 
 \textbf{Single-step planning.} Policy length 1 prevents reasoning about complementary intervention sequences. Multi-step planning via tree search with pruning could capture synergistic effects at the cost of combinatorial complexity.
 
@@ -36,4 +90,4 @@ The \ACD{} framework has direct implications for AI safety auditing~\cite{Hubing
 
 \subsection{Broader Implications}
 
-The \ACD{} framework demonstrates that active inference---a theory of rational agency from computational neuroscience---provides both theoretical motivation and practical benefits for circuit discovery~\cite{Hubinger2019,Bereska2024}. Circuit discovery is formulated as adaptive Bayesian experimental design~\cite{MacKay2003}, where the agent's exploration--exploitation behaviour emerges from the Free Energy Principle rather than being hand-tuned. The framework scales from toy tasks (GPT-2 Small) to production-size models (2B+ parameters), with oracle efficiency exceeding 100\% on Gemma demonstrating that multi-action interventions yield sharper mechanistic understanding. Future work should investigate scaling to larger models with task-adaptive priors, integrating additional modalities, and applying active inference to other interpretability tasks such as deception detection.
+The \ACD{} framework demonstrates that active inference---a theory of rational agency from computational neuroscience---provides both theoretical motivation and practical benefits for circuit discovery~\cite{Hubinger2019,Bereska2024}. Circuit discovery is formulated as adaptive Bayesian experimental design~\cite{MacKay2003}, where the agent's exploration--exploitation behaviour emerges from the Free Energy Principle rather than being hand-tuned. The framework scales from toy tasks (GPT-2 Small) to production-size models (2B+ parameters). On Gemma, the full multi-action agent attains a Relative Cumulative KL above $100\%$ (Equation~\ref{eq:rck}); we interpret this as the steering action amplifying measurable causal impact relative to the ablation oracle, not as a super-oracle ``efficiency'', and we ground our discovery-quality claims in the bounded POMDP-abl comparison instead. Future work should investigate scaling to larger models with task-adaptive priors, integrating additional modalities, and applying active inference to other interpretability tasks such as deception detection.

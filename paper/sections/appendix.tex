@@ -78,29 +78,82 @@ is sought rather than exploration.
 All transition probabilities are symmetric around the current state
 to ensure that the expected utility is similar across actions, so
 that the epistemic term (information gain) drives action selection.
-These probabilities are fixed hyperparameters, not learned from data.
-Varying the diagonal element of the ablation transition matrix between
-0.4 and 0.7 did not qualitatively change the action-type distribution
-or oracle efficiency rankings across benchmarks; however, a full
+
+\textbf{Why these specific values (R1.9).} The three diagonals are not tuned to
+maximise a metric; they encode a deliberate \emph{ordering} of transition entropy
+that mirrors the operational semantics of the interventions. Ablation deletes a
+feature and is the most disruptive, so it should admit the widest range of
+importance revisions (lowest diagonal, highest entropy $\Rightarrow$ largest
+epistemic value); patching substitutes a reference activation and is intermediate;
+steering merely rescales an existing direction and is the gentlest, so it should
+mostly preserve the current importance estimate (highest diagonal, lowest entropy).
+What matters for action selection is this monotone entropy ordering
+$H(\mat{B}_{\text{abl}}) > H(\mat{B}_{\text{patch}}) > H(\mat{B}_{\text{steer}})$,
+not the exact fractions. The specific values $(0.50,0.70,0.90)$ are the simplest
+round numbers that realise this ordering while keeping all rows valid tridiagonal
+distributions; the boundary states absorb the missing mass, giving the corner
+diagonals of $0.75/0.85/0.95$ shown in
+Appendix~\ref{app:generative_model}.
+
+\textbf{The $0.01$ importance-scaling factor.} The factor in
+Appendix~\ref{app:selector} is not arbitrary: normalised graph importance lies in
+$[0,1]$, whereas observed ablation KL on these models lies in roughly
+$[10^{-4},10^{-2}]$. Multiplying by $0.01$ maps the top of the importance range onto
+the top of the empirical KL range so that the graph-derived \emph{prior} observation
+is discretised into the same bins the agent will later see from real interventions;
+without it, every candidate would saturate the ``large-KL'' bin and the prior would
+be uninformative.
+
+\textbf{Sensitivity.} Because these are fixed rather than learned, we test their
+influence directly. Section~\ref{sec:stats_protocol} re-runs Gemma IOI with the KL
+and activation discretisation thresholds scaled by $\pm 20\%$; the resulting bounded
+oracle efficiencies are reported in Table~\ref{tab:sensitivity}. Efficiency is stable
+(80--86\%) under activation-threshold changes and a $+20\%$ KL-threshold change, but
+tightening the KL thresholds by $20\%$ lowers it to $60.2\%$, so the KL discretisation
+is the sensitive knob; crucially, the qualitative ordering (above random, competitive
+with the bandit, below EAP) is preserved in all configurations. A full joint
 hyperparameter sweep is left to future work.
+
+
+\section{Complete Generative Model Specification}
+\label{app:generative_model}
+
+For full reproducibility we list the exact generative model used by the default
+agent ($26$-layer Gemma configuration), auto-generated from the implementation by
+\texttt{scripts/\allowbreak dump\_\allowbreak generative\_\allowbreak model.py}. The hidden state comprises
+$4$ importance levels $\times$ $3$ layer roles $\times$ $3$ causal-influence levels;
+observations comprise $4$ KL levels, $4$ activation levels, and $3$ connectivity
+levels. We give the action-conditioned importance transition tensor
+$\mat{B}^{(0)}$, the preference vectors $\mat{C}$, the state priors $\mat{D}$, and a
+representative conditional slice of the (large) KL-likelihood tensor
+$\mat{A}^{(0)}$; the complete numeric arrays for all modalities are released as
+\texttt{results/generative\_model.json}.
+
+\input{figures/generative_model.tex}
 
 
 \section{Correspondence Metric}
 \label{app:correspondence}
 
-The primary metric for evaluating selector quality is oracle efficiency:
-the ratio of cumulative KL divergence achieved by the selector to that
-achieved by the oracle (features sorted by true KL divergence,
-descending):
+The primary metric for evaluating selector quality is the \emph{bounded oracle
+efficiency} (Equation~\ref{eq:oracle_eff}): the ratio of cumulative \emph{ablation}
+KL achieved by an ablation-only selector to that achieved by the ablation oracle
+(features sorted by true ablation KL, descending):
 \begin{equation}
-  \text{Oracle Efficiency} = \frac{\sum_{t=1}^{B} \text{KL}_{i_t^{\text{method}}}}
-                                  {\sum_{t=1}^{B} \text{KL}_{i_t^{\text{oracle}}}}
-                             \times 100\%
+  \eta = \frac{\sum_{t=1}^{B} \text{KL}^{\text{abl}}_{i_t^{\text{method}}}}
+                                  {\sum_{t=1}^{B} \text{KL}^{\text{abl}}_{i_t^{\text{oracle}}}}
+                             \times 100\% \in [0,100]\%.
 \end{equation}
+Both numerator and denominator are ablation KL, so $\eta$ is genuinely bounded by
+$100\%$. For the full multi-action agent we instead report Relative Cumulative KL
+(RCK, Equation~\ref{eq:rck}), which divides the agent's (possibly steering-inflated)
+cumulative KL by the same ablation-oracle denominator and may therefore exceed
+$100\%$; we label it an amplification factor, never an efficiency.
 
 Secondary metrics include mean KL per intervention (higher = better
-feature selection) and improvement percentages over random and greedy
-baselines.
+feature selection), its median and inter-quartile range (reported because the
+per-prompt coefficient of variation is high), and improvement percentages over
+random and greedy baselines.
 
 KL divergence between clean and intervened output distributions is
 computed as:\footnote{The implementation calls
