@@ -24,9 +24,11 @@ def load_json(path: str) -> dict:
 
 
 def _try_load(results_dir: Path, model_name: str, task: str) -> Optional[dict]:
+    # Only the model-suffixed file is authoritative.  We deliberately do NOT
+    # fall back to a legacy unsuffixed `{task}_results.json`, because such files
+    # predate the EAP/action-matched baselines and lack the new cumulative-KL
+    # keys; loading them would silently mislabel metrics in the figures.
     path = results_dir / f"{task}_results_{model_name}.json"
-    if not path.exists():
-        path = results_dir / f"{task}_results.json"
     if path.exists():
         return load_json(str(path))
     return None
@@ -43,10 +45,20 @@ def compute_ioi_aggregate(data: dict) -> dict:
     def avg(key):
         return sum(p.get(key, 0) for p in prompts) / n
 
+    # Require the bounded-efficiency keys: silently substituting a different
+    # metric (e.g. ai_cumkl for ai_abl_cumkl) would corrupt the figures.
+    required = ("ai_cumkl", "ai_abl_cumkl", "bandit_cumkl", "eap_cumkl",
+                "greedy_cumkl", "random_cumkl", "oracle_cumkl")
+    missing = [k for k in required if k not in prompts[0]]
+    if missing:
+        raise KeyError(
+            f"IOI results JSON is missing required keys {missing}; "
+            "re-run run_real_experiments.py to refresh the baselines."
+        )
     ai_cum     = avg("ai_cumkl")
-    ai_abl_cum = avg("ai_abl_cumkl") if "ai_abl_cumkl" in prompts[0] else avg("ai_cumkl")
-    bandit_cum = avg("bandit_cumkl") if "bandit_cumkl" in prompts[0] else avg("ai_cumkl")
-    eap_cum    = avg("eap_cumkl") if "eap_cumkl" in prompts[0] else avg("greedy_cumkl")
+    ai_abl_cum = avg("ai_abl_cumkl")
+    bandit_cum = avg("bandit_cumkl")
+    eap_cum    = avg("eap_cumkl")
     greedy_cum = avg("greedy_cumkl")
     random_cum = avg("random_cumkl")
     oracle_cum = avg("oracle_cumkl")
