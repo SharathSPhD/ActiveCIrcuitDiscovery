@@ -147,16 +147,18 @@ features are not causally critical, and uniform over layer role.
 
 \subsection{Intervention Selection via Expected Free Energy}
 
-At each step, the agent evaluates each unobserved candidate feature $i$
-and each action $a$ by computing the Expected Free Energy:
+In the single-step \ACD\ setting, each policy $\pi$ corresponds to a
+single candidate feature $i$ and intervention type $a$; substituting
+$\pi = (i, a)$ into Equation~\ref{eq:efe} yields the following per-step EFE.
 \begin{equation}
   \label{eq:efe_agent}
-  G(i, a) = \underbrace{\mathbb{E}_{q}\!\bigl[\log q(s_\tau | \pi) - \log q(s_\tau | o_\tau, \pi)\bigr]}_{\text{epistemic}} + \underbrace{\mathbb{E}_{q}\!\bigl[\log p(o_\tau) - \log q(o_\tau | \pi)\bigr]}_{\text{pragmatic}}
+  \EFE(i, a) = \underbrace{\mathbb{E}_{q}\!\bigl[\log q(s_\tau | \pi) - \log q(s_\tau | o_\tau, \pi)\bigr]}_{\text{epistemic}} + \underbrace{\mathbb{E}_{q}\!\bigl[\log p(o_\tau) - \log q(o_\tau | \pi)\bigr]}_{\text{pragmatic}}
 \end{equation}
 
 The candidate--action pair with the lowest EFE is selected:
 \begin{equation}
-  (i^*, a^*) = \arg\min_{(i,a)} G(i, a)
+  \label{eq:efe_select}
+  (i^*, a^*) = \argmin_{(i,a)}\; \EFE(i, a)
 \end{equation}
 
 This selection criterion naturally trades off exploration (choosing

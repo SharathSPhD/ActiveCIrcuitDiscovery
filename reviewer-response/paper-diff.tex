@@ -1,7 +1,7 @@
 % paper.tex -- MDPI journal paper
 %DIF LATEXDIFF DIFFERENCE FILE
 %DIF DEL docs/paper-v0/paper.tex   Fri May 29 11:56:02 2026
-%DIF ADD paper/paper.tex           Fri May 29 12:09:53 2026
+%DIF ADD paper/paper.tex           Fri May 29 12:57:38 2026
 % Active Circuit Discovery: EFE-Guided Mechanistic Interpretability in LLMs
 % Journal: Symmetry (MDPI) -- instructions: https://www.mdpi.com/journal/symmetry/instructions
 % LaTeX template: https://www.mdpi.com/authors/latex
@@ -62,22 +62,14 @@
 \newcommand{\softmax}{\ensuremath{\operatorname{softmax}}}
 \newcommand{\Attn}{\ensuremath{\operatorname{Attn}}}
 \newcommand{\MLP}{\ensuremath{\operatorname{MLP}}}
-%DIF 62d62
-%DIF < \newcommand{\argmin}{\ensuremath{\operatorname*{arg\,min}}}
-%DIF -------
+\newcommand{\argmin}{\ensuremath{\operatorname*{arg\,min}}}
 \newcommand{\abs}[1]{\ensuremath{\left|#1\right|}}
 \newcommand{\norm}[1]{\ensuremath{\left\|#1\right\|}}
 \newcommand{\vect}[1]{\ensuremath{\bm{#1}}}
 \newcommand{\mat}[1]{\ensuremath{\mathbf{#1}}}
-%DIF 67-69c66-68
-%DIF < \newcommand{\ACDC}{ACDC}
-%DIF < \newcommand{\EAP}{EAP}
-%DIF < \newcommand{\ACD}{ACD}
-%DIF -------
-\newcommand{\ACDC}{\textsc{acdc}} %DIF > 
-\newcommand{\EAP}{\textsc{eap}} %DIF > 
-\newcommand{\ACD}{\textsc{acd}} %DIF > 
-%DIF -------
+\newcommand{\ACDC}{ACDC}
+\newcommand{\EAP}{EAP}
+\newcommand{\ACD}{ACD}
 \newcommand{\pymdp}{\texttt{pymdp}}
 
 % =================================================================
@@ -86,7 +78,7 @@
 \Title{Active Circuit Discovery: A Multi-Action POMDP Agent
        for Causal Feature Identification\\in Transformer Attribution Graphs}
 
-%DIF 78-80c77
+%DIF 78-80c78
 %DIF < \newcommand{\orcidauthorA}{0000-0000-0000-000x}
 %DIF < \newcommand{\orcidauthorB}{0000-0000-0000-000x}
 %DIF < \newcommand{\orcidauthorC}{0000-0002-2671-0516}
@@ -94,11 +86,11 @@
 \newcommand{\orcidauthorA}{0000-0000-0000-000X} %DIF > 
 %DIF -------
 
-%DIF 82a79
+%DIF 82a80
 \Author{Sharath Sathish $^{1}$\orcidA{}, Mominul Ahsan $^{2}$\orcidA{} and Majid Latifi $^{2,}$*\orcidA{}} %DIF > 
 %DIF -------
 
-%DIF 83-84d81
+%DIF 83-84d82
 %DIF < \Author{Sharath Sathish $^{1}$\orcidA{}, Mominul Ahsan $^{2}$\orcidB{} and Majid Latifi $^{2,}$*\orcidC{}}
 %DIF < 
 %DIF -------
@@ -111,7 +103,7 @@ $^{2}$ \quad Department of Computer Science, University of York, York YO10 5GH, 
 \corres{majid.latifi@york.ac.uk}
 
 \abstract{Mechanistic interpretability seeks to reverse-engineer the computational
-%DIF 94-124c90-128
+%DIF 94-124c91-129
 %DIF < circuits within large language models, yet current methods rely on
 %DIF < exhaustive or heuristic search over exponentially many feature
 %DIF < interactions. This paper introduces \emph{Active Circuit Discovery}
@@ -186,7 +178,7 @@ available. %DIF >
 %DIF -------
 }
 
-%DIF 127c131
+%DIF 127c132
 %DIF < \keyword{mechanistic interpretability; active inference; circuit discovery; transcoders; Expected Free Energy; POMDP agent}
 %DIF -------
 \keyword{mechanistic interpretability; active inference; circuit discovery; transcoders; Expected Free Energy; POMDP} %DIF > 
@@ -1111,24 +1103,18 @@ features are not causally \DIFdelbegin \DIFdel{critical---and }\DIFdelend \DIFad
 
 \subsection{Intervention Selection via Expected Free Energy}
 
-\DIFdelbegin \DIFdel{In the single-step \ACD\ setting, each policy $\pi$ corresponds to a
-single }\DIFdelend \DIFaddbegin \DIFadd{At each step, the agent evaluates each unobserved }\DIFaddend candidate feature $i$
-and \DIFdelbegin \DIFdel{intervention type }\DIFdelend \DIFaddbegin \DIFadd{each action }\DIFaddend $a$ \DIFdelbegin \DIFdel{; substituting
+In the single-step \ACD\ setting, each policy $\pi$ corresponds to a
+single candidate feature $i$ and intervention type $a$; substituting
 $\pi = (i, a)$ into Equation~\ref{eq:efe} yields the following per-step EFE.
-}\DIFdelend \DIFaddbegin \DIFadd{by computing the Expected Free Energy:
-}\DIFaddend \begin{equation}
+\begin{equation}
   \label{eq:efe_agent}
-  \DIFdelbegin %DIFDELCMD < \EFE%%%
-\DIFdelend \DIFaddbegin \DIFadd{G}\DIFaddend (i, a) = \underbrace{\mathbb{E}_{q}\!\bigl[\log q(s_\tau | \pi) - \log q(s_\tau | o_\tau, \pi)\bigr]}_{\text{epistemic}} + \underbrace{\mathbb{E}_{q}\!\bigl[\log p(o_\tau) - \log q(o_\tau | \pi)\bigr]}_{\text{pragmatic}}
+  \EFE(i, a) = \underbrace{\mathbb{E}_{q}\!\bigl[\log q(s_\tau | \pi) - \log q(s_\tau | o_\tau, \pi)\bigr]}_{\text{epistemic}} + \underbrace{\mathbb{E}_{q}\!\bigl[\log p(o_\tau) - \log q(o_\tau | \pi)\bigr]}_{\text{pragmatic}}
 \end{equation}
 
 The candidate--action pair with the lowest EFE is selected:
 \begin{equation}
-  \DIFdelbegin %DIFDELCMD < \label{eq:efe_select}
-%DIFDELCMD <   %%%
-\DIFdelend (i^*, a^*) = \DIFdelbegin %DIFDELCMD < \argmin%%%
-\DIFdelend \DIFaddbegin \DIFadd{\arg\min}\DIFaddend _{(i,a)} \DIFdelbegin \DIFdel{\; }%DIFDELCMD < \EFE%%%
-\DIFdelend \DIFaddbegin \DIFadd{G}\DIFaddend (i, a)
+  \label{eq:efe_select}
+  (i^*, a^*) = \argmin_{(i,a)}\; \EFE(i, a)
 \end{equation}
 
 This selection criterion naturally trades off exploration (choosing
