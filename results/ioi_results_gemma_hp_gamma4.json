@@ -1947,7 +1947,9 @@
     "oracle_steer_cumkl": 0.28347009285353125,
     "oracle_cumkl": 0.017248596443096176
   },
-  "elapsed_seconds": 265.77008032798767,
+  "elapsed_seconds": 267.60081911087036,
   "model": "google/gemma-2-2b",
-  "agent_kwargs": {}
+  "agent_kwargs": {
+    "gamma": 4.0
+  }
 }

@@ -8,39 +8,68 @@
 \section{Active Inference Selector Parameters}
 \label{app:selector}
 
-This appendix details the initialisation and hyperparameters of the
-Active Inference Selector.
+This appendix details the hyperparameters of the Active Inference
+selector and the heuristic bandit baseline.
 
-\textbf{Exploration weight ($\omega_e$).}  Default value: 2.0.  Higher
-values increase early-stage exploration of uncertain features at the
-cost of potentially delaying exploitation of known high-value features.
-The value was selected based on the IOI benchmark to balance oracle
-efficiency with baseline improvement.
+The POMDP agent is instantiated with the pymdp parameters listed in
+Table~\ref{tab:hparams}. Action selection uses a Boltzmann policy with
+precision $\gamma = 16.0$ over the negative Expected Free Energy. The
+exploration behaviour of the agent is not controlled by a single scalar
+but emerges from the two information-gain terms of the Expected Free
+Energy, namely state information gain and Dirichlet parameter
+information gain, both of which are enabled. The observation likelihood
+is learned online with a Dirichlet learning rate $\eta = 1.0$, and the
+pragmatic preference weight on the preference vector is $1.0$. The
+hidden state comprises four importance levels, three layer-role bins,
+and three causal-strength levels; the policy horizon is one step.
 
-\textbf{Uncertainty initialisation.}  All features start with $u(i) = 1$.
-After observing feature $i$, its uncertainty drops to 0.  Same-layer
-features receive a 30\% reduction ($u(j) \leftarrow 0.7 \cdot u(j)$),
-and adjacent-position features receive a 10\% reduction
-($u(j) \leftarrow 0.9 \cdot u(j)$).
+\begin{table}[t]
+\centering
+\caption{POMDP agent hyperparameters (pymdp).}
+\label{tab:hparams}
+\small
+\begin{tabular}{lll}
+\toprule
+Symbol & Meaning & Value \\
+\midrule
+$\gamma$ & action precision (policy temperature) & $16.0$ \\
+$\eta$ & Dirichlet likelihood learning rate ($\mathrm{lr}_{pA}$) & $1.0$ \\
+$w_{\text{prag}}$ & pragmatic preference weight on $\vect{C}$ & $1.0$ \\
+state info gain & epistemic term over hidden states & enabled \\
+param info gain & epistemic term over Dirichlet parameters & enabled \\
+policy length & planning horizon & $1$ \\
+$|\mathcal{S}|$ & hidden-state factors (importance, role, causal) & $4\times3\times3$ \\
+$\kappa$ & importance-to-KL prior scaling & $0.01$ \\
+\bottomrule
+\end{tabular}
+\end{table}
 
-\textbf{Layer prior.}  Initialised to $\lambda_\ell = 1$ for all layers.
-Updated after each observation as
-$\lambda_\ell = 1 + 0.5 (\bar{\text{KL}}_\ell / \bar{\text{KL}}_{\text{global}} - 1)$.
+Before an intervention is executed, the agent derives a prior
+observation for each candidate from its graph metadata. The normalised
+graph importance $\text{imp}(i) \in [0,1]$ is scaled by a factor of
+$\kappa = 0.01$ before discretisation: $o_{\text{prior}} =
+\text{discretise}(\text{imp}(i) \times \kappa)$. This maps the
+graph-derived importance into the KL divergence threshold range
+$[10^{-4}, 10^{-2}]$, so that the prior observation reflects expected
+KL magnitudes rather than raw graph weights.
 
-\textbf{Prior observation derivation.}  Before an intervention is
-executed, the agent derives a prior observation for each candidate from
-its graph metadata.  The normalised graph importance $\text{imp}(i)
-\in [0,1]$ is scaled by a factor of $0.01$ before discretisation:
-$o_{\text{prior}} = \text{discretise}(\text{imp}(i) \times 0.01)$.
-This maps the graph-derived importance into the KL divergence
-threshold range $[10^{-4}, 10^{-2}]$, ensuring that the prior
-observation reflects expected KL magnitudes rather than raw graph
-weights.
+Candidates are extracted as up to 5 features per layer, 60 total,
+selected from pruned graph features sorted by influence (sum of absolute
+adjacency weights). The pruning thresholds are node $=0.8$ and edge
+$=0.98$, the defaults from \texttt{circuit-tracer}.
 
-\textbf{Candidate extraction.}  Up to 5 features per layer, 60 total
-candidates, selected from pruned graph features sorted by influence
-(sum of absolute adjacency weights).  Pruning thresholds: node = 0.8,
-edge = 0.98 (defaults from \texttt{circuit-tracer}).
+The heuristic bandit baseline uses a separate set of parameters that are
+not part of the active-inference agent. Its exploration weight is
+$\omega_e = 2.0$, applied to a per-feature uncertainty bonus. All
+features start with uncertainty $u(i) = 1$; after feature $i$ is
+observed its uncertainty drops to $0$, same-layer features receive a
+$30\%$ reduction ($u(j) \leftarrow 0.7\,u(j)$), and adjacent-position
+features receive a $10\%$ reduction ($u(j) \leftarrow 0.9\,u(j)$). A
+layer prior is initialised to $\lambda_\ell = 1$ for all layers and
+updated after each observation as $\lambda_\ell = 1 + 0.5
+(\bar{\text{KL}}_\ell / \bar{\text{KL}}_{\text{global}} - 1)$. The plain
+UCB baseline removes these engineered priors entirely and applies the
+textbook UCB1 rule over layers using the same exploration weight.
 
 
 \section{B-Matrix Transition Priors}
@@ -79,8 +108,8 @@ All transition probabilities are symmetric around the current state
 to ensure that the expected utility is similar across actions, so
 that the epistemic term (information gain) drives action selection.
 
-\textbf{Why these specific values (R1.9).} The three diagonals are not tuned to
-maximise a metric; they encode a deliberate \emph{ordering} of transition entropy
+\textbf{Why these specific values.} The three diagonals are not tuned to
+maximise a metric; they encode a deliberate ordering of transition entropy
 that mirrors the operational semantics of the interventions. Ablation deletes a
 feature and is the most disruptive, so it should admit the widest range of
 importance revisions (lowest diagonal, highest entropy $\Rightarrow$ largest
@@ -104,8 +133,8 @@ is discretised into the same bins the agent will later see from real interventio
 without it, every candidate would saturate the ``large-KL'' bin and the prior would
 be uninformative.
 
-\textbf{Sensitivity.} Because these are fixed rather than learned, we test their
-influence directly. Section~\ref{sec:stats_protocol} re-runs Gemma IOI with the KL
+\textbf{Sensitivity.} Because these are fixed rather than learned, their
+influence is tested directly. Section~\ref{sec:stats_protocol} re-runs Gemma IOI with the KL
 and activation discretisation thresholds scaled by $\pm 20\%$; the resulting bounded
 oracle efficiencies are reported in Table~\ref{tab:sensitivity}. Efficiency is stable
 (80--86\%) under activation-threshold changes and a $+20\%$ KL-threshold change, but
@@ -118,15 +147,18 @@ hyperparameter sweep is left to future work.
 \section{Complete Generative Model Specification}
 \label{app:generative_model}
 
-For full reproducibility we list the exact generative model used by the default
-agent ($26$-layer Gemma configuration), auto-generated from the implementation by
+For full reproducibility this section lists the exact generative model used by the
+default agent ($26$-layer Gemma configuration), auto-generated from the
+implementation by
 \texttt{scripts/\allowbreak dump\_\allowbreak generative\_\allowbreak model.py}. The hidden state comprises
 $4$ importance levels $\times$ $3$ layer roles $\times$ $3$ causal-influence levels;
 observations comprise $4$ KL levels, $4$ activation levels, and $3$ connectivity
-levels. We give the action-conditioned importance transition tensor
-$\mat{B}^{(0)}$, the preference vectors $\mat{C}$, the state priors $\mat{D}$, and a
-representative conditional slice of the (large) KL-likelihood tensor
-$\mat{A}^{(0)}$; the complete numeric arrays for all modalities are released as
+levels. The action-conditioned importance transition tensor $\mat{B}^{(0)}$, the
+identity transitions $\mat{B}^{(1)}$ and $\mat{B}^{(2)}$ for the intrinsic factors,
+the preference vectors $\mat{C}$, the state priors $\mat{D}$, all three observation
+likelihood modalities $\mat{A}^{(0)},\mat{A}^{(1)},\mat{A}^{(2)}$ (each tabulated
+over its non-trivial conditioning factors), and the Dirichlet concentration prior
+are given below. The complete numeric arrays are also released as
 \texttt{results/generative\_model.json}.
 
 \input{figures/generative_model.tex}
@@ -145,10 +177,10 @@ KL achieved by an ablation-only selector to that achieved by the ablation oracle
                              \times 100\% \in [0,100]\%.
 \end{equation}
 Both numerator and denominator are ablation KL, so $\eta$ is genuinely bounded by
-$100\%$. For the full multi-action agent we instead report Relative Cumulative KL
-(RCK, Equation~\ref{eq:rck}), which divides the agent's (possibly steering-inflated)
-cumulative KL by the same ablation-oracle denominator and may therefore exceed
-$100\%$; we label it an amplification factor, never an efficiency.
+$100\%$. For the full multi-action agent the Relative Cumulative KL is reported
+instead (RCK, Equation~\ref{eq:rck}), which divides the agent's (possibly
+steering-inflated) cumulative KL by the same ablation-oracle denominator and may
+therefore exceed $100\%$; it is an amplification factor, never an efficiency.
 
 Secondary metrics include mean KL per intervention (higher = better
 feature selection), its median and inter-quartile range (reported because the

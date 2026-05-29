@@ -1,0 +1,18 @@
+% Auto-generated: A-matrix online convergence (mean L1 drift per step).
+\begin{tikzpicture}
+\begin{axis}[
+    width=\columnwidth, height=5cm,
+    xlabel={Belief update step}, ylabel={Mean $\|A_t-A_{t-1}\|_1$},
+    x label style={font=\scriptsize}, y label style={font=\scriptsize},
+    tick label style={font=\scriptsize},
+    legend style={font=\tiny, legend columns=-1, draw=none,
+        at={(0.5,-0.32)}, anchor=north},
+    ymin=0,
+]
+
+\addplot[red, thick, mark=*, mark size=1pt] coordinates { (1,1.028281e-03) (2,1.039235e-03) (3,1.030940e-03) (4,1.033210e-03) (5,9.586966e-04) (6,9.796875e-04) (7,8.968510e-04) (8,8.892721e-04) (9,8.137831e-04) (10,7.340020e-04) (11,6.832358e-04) (12,6.460141e-04) (13,6.213705e-04) (14,5.875674e-04) (15,5.668197e-04) (16,5.367225e-04) (17,5.695627e-04) (18,5.467266e-04) (19,5.038578e-04) };
+\addplot[blue, thick, mark=square*, mark size=1pt] coordinates { (1,1.063762e-03) (2,1.009849e-03) (3,9.905962e-04) (4,9.347575e-04) (5,9.492890e-04) (6,9.507243e-04) (7,9.513819e-04) (8,9.200837e-04) (9,8.848640e-04) (10,8.889142e-04) (11,8.388198e-04) (12,7.777137e-04) (13,7.624398e-04) (14,6.991302e-04) (15,6.459326e-04) (16,6.924570e-04) (17,6.515450e-04) (18,5.772606e-04) (19,6.217703e-04) };
+\legend{Gemma-2-2B, Llama-3.2-1B}
+
+\end{axis}
+\end{tikzpicture}

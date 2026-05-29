@@ -137,6 +137,7 @@ def _paired_permutation_p(diff: np.ndarray) -> float:
 ABLATION_METHODS = {
     "ai_abl": ("ai_abl_mean", "ai_abl_cumkl"),
     "bandit": ("bandit_mean", "bandit_cumkl"),
+    "ucb": ("ucb_mean", "ucb_cumkl"),
     "eap": ("eap_mean", "eap_cumkl"),
     "greedy": ("greedy_mean", "greedy_cumkl"),
     "random": ("random_mean", "random_cumkl"),
@@ -222,6 +223,27 @@ def analyse_task(data: dict) -> dict:
         "post_first": post_first,
         "post_first_total": post_first_total,
     }
+
+    # --- A-matrix (observation model) online convergence ---
+    # Mean per-step L1 drift of the learned KL-likelihood, averaged over prompts.
+    conv_curves = [p["agent_a_convergence"] for p in pp
+                   if p.get("agent_a_convergence")]
+    if conv_curves:
+        max_len = max(len(c) for c in conv_curves)
+        per_step_mean = []
+        for s in range(max_len):
+            vals = [c[s] for c in conv_curves if s < len(c)]
+            per_step_mean.append(float(np.mean(vals)))
+        firsts = [c[0] for c in conv_curves if len(c) >= 1]
+        lasts = [c[-1] for c in conv_curves if len(c) >= 1]
+        out["a_convergence"] = {
+            "per_step_mean_drift": per_step_mean,
+            "first_step_drift": float(np.mean(firsts)) if firsts else 0.0,
+            "last_step_drift": float(np.mean(lasts)) if lasts else 0.0,
+            "ratio_last_to_first": (float(np.mean(lasts) / np.mean(firsts))
+                                    if firsts and np.mean(firsts) > 0 else 0.0),
+            "n_curves": len(conv_curves),
+        }
     return out
 
 
@@ -240,10 +262,23 @@ def analyse_domain(data: dict) -> dict:
             "ai_mean_kl": float(np.mean(ai)) if ai else 0.0,
             "bandit_mean_kl": float(np.mean(band)) if band else 0.0,
             "random_mean_kl": float(np.mean(rnd)) if rnd else 0.0,
+            "ai_abl_oracle_efficiency": d.get("ai_abl_oracle_efficiency"),
+            "bandit_oracle_efficiency": d.get("bandit_oracle_efficiency"),
+            "ucb_oracle_efficiency": d.get("ucb_oracle_efficiency"),
+            "eap_oracle_efficiency": d.get("eap_oracle_efficiency"),
             "ai_vs_random_pct": d.get("ai_vs_random_pct"),
             "ai_vs_greedy_pct": d.get("ai_vs_greedy_pct"),
             "layer_distribution": d.get("layer_distribution"),
         }
+    # aggregate (mean over domains) oracle efficiencies for the head-to-head table
+    agg = data.get("aggregate", {})
+    out["aggregate"] = {
+        "ai_abl_oracle_efficiency": agg.get("ai_abl_oracle_efficiency"),
+        "bandit_oracle_efficiency": agg.get("bandit_oracle_efficiency"),
+        "ucb_oracle_efficiency": agg.get("ucb_oracle_efficiency"),
+        "eap_oracle_efficiency": agg.get("eap_oracle_efficiency"),
+        "ai_rck": agg.get("ai_rck"),
+    }
     if ai_all:
         diff = np.array(ai_all) - np.array(rand_all)
         t = stats.ttest_rel(ai_all, rand_all, alternative="greater")
@@ -284,6 +319,30 @@ def analyse_steering(data: dict) -> dict:
     out["control_changes_per_mult"] = ctrl_changes
     out["top_max_kl"] = _q(top_maxkl)
     out["control_max_kl"] = _q(ctrl_maxkl)
+
+    # --- concept-amplification evidence (H2): how the top-1 token mass and the
+    # set of dominant tokens evolve with the steering multiplier ---
+    concept: Dict[str, Any] = {}
+    for m in mults:
+        token_counts: Dict[str, int] = {}
+        top_probs: List[float] = []
+        for p in pp:
+            for feat in p.get("features", []):
+                cell = feat.get(f"mult_{m}")
+                if not isinstance(cell, dict):
+                    continue
+                toks = cell.get("top_tokens") or []
+                if toks:
+                    tok, prob = toks[0][0], toks[0][1]
+                    token_counts[tok] = token_counts.get(tok, 0) + 1
+                    top_probs.append(float(prob))
+        ranked = sorted(token_counts.items(), key=lambda kv: kv[1], reverse=True)
+        concept[str(m)] = {
+            "mean_top1_prob": float(np.mean(top_probs)) if top_probs else 0.0,
+            "n_distinct_top1": len(token_counts),
+            "top3_tokens": ranked[:3],
+        }
+    out["concept_amplification"] = concept
 
     # H2 at the largest multiplier.  We report BOTH the (weak) test against a 1%
     # chance baseline AND the (honest) test of selected vs matched random-feature
@@ -377,6 +436,53 @@ def main():
             }
     if sens:
         report["sensitivity"] = sens
+
+    # hyperparameter sweeps (IOI; gamma/eta/pragmatic, both models)
+    hp: Dict[str, Any] = {}
+    for p in sorted(rd.glob("ioi_results_*_hp_*.json")):
+        data = _load(p)
+        if data:
+            agg = data.get("aggregate", {})
+            hp[p.stem] = {
+                "agent_kwargs": data.get("agent_kwargs"),
+                "ai_abl_oracle_efficiency": agg.get("ai_abl_oracle_efficiency"),
+                "ai_rck": agg.get("ai_rck"),
+                "bandit_oracle_efficiency": agg.get("bandit_oracle_efficiency"),
+            }
+    if hp:
+        report["hyperparameter_sweep"] = hp
+
+    # head-to-head: bounded oracle efficiency of the key ablation-only selectors
+    # (and the agent's RCK) across IOI / multi-step / domain, for both models.
+    h2h: Dict[str, Any] = {}
+    for model in ("gemma", "llama"):
+        mrep = report.get(model, {})
+        rows: Dict[str, Any] = {}
+        for task in ("ioi", "multistep"):
+            t = mrep.get(task)
+            if not t:
+                continue
+            meth = t.get("methods", {})
+            rows[task] = {
+                "ai_abl": meth.get("ai_abl", {}).get("oracle_eff", {}).get("point"),
+                "bandit": meth.get("bandit", {}).get("oracle_eff", {}).get("point"),
+                "ucb": meth.get("ucb", {}).get("oracle_eff", {}).get("point"),
+                "eap": meth.get("eap", {}).get("oracle_eff", {}).get("point"),
+                "ai_rck": meth.get("ai", {}).get("rck", {}).get("point"),
+            }
+        dom = mrep.get("domain", {}).get("aggregate")
+        if dom:
+            rows["domain"] = {
+                "ai_abl": dom.get("ai_abl_oracle_efficiency"),
+                "bandit": dom.get("bandit_oracle_efficiency"),
+                "ucb": dom.get("ucb_oracle_efficiency"),
+                "eap": dom.get("eap_oracle_efficiency"),
+                "ai_rck": dom.get("ai_rck"),
+            }
+        if rows:
+            h2h[model] = rows
+    if h2h:
+        report["head_to_head"] = h2h
 
     Path(args.out).parent.mkdir(parents=True, exist_ok=True)
     with open(args.out, "w") as f:

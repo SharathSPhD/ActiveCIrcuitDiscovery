@@ -93,9 +93,12 @@
 \draw[strong] (l12) -- (l31);
 \end{scope}
 
-% Legend
-\node[low, label=right:{\tiny Low}] at (9.0, 0.3) {};
-\node[med, label=right:{\tiny Moderate}] at (9.0, 0.9) {};
-\node[high, label=right:{\tiny High}] at (9.0, 1.5) {};
+% Legend: single horizontal row, centred below both graphs
+\node[low] (legL) at (1.3, -0.9) {};
+\node[label, anchor=west] at (1.55, -0.9) {\tiny Low importance};
+\node[med] (legM) at (3.4, -0.9) {};
+\node[label, anchor=west] at (3.65, -0.9) {\tiny Moderate};
+\node[high] (legH) at (5.1, -0.9) {};
+\node[label, anchor=west] at (5.35, -0.9) {\tiny High};
 
 \end{tikzpicture}

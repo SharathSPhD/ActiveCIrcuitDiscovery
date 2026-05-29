@@ -1,0 +1,310 @@
+\documentclass[11pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage[a4paper,margin=2.4cm]{geometry}
+\usepackage{xcolor}
+\usepackage{framed}
+\usepackage{amsmath}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\hypersetup{colorlinks=true,linkcolor=blue,urlcolor=blue}
+
+\definecolor{commentbg}{RGB}{238,242,248}
+\definecolor{commentrule}{RGB}{90,120,170}
+
+\newenvironment{comment}{%
+  \def\FrameCommand{{\color{commentrule}\vrule width 3pt}\hspace{0pt}%
+    \fboxsep=8pt\colorbox{commentbg}}%
+  \MakeFramed{\advance\hsize-\width\FrameRestore}%
+  \itshape\small}{\endMakeFramed}
+
+\newcommand{\response}{\par\smallskip\noindent\textbf{Response:}\;}
+
+\title{\vspace{-1.5em}Response to Reviewer 2}
+\author{}
+\date{}
+
+\begin{document}
+\maketitle
+\vspace{-3em}
+
+\noindent We thank the reviewer for an exceptionally detailed and rigorous
+review, including the deep methodological critique. The review identified the
+most important weaknesses of the original submission: the overclaiming of
+state-of-the-art, the underpowered statistics, the unexplained Llama multi-step
+failure, the misleading $>100\%$ metric, and the opacity of the generative model.
+The revision addresses each of these with new experiments and substantial new
+text. All locations below refer to the revised compiled PDF.
+
+\section*{Summary of the main changes}
+\begin{itemize}[leftmargin=1.4em,itemsep=2pt]
+  \item ``State-of-the-art'' has been removed; a direct EAP attribution ranking
+        on the same backend is reported as the established-method comparison, and
+        the absence of a portable ACDC run is documented as a limitation.
+  \item Every reported number now carries a percentile bootstrap 95\% confidence
+        interval; H1 is not accepted where it is not significant under a paired
+        permutation test (e.g.\ Llama IOI).
+  \item The Llama multi-step failure is analysed and a finer-layer-bin remedy is
+        attempted and reported (it does not close the gap), then stated as a major
+        limitation.
+  \item The $>100\%$ metric is renamed Relative Cumulative KL (RCK); the
+        ablation-only POMDP (POMDP-abl) against the ablation oracle is the primary
+        discovery-quality comparison.
+  \item The full $A$, $B$, $C$, $D$ matrices and the exact Dirichlet
+        concentrations are inlined; discretisation thresholds carry a $\pm20\%$
+        sensitivity analysis; the $0.01$ scaling factor is explained.
+  \item An x86\_64 (amd64) Docker image and a T4 run are provided.
+  \item POMDP-abl is compared against the bandit (and a new plain UCB baseline)
+        across all tasks, and a random-action baseline isolates EFE-guided action
+        selection.
+\end{itemize}
+
+\section*{Major weaknesses and required revisions}
+
+\begin{comment}
+\textbf{W1. Insufficient baseline comparisons and overclaiming of
+``state-of-the-art''.} Run ACDC or EAP on a subset with a reasonable budget and
+report cumulative KL or faithfulness; otherwise state the limitation and remove
+``state-of-the-art''.
+\end{comment}
+\response The term ``state-of-the-art'' has been removed from the abstract and
+conclusion, replaced by ``outperforms heuristic baselines''. A direct Edge
+Attribution Patching ranking is now computed on the same \texttt{circuit-tracer}
+backend and reported on the common cumulative-KL / bounded-efficiency metric for
+both models (Table~2, p.~19; Figure~4, p.~20); EAP is the strongest baseline on
+both models. A genuine ACDC run is not included because ACDC is defined over the
+attention-head/MLP edge graph and does not operate on the transcoder-feature
+candidate set or the fixed per-feature budget used here; this is stated explicitly
+as a limitation of the present comparison (Discussion ``Comparison scope and the
+absence of a direct ACDC run'', p.~31).
+
+\begin{comment}
+\textbf{W2. Statistical weakness: small prompt sets and insignificant results.}
+Increase prompt sets to $n\geq30$ or use bootstrapped confidence intervals; for
+Llama IOI accept that H1 is not supported. Investigate the Llama multi-step
+failure with per-prompt analysis and a remedy.
+\end{comment}
+\response Every reported mean, bounded efficiency, and RCK now carries a
+percentile bootstrap 95\% CI ($10^4$ resamples), and H1 is assessed with both a
+paired $t$-test and an exact paired-permutation test
+(Section ``Statistical Analysis and Sensitivity'', p.~17). H1 is explicitly not
+accepted for Llama IOI (Table~10, p.~30). The Llama multi-step failure
+is analysed per task with action-selection breakdowns; a finer-layer-bin variant
+was run as a remedy and reported even though it does not close the gap, and the
+failure is stated as a major limitation (Table~5, p.~26; Discussion, p.~31).
+
+\begin{comment}
+\textbf{W3. The ``oracle efficiency $>100\%$'' artefact is misleading.} Rename to
+``relative cumulative KL'' and use the ablation-only POMDP as the primary
+comparison against the ablation oracle.
+\end{comment}
+\response Done. Bounded oracle efficiency ($\leq100\%$) is now defined only for
+ablation-only selectors and is the primary discovery-quality metric; the
+steering-enabled comparison is reported separately as RCK and labelled as a
+relative amplification factor (Section ``Metrics'', p.~16--17). POMDP-abl against
+the ablation oracle is the headline comparison throughout the IOI, multi-step, and
+domain tables.
+
+\begin{comment}
+\textbf{W4. Methodological opacity: generative model details missing.} Provide the
+full $A$, $B$, $C$, $D$ matrices and Dirichlet concentrations; justify
+discretisation thresholds with $\pm20\%$ sensitivity analysis; explain the $0.01$
+scaling factor.
+\end{comment}
+\response The appendix ``Complete Generative Model Specification'' (p.~37) now
+inlines the full observation model $A$ (all modalities), every action-conditioned
+$B$ factor, the preference vector $C$, the prior $D$, and the exact initial
+Dirichlet concentrations ($pA = 10A$, learning rate $\eta=1.0$). The $\pm20\%$
+threshold sweep is reported in Table~7 (p.~28), and the $0.01$ scaling factor that
+maps graph importance into the KL-prior range is explained in the appendix and in
+Section ``Statistical Analysis and Sensitivity'' (p.~17).
+
+\begin{comment}
+\textbf{W5. Reproducibility and hardware constraints.} Provide a
+\texttt{requirements.txt} for x86\_64 with a consumer GPU; report variance across
+hardware (T4 vs.\ DGX Spark); the Docker container targets aarch64.
+\end{comment}
+\response An x86\_64 (amd64) Docker image and a pinned \texttt{requirements.txt}
+are provided, and a T4 run is reported alongside the DGX Spark results to document
+hardware variance (Experimental Setup, p.~13 and reproducibility paragraph,
+p.~14). The environment and seeds are specified in the configuration.
+
+\begin{comment}
+\textbf{W6. Missing ablation for the action space and belief update.} Compare
+POMDP-abl vs.\ bandit across all tasks; add a random-action ablation that replaces
+the EFE objective to isolate its benefit.
+\end{comment}
+\response A head-to-head table (Table~9, p.~29) now compares POMDP-abl against the
+bandit, the new plain UCB baseline, and EAP across IOI, multi-step, and the five
+domains for both models. A random-action baseline (EFE-free action selection with
+the same feature sampling) is reported on the RCK scale (Table~3, p.~22), isolating
+the contribution of EFE-guided action selection.
+
+\section*{Minor issues}
+
+\begin{comment}
+Terminology: ``Oracle efficiency $>100\%$'' should be renamed throughout.
+\end{comment}
+\response Renamed to Relative Cumulative KL throughout, with bounded oracle
+efficiency reserved for the $\leq100\%$ ablation-only quantity.
+
+\begin{comment}
+Figure~4: the text says ``dominates all baselines'', but on Llama the bandit
+tracks the POMDP closely; clarify.
+\end{comment}
+\response The ``dominates'' claim has been removed. The text now states that EAP
+is the strongest baseline and that on Llama the bandit and POMDP-abl are close,
+consistent with Figure~4 (p.~20) and Table~2 (p.~19).
+
+\begin{comment}
+Table~2: high coefficient of variation; report median and quartiles.
+\end{comment}
+\response Table~2 (p.~19) now reports the per-prompt median and inter-quartile
+range [Q1, Q3] in addition to the mean, for every method.
+
+\begin{comment}
+Section 3.3 (Actions): explain how the transition probabilities (50/25/25 etc.)
+were chosen.
+\end{comment}
+\response The appendix (p.~37) now states that these encode how strongly each
+action is expected to move the latent importance state (ablation broad and
+near-symmetric, patching conservative, steering concentrated), and the $\pm20\%$
+threshold and hyperparameter sweeps (Tables~7 and~8, p.~28--29) show the conclusions
+are robust to the exact values.
+
+\begin{comment}
+Language: some sentences are overly long; a light copy-edit would improve
+readability.
+\end{comment}
+\response The manuscript has been copy-edited for concision and a consistent
+third-person register throughout.
+
+\section*{Deep methodology evaluation}
+
+\begin{comment}
+\textbf{M1. Discretisation and state-space design.} The importance and layer-role
+binning is unjustified and architecture-dependent; the Llama multi-step failure is
+attributed to coarse discretisation; no sensitivity analysis; token position is
+ignored.
+\end{comment}
+\response The discretisation is now justified and stress-tested. The $\pm20\%$
+threshold sweep (Table~7, p.~28) identifies the KL discretisation as the sensitive
+knob while leaving the qualitative ordering intact, and a finer-layer-bin variant
+is run for the Llama multi-step case (Table~5, p.~26). The absence of token-position
+factors is acknowledged as a limitation with a position-resolved observation model
+proposed as future work (Discussion ``Token-position granularity'', p.~31).
+
+\begin{comment}
+\textbf{M1 (cont.) Observation discretisation and online learning of $A$.} Fixed
+KL/activation/connectivity thresholds are arbitrary; initial Dirichlet parameters
+are unspecified; $\eta=1.0$ is unjustified; no belief-convergence evidence.
+\end{comment}
+\response The exact thresholds, initial Dirichlet concentrations ($pA=10A$), and
+$\eta=1.0$ are now specified in the appendix (p.~37) and in the hyperparameter
+table. Online convergence of $A$ is demonstrated with a new figure (Figure~9,
+p.~25) showing the mean per-step $L_1$ drift $\|A_t-A_{t-1}\|_1$ decreasing
+monotonically over the budget (roughly halving on Gemma IOI), and a hyperparameter
+sweep over $\eta$ (Table~8, p.~29) shows the result is insensitive to the learning
+rate.
+
+\begin{comment}
+\textbf{M2. Generative model components $A,B,C,D$.} Full $B$ matrices not shown;
+non-diagonal transitions underived; $C$ assumes large effects are always better;
+$D$ probabilities not given.
+\end{comment}
+\response The full $A$, $B$, $C$, and $D$ are inlined in the appendix (p.~37),
+including all non-diagonal $B$ entries and the exact $D$ probabilities. The risk
+that the preference model $C$ rewards off-target or model-breaking interventions
+is now acknowledged directly (Discussion ``Limitations'', p.~31), and the
+steering analysis with a random-feature control and top-$k$ token check
+(Results, p.~24) is the empirical response to that concern.
+
+\begin{comment}
+\textbf{M3. Candidate extraction and prior observation.} The top-5-per-layer
+selection biases the candidate set; the $0.01$ prior-observation scaling is
+unexplained.
+\end{comment}
+\response The candidate-selection procedure (top features by graph importance,
+up to five per layer) is now described precisely, and the resulting selection bias
+is acknowledged: the evaluation measures selection efficiency within an
+already-pruned set rather than over all model components (Discussion ``Selection
+bias in the candidate set'', p.~31). The $0.01$ scaling, which maps graph
+importance into the KL-prior range, is explained in the appendix and Section
+``Statistical Analysis and Sensitivity'' (p.~17).
+
+\begin{comment}
+\textbf{M4. Intervention selection via EFE.} Horizon-1 planning may miss
+synergies; sensitivity to $\omega_e=2.0$ and $\gamma=16$ is unexplored.
+\end{comment}
+\response Single-step planning is retained but its limitation is stated explicitly,
+with tree-search planning proposed as future work (Discussion, p.~31). The action
+precision $\gamma$ is now included in the hyperparameter sweep
+($\gamma\in\{4,16,64\}$; Table~8, p.~29), which leaves bounded efficiency
+essentially unchanged. We clarify that $\omega_e=2.0$ is the exploration term of
+the heuristic \emph{bandit} baseline, not a POMDP parameter; the POMDP's
+exploration is the epistemic (information-gain) term of the EFE, and the new plain
+UCB baseline isolates the effect of the bandit's engineered priors.
+
+\begin{comment}
+\textbf{M5. Intervention engine and causal correctness.} The 10$\times$ multiplier
+is aggressive and may reflect model fragility, not causal role; no evidence it
+amplifies the intended concept; intervention information-leak across positions is
+not validated.
+\end{comment}
+\response The 10$\times$ claim is now supported by a dose--response sweep
+($m\in\{0,1.5,2,3,5,10\}$) with a matched random-feature control, and by a top-$k$
+token analysis showing that large multipliers amplify coherent concept tokens
+rather than producing undifferentiated noise (Results ``Feature Steering'', p.~24).
+The causal claim is correspondingly softened to controllability. The intervention
+API operates on transcoder features at the final token position; the limitation
+that effects are not separately localised to earlier token positions is documented
+(Discussion ``Token-position granularity'', p.~31).
+
+\begin{comment}
+\textbf{M6. Baselines and comparative methodology.} ACDC/EAP comparison missing;
+the bandit's per-layer prior and one-visit decay are unjustified inductive bias;
+no simpler UCB baseline; POMDP-abl vs.\ bandit nuances undiscussed;
+random-action baseline missing.
+\end{comment}
+\response A direct EAP ranking is reported (Table~2, p.~19; Figure~4, p.~20) and a
+plain UCB baseline was added that removes the bandit's engineered importance and
+locality priors, isolating how much of the bandit's performance comes from those
+priors versus upper-confidence exploration (Section ``Baselines'', p.~15; UCB rows
+in Table~2, p.~19). The POMDP-abl-versus-bandit nuances are now discussed across
+all tasks via the head-to-head table (Table~9, p.~29), and a random-action
+baseline isolates EFE-guided action selection (Table~3, p.~22). The portability
+limitation for ACDC is documented (Discussion, p.~31).
+
+\begin{comment}
+\textbf{M7. Reproducibility and implementation gaps.} Hardware dependency
+(aarch64); missing hyperparameters (number of runs, seeds, Dirichlet
+initialisation, exact $B$); code contents not described.
+\end{comment}
+\response An x86\_64 Docker image and a T4 run are provided, and the number of
+trials, all random seeds, the Dirichlet initialisation, $\eta$, $\gamma$, and the
+full $B$ matrices are now specified (Experimental Setup, p.~13--14; appendix,
+p.~37). The experiment runner exposes every swept parameter through CLI flags,
+and the reported prompts correspond exactly to the released JSON results.
+
+\begin{comment}
+\textbf{M8. Recommendations for methodology revision.} Re-evaluate the layer-role
+discretisation; justify thresholds with empirical quantiles and $\pm20\%$
+sensitivity; provide full matrices; justify the steering multiplier; add ACDC/EAP
+and a random-action baseline; improve reproducibility (amd64 Docker, T4, seeds).
+\end{comment}
+\response These recommendations are implemented as described in W1--W6 and M1--M7
+above: the finer-layer-bin variant (Table~5), the $\pm20\%$ and hyperparameter
+sweeps (Tables~7--8), the full inlined generative model (appendix), the
+dose--response steering justification (Results), the EAP comparison and
+random-action / UCB baselines (Tables~2, 3, 9), and the amd64 Docker image with a
+T4 run and specified seeds.
+
+\section*{Final remark}
+The revision treats the Llama multi-step shortfall and the absence of a portable
+ACDC run as honest limitations rather than as resolved issues, and it confines all
+discovery-quality claims to the bounded ablation-only comparison so that no metric
+can exceed the oracle. We believe these changes address the methodological
+concerns raised.
+
+\end{document}

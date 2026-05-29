@@ -147,7 +147,7 @@ Expected Free Energy minimisation generalises MacKay's information-theoretic pri
 to the full POMDP setting. The epistemic term in EFE (equation~\ref{eq:efe}) is
 precisely the expected information gain about hidden states~\cite{Friston2015,DaCosta2020}.
 When the pragmatic term is zeroed, EFE minimisation reduces to maximising information
-gain---i.e., selecting the action that most reduces posterior uncertainty. This
+gain, that is, selecting the action that most reduces posterior uncertainty. This
 connection grounds Active Inference in the principled statistical tradition of Bayesian
 optimal design. The present work leverages this alignment: circuit discovery is cast as
 a Bayesian experimental design problem in which the ``experiment'' is a causal
@@ -171,13 +171,13 @@ information-theoretic principles. The novelty of ACD is threefold: it explicitly
 models uncertainty via a belief state distribution, uses that uncertainty to guide
 adaptive intervention selection via EFE, and learns the observation model online via
 Dirichlet parameter updates, enabling the agent to refine its causal estimates after
-each intervention. We stress that these categories are not mutually exclusive: ACD is
-\emph{complementary} to ACDC and EAP rather than a competing graph-construction
+each intervention. These categories are not mutually exclusive: ACD is
+complementary to ACDC and EAP rather than a competing graph-construction
 method. It consumes an attribution graph (here built with \texttt{circuit-tracer}'s
 EAP) and decides which of its features to test next under a budget. Accordingly, the
-fair point of comparison is not whole-circuit recovery but \emph{selection efficiency}
-on a shared candidate set, which we measure against a direct EAP attribution ranking
-(Sections~\ref{sec:setup}--\ref{sec:results}).
+fair point of comparison is not whole-circuit recovery but selection efficiency
+on a shared candidate set, measured against a direct EAP attribution ranking
+(Sections~\ref{sec:setup} to~\ref{sec:results}).
 
 \begin{table}[H]
   \centering

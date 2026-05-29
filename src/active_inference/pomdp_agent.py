@@ -135,6 +135,12 @@ class ActiveInferencePOMDPAgent:
         self._D: Optional[list] = None
         self._pA: Optional[list] = None
 
+        # Tracks the per-step L1 drift of the learned KL-likelihood A[0]
+        # (mean absolute change between successive Dirichlet updates), used to
+        # quantify online convergence of the observation model.
+        self._A_prev_kl: Optional[np.ndarray] = None
+        self._A_drift: List[float] = []
+
     # ------------------------------------------------------------------
     # Generative model construction
     # ------------------------------------------------------------------
@@ -324,6 +330,8 @@ class ActiveInferencePOMDPAgent:
         self._converged = False
         self.history.clear()
         self._feature_beliefs.clear()
+        self._A_prev_kl = None
+        self._A_drift = []
         logger.info("Active Inference POMDP agent initialised (pymdp).")
 
     def reset(self) -> None:
@@ -495,6 +503,16 @@ class ActiveInferencePOMDPAgent:
                 "pymdp update_A() unavailable; used manual Dirichlet update."
             )
 
+        # Record the L1 drift of the learned KL-likelihood column to track
+        # online convergence of the observation model.
+        try:
+            cur_kl = np.asarray(self._agent.A[0], dtype=float)
+            if self._A_prev_kl is not None and cur_kl.shape == self._A_prev_kl.shape:
+                self._A_drift.append(float(np.abs(cur_kl - self._A_prev_kl).mean()))
+            self._A_prev_kl = cur_kl.copy()
+        except (AttributeError, TypeError, IndexError):
+            pass
+
         action_idx = (
             ACTION_NAMES.index(action_name) if action_name in ACTION_NAMES else 0
         )
@@ -611,6 +629,14 @@ class ActiveInferencePOMDPAgent:
 
     def get_efe_history(self) -> List[float]:
         return [r.efe_value for r in self.history]
+
+    def get_a_drift_history(self) -> List[float]:
+        """Per-step L1 drift of the learned KL-likelihood A[0] column.
+
+        A decreasing sequence indicates the online Dirichlet updates are
+        converging toward a stable observation model.
+        """
+        return list(self._A_drift)
 
     def dump_matrices(self) -> Dict[str, Any]:
         """Return the full generative model (A, B, C, D) as nested lists.
