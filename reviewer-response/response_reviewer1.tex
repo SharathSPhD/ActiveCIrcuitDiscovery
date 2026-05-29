@@ -1,0 +1,202 @@
+\documentclass[11pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage[a4paper,margin=2.4cm]{geometry}
+\usepackage{xcolor}
+\usepackage{framed}
+\usepackage{amsmath}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\hypersetup{colorlinks=true,linkcolor=blue,urlcolor=blue}
+
+\definecolor{commentbg}{RGB}{238,242,248}
+\definecolor{commentrule}{RGB}{90,120,170}
+
+\newenvironment{comment}{%
+  \def\FrameCommand{{\color{commentrule}\vrule width 3pt}\hspace{0pt}%
+    \fboxsep=8pt\colorbox{commentbg}}%
+  \MakeFramed{\advance\hsize-\width\FrameRestore}%
+  \itshape\small}{\endMakeFramed}
+
+\newcommand{\reviewerpoint}[1]{\medskip\noindent\textbf{Comment #1.}\;}
+\newcommand{\response}{\par\smallskip\noindent\textbf{Response:}\;}
+
+\title{\vspace{-1.5em}Response to Reviewer 1}
+\author{}
+\date{}
+
+\begin{document}
+\maketitle
+\vspace{-3em}
+
+\noindent We thank the reviewer for a careful and constructive reading of the
+manuscript. The comments on novelty framing, the oracle-efficiency metric, the
+fairness of baseline comparisons, the strength of the causal claims, and the
+clarity of the figures have substantially improved the paper. The manuscript has
+been revised throughout; all changes are summarised below, with pointers to the
+relevant sections, tables, and figures of the revised manuscript. Page numbers
+refer to the revised compiled PDF.
+
+\section*{Summary of the main changes}
+\begin{itemize}[leftmargin=1.4em,itemsep=2pt]
+  \item The contribution is now framed explicitly as an intervention-selection
+        layer on top of an existing attribution backend, not a new attribution
+        method (Introduction, p.~2; Section~``Comparison with Published Circuit
+        Discovery Methods'', Table~11, p.~31).
+  \item The $>100\%$ ``oracle efficiency'' has been replaced by two clearly
+        separated metrics: a bounded oracle efficiency ($\leq 100\%$) for
+        ablation-only selectors, and a Relative Cumulative KL (RCK) for
+        steering-enabled selectors (Section~``Metrics'', p.~16--17).
+  \item A dose--response steering sweep and a random-feature control were added,
+        and the causal claims were weakened accordingly (Section~``Feature
+        Steering'', p.~13; Results, p.~24).
+  \item Figures~1 and~2 were redrawn as clean raster diagrams; the remaining
+        figures were given shared, non-overlapping legends.
+  \item The oracle rows of the KL tables now report the actual oracle KL values.
+  \item Action-matched (steering-enabled) variants of random, greedy, and bandit
+        were added, plus a random-action control, and the Llama multi-step
+        shortfall is now treated as a limitation.
+\end{itemize}
+
+\section*{Point-by-point responses}
+
+\begin{comment}
+\reviewerpoint{1} The novelty of the proposed framework should be clarified.
+It is not fully clear whether the main contribution is a new circuit discovery
+method or an active intervention-selection strategy built on existing attribution
+graph tools.
+\end{comment}
+\response The contribution is the latter, and the manuscript now states this
+plainly. The revised Introduction (p.~2) describes the work as ``an
+intervention-selection layer that sits on top of an existing attribution
+backend'', and the comparison section (Table~11, p.~31) explicitly lists
+\texttt{circuit-tracer} as the attribution backend and
+positions the agent as the selection policy operating over its candidate set.
+The novelty claimed is the active-inference POMDP formulation of which
+feature and which intervention type to test next under a fixed budget, not the
+construction of the attribution graph itself.
+
+\begin{comment}
+\reviewerpoint{2} The ``oracle efficiency'' metric needs a clearer definition.
+Reporting values above 100\%, such as 1255\%, is confusing if the oracle is an
+upper bound. This should be mathematically explained or renamed.
+\end{comment}
+\response The metric has been split and renamed. For ablation-only selectors,
+every method and the oracle draw from the same quantity (ablation KL), so the
+ratio is a genuine bounded efficiency $\eta\in[0,100]\%$
+(Equation for $\eta$, Section ``Metrics'', p.~16). For the full multi-action
+agent, which may steer, the cumulative KL is compared with the ablation oracle
+through a separate quantity, the Relative Cumulative KL
+(RCK, Equation for RCK, p.~17), explicitly labelled as a relative amplification
+factor and never as an efficiency. The 1255\% figure now appears only as an RCK
+value in Table~3 (p.~22) and is described as steering-driven amplification rather
+than super-oracle discovery.
+
+\begin{comment}
+\reviewerpoint{3} The causal claims should be stated more cautiously. Feature
+steering with 10$\times$ activation scaling may cause out-of-distribution
+effects, so additional controls such as smaller scaling factors and
+random-feature comparisons would strengthen the claim.
+\end{comment}
+\response Both controls were added. The steering protocol now sweeps
+$m\in\{0,1.5,2,3,5,10\}$ and compares each circuit-selected feature against a
+matched random-feature control steered at the same multipliers
+(Section ``Feature Steering'', p.~13). The Results section (p.~24) reports that
+the selectivity advantage of circuit features over the control is not
+statistically significant at large multipliers (one-sided Fisher exact test), so
+the steering result is now framed as a controllability demonstration rather than
+proof of privileged selectivity. A complementary top-$k$ token analysis shows
+that large multipliers amplify coherent concept tokens rather than only
+degrading the model, which is reported alongside the dose--response curve.
+
+\begin{comment}
+\reviewerpoint{4} Figure~1 should be visually revised. Some arrows/lines appear
+to cross through each other, which makes the workflow difficult to follow.
+\end{comment}
+\response Figures~1 and~2 (system architecture and the EFE pipeline) were
+re-authored as clean raster diagrams (\texttt{fig1.png}, \texttt{fig2.png}) with
+non-crossing routing and clear spacing, replacing the previous TikZ figures
+(Methodology, p.~8 and p.~9).
+
+\begin{comment}
+\reviewerpoint{5} In Tables~2 and~4, the oracle row reports only 100\% efficiency
+but not the corresponding mean or cumulative KL value. The authors should report
+the actual oracle KL scores to make the normalization transparent.
+\end{comment}
+\response The oracle KL values are now reported. Table~2 (IOI, p.~19) lists the
+oracle's per-prompt mean KL (0.000862 for Gemma, 0.009755 for Llama), and the
+surrounding text gives the cumulative-KL denominators (0.0172 and 0.1951). The
+multi-step table (Table~5, p.~26) likewise reports the oracle cumulative KL (0.0101 Gemma,
+0.2447 Llama). The normalisation underlying every efficiency value is therefore
+explicit.
+
+\begin{comment}
+\reviewerpoint{6} The POMDP agent performs worse than the bandit in the Llama
+multi-step test (33.6\% vs.\ 76.4\%). This negative result is significant and
+should be treated as a limitation, not an architectural explanation.
+\end{comment}
+\response The Llama multi-step shortfall is now reported as a genuine limitation.
+Under the fair ablation-only protocol the multi-step results appear in Table~5
+(p.~26), and the Discussion (``Cross-Model Generality'' and ``Limitations'',
+p.~31) states that the agent underperforms on Llama multi-step and that a
+finer-layer-bin variant was tried but did not recover the gap (Table~5). The
+result is presented as an open limitation tied to the coarse layer-role
+discretisation rather than as a feature of the architecture.
+
+\begin{comment}
+\reviewerpoint{7} Only an ablation version of the POMDP is included; action-matched
+variants are missing for random, greedy, and bandit. Does the POMDP's success stem
+from EFE-guided selection or from the steering action producing higher KL?
+Action-matched versions of the baselines would make the comparison more balanced.
+\end{comment}
+\response Action-matched baselines were added. Greedy+steer, Bandit+steer, and
+Random+steer use the identical multi-action space as the full agent, and a
+Random-action control randomises the intervention type
+(Section ``Baselines'', p.~15). Reported on the common RCK scale (Table~3, p.~22),
+these show that on Gemma every steering-enabled strategy, including random+steer
+(888\%), produces RCK well above 100\%, so the amplification is attributable to
+the steering action itself rather than to which feature is selected. This
+decomposition is exactly what isolates EFE-guided selection from the steering
+effect, and is discussed in Section ``Multi-Action Amplification'' (p.~22).
+
+\begin{comment}
+\reviewerpoint{8} In Gemma IOI the agent selects feature steering in 94 of 100
+steps after the initial stage, suggesting the high efficiency stems from repeated
+orientation rather than balanced exploration. The authors should discuss whether
+the framework is discovering circuit structure or exploiting steering-induced KL
+increases.
+\end{comment}
+\response This distinction is now central to the analysis. The bounded oracle
+efficiency (the discovery-quality claim) is computed only from the ablation-only
+agent against the ablation oracle, so it cannot be inflated by steering. The
+steering-driven amplification is reported separately as RCK and explicitly
+described as exploitation of the steering action, not structure discovery
+(Section ``Multi-Action Amplification'', p.~22; Discussion ``Structure Discovery
+versus Steering-KL Exploitation'', p.~32). The action-distribution figure
+(Figure~10, p.~25) shows the 94/100 steering pattern and is used to explain the
+RCK contrast between the two models.
+
+\begin{comment}
+\reviewerpoint{9} Appendix~B gives fixed transition probabilities (ablation 50\%
+stay / 25\% down / 25\% up; patching 70\% stay; steering 90\% stay) that are not
+learned from data. The authors should justify these values.
+\end{comment}
+\response The transition probabilities are design choices encoding how strongly
+each action is expected to move the latent importance state, and the appendix now
+states this rationale: ablation can reveal or remove importance (broad, near-
+symmetric transitions), patching is more conservative, and steering is least
+likely to change the underlying importance estimate (concentrated diagonal). The
+full $B$ matrices for every action are now given explicitly in the appendix
+(``Complete Generative Model Specification'', p.~37), and a $\pm 20\%$ sensitivity
+sweep over the discretisation thresholds (Table~7, p.~28) together with a
+hyperparameter sweep over the agent's core parameters (Table~8, p.~29) shows the
+qualitative ordering is preserved, so the conclusions are not artefacts of these
+fixed values.
+
+\section*{English language and style}
+The manuscript has been copy-edited throughout for concision and a consistent
+third-person scientific register, and overly long sentences flagged in review
+were split.
+
+\end{document}
