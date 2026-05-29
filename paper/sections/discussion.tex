@@ -8,8 +8,8 @@ The temporal pattern of action selection reveals the exploration--exploitation t
 \label{sec:structure_vs_steering}
 
 A fair reading of the action dynamics above raises the question of whether
-the agent's headline performance reflects genuine circuit-structure discovery
-or merely the exploitation of steering, which mechanically produces larger KL
+the agent's headline performance reflects circuit-structure discovery
+or the exploitation of steering, which mechanically produces larger KL
 shifts than ablation. Two design choices address this directly. First, the
 primary discovery-quality metric is the ablation-only agent (POMDP-abl) scored
 by bounded oracle efficiency against the ablation oracle
@@ -48,14 +48,14 @@ Llama IOI its bounded oracle efficiency is modest (52.1\%, CI [17.4, 90.2]), bar
 above random (48.4\%) and clearly below the bandit (88.2\%) and EAP (95.2\%). The
 word ``dominates'' is deliberately avoided: on several Llama conditions the bandit
 tracks or beats the agent (Fig.~\ref{fig:cumkl}), and these are reported as ties or
-losses rather than wins. The one clear negative result, Llama multi-step, is
-examined as a limitation in its own right below rather than explained away.
+losses rather than wins. The one task where the agent underperforms random,
+Llama multi-step, is examined as a limitation in its own right below.
 
 \subsection{Limitations}
 
-\textbf{Multi-step reasoning on Llama (primary limitation).} On Llama multi-step the
-agent underperforms random selection (Table~\ref{tab:multistep}); this is a
-genuine negative result, not an architectural ``feature''. Per-prompt diagnostics
+The primary limitation concerns multi-step reasoning on Llama. On Llama multi-step the
+agent underperforms random selection (Table~\ref{tab:multistep}); this outcome is
+reported as a limitation rather than attributed to the architecture. Per-prompt diagnostics
 (Section~\ref{sec:results}) show the failure concentrates on the prompts whose
 high-KL features sit in adjacent middle layers that the default three-bin layer-role
 factor collapses into a single ``middle'' state, so the agent cannot distinguish
@@ -66,7 +66,7 @@ multi-hop reasoning on shallow architectures remains the weakest setting for the
 current generative model, and architecture-specific or learned layer groupings
 are needed before the method can be relied upon there.
 
-\textbf{Limited prompt sets and significance.} The evaluation uses 5 IOI, 3
+A further limitation is the small prompt set and its effect on significance. The evaluation uses 5 IOI, 3
 multi-step, and 10 domain prompts. Standard practice favours $n \geq 30$ for reliable
 significance testing; to compensate, bootstrap 95\% confidence intervals and
 an exact paired-permutation test are reported alongside the $t$-test
@@ -74,7 +74,7 @@ an exact paired-permutation test are reported alongside the $t$-test
 (for example, Llama IOI) H1 is not accepted. Expanding to 30 or more prompts per
 condition remains important future work.
 
-\textbf{Discretisation and hyperparameter sensitivity.} Observation thresholds were
+A final limitation concerns discretisation and hyperparameter sensitivity. Observation thresholds were
 calibrated on Gemma. A $\pm 20\%$ threshold sweep on Gemma IOI
 (Table~\ref{tab:sensitivity}) shows bounded efficiency stable (80--86\%) under
 activation-threshold and $+20\%$ KL-threshold changes, while tightening the KL
@@ -89,7 +89,7 @@ learned discretisation boundaries would improve robustness and portability.
 A second limitation concerns comparison scope and the absence of a direct ACDC
 run. The strongest established comparison reported here is a direct EAP attribution
 ranking computed on the same \texttt{circuit-tracer} backend, which is consistently
-competitive with or stronger than the agent. A genuine ACDC run is not included
+competitive with or stronger than the agent. A direct ACDC run is not included
 because ACDC is defined over the attention-head and MLP edge graph of a model and does
 not operate on the transcoder-feature candidate set or the fixed per-feature
 intervention budget used here, so a like-for-like ACDC comparison would require a

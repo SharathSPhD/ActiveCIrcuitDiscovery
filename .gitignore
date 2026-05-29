@@ -98,3 +98,6 @@ results/graphs/
 reviewer-response/*.aux
 reviewer-response/*.log
 reviewer-response/*.out
+
+# Vendored CTAN package used only to build the latexdiff PDF locally
+paper/ulem.sty

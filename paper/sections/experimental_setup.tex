@@ -65,7 +65,7 @@ $m \in \{0, 1.5, 2, 3, 5, 10\}$. Because large multipliers can push
 activations out of distribution, the protocol (a) includes smaller factors
 (1.5, 2, 3) to characterise the dose-response curve, and (b) adds a
 random-feature control: a matched set of randomly chosen
-lower-importance features steered at the same multipliers. Genuine causal
+lower-importance features steered at the same multipliers. Causal
 control is evidenced only to the extent that circuit-selected features shift
 predictions more than this control. For every steered feature the top-five
 next-token probabilities are recorded at each multiplier, so that
@@ -92,7 +92,7 @@ defined in the experiment runner script (\texttt{run\_real\_experiments.py}) and
 correspond exactly to the prompts whose results appear in the JSON
 outputs under \texttt{results/}.
 
-\textbf{IOI Circuit Recovery (5 prompts):}
+The five IOI prompts are:
 \begin{quote}
 ``When John and Mary went to the store, John gave the bag to''
 ``After Alice and Bob finished lunch, Alice handed the receipt to''
@@ -101,14 +101,14 @@ outputs under \texttt{results/}.
 ``As Lisa and Mike left the restaurant, Lisa returned the coat to''
 \end{quote}
 
-\textbf{Multi-step Reasoning (3 prompts):}
+The three multi-step reasoning prompts are:
 \begin{quote}
 ``If Alice is taller than Bob, and Bob is taller than Carol, then the tallest person is''
 ``The capital of France is Paris. Paris is in Europe. The continent containing Paris is''
 ``All dogs are animals. Fido is a dog. Therefore Fido is''
 \end{quote}
 
-\textbf{Feature Steering (5 concept prompts):}
+The five feature-steering concept prompts are:
 \begin{quote}
 ``The Golden Gate Bridge is''
 ``The Eiffel Tower is located in''
@@ -117,7 +117,7 @@ outputs under \texttt{results/}.
 ``The Statue of Liberty stands in''
 \end{quote}
 
-\textbf{Multi-Domain Benchmark (10 prompts, 2 per domain):}
+The ten multi-domain prompts, two per domain, are grouped by domain below.
 Geography prompts:
 \begin{quote}
 ``The capital of France is''
@@ -155,8 +155,7 @@ only ablate and are therefore directly comparable to the ablation oracle) and
 action-matched selectors (which, like the full POMDP, may also steer, and
 are used only for the secondary RCK analysis of Section~\ref{sec:results}).
 
-\paragraph{Ablation-only baselines.}
-\emph{Random} selection draws features uniformly at random
+Among the ablation-only baselines, \emph{Random} selection draws features uniformly at random
 (Equation~\ref{eq:random}; $N=10$ trials, averaged):
 \begin{equation}
   \label{eq:random}
@@ -202,9 +201,8 @@ advance:
   i^* = \arg\max_i \text{KL}_i^{\text{abl}}
 \end{equation}
 
-\paragraph{Action-matched baselines.}
-To separate the contribution of the agent's selection policy from that of
-the steering action, steering-enabled counterparts of the
+The action-matched baselines separate the contribution of the agent's selection
+policy from that of the steering action. Steering-enabled counterparts of the
 heuristics are evaluated that use the identical selection order but apply the
 feature-steering intervention: \emph{Greedy+steer}, \emph{Bandit+steer}, and
 \emph{Random+steer}. A \emph{Random-action} baseline that selects a feature uniformly
@@ -234,7 +232,7 @@ budget.
 \emph{(i) Bounded oracle efficiency.} For \emph{ablation-only} methods (POMDP-abl,
 Random, Greedy, EAP, Bandit, UCB), every selector and the oracle draw from the same
 quantity, ablation KL, so their ratio to the ablation oracle is bounded in
-$[0,100]\%$ and is a genuine efficiency:
+$[0,100]\%$ and is interpretable as an efficiency:
 \begin{equation}
   \label{eq:oracle_eff}
   \eta = \frac{\text{CumKL}^{\text{abl}}_{\text{agent}}}
@@ -276,7 +274,7 @@ The Correspondence Metric is formally defined in Appendix~\ref{app:correspondenc
 \subsection{Statistical Analysis and Sensitivity}
 \label{sec:stats_protocol}
 
-\paragraph{Bootstrap confidence intervals.} Given the modest prompt counts and the
+Given the modest prompt counts and the
 high coefficient of variation of per-prompt KL, every reported mean,
 bounded efficiency, and RCK is accompanied by a percentile bootstrap 95\% confidence
 interval obtained by resampling prompts with replacement ($10^4$ resamples).
@@ -285,7 +283,7 @@ paired-permutation test of agent-versus-random per-prompt mean KL; a result is
 reported as significant only when $p<0.05$ under the permutation test. H1 is not
 accepted where it is not significant (for example, Llama IOI).
 
-\paragraph{Discretisation sensitivity ($\pm 20\%$).} The agent discretises
+The discretisation sensitivity of the agent is assessed at $\pm 20\%$. The agent discretises
 continuous observations (KL, activation, connectivity) at fixed thresholds, and maps
 graph importance into the KL-prior range through a $0.01$ scaling factor
 (Appendix~\ref{app:generative_model}). To show that conclusions are not artefacts of
@@ -295,7 +293,7 @@ bounded efficiency is reported. The scaling is exposed through the experiment ru
 flags \texttt{-{}-kl-threshold-scale}, \texttt{-{}-act-threshold-scale}, and
 \texttt{-{}-imp-scale}.
 
-\paragraph{Hyperparameter sensitivity.} To characterise robustness to the agent's
+To characterise robustness to the agent's
 core hyperparameters, the Gemma and Llama IOI benchmarks are additionally re-run
 while independently varying the action precision ($\gamma \in \{4, 16, 64\}$), the
 Dirichlet likelihood learning rate ($\eta \in \{0.5, 1.0, 2.0\}$), and the pragmatic
@@ -304,7 +302,7 @@ These factors are exposed through \texttt{-{}-gamma}, \texttt{-{}-lr-pa}, and
 \texttt{-{}-pragmatic-weight}, and the resulting bounded efficiencies are reported in
 Section~\ref{sec:results}.
 
-\paragraph{Finer layer-role bins.} To probe the Llama multi-step result, a
+To probe the Llama multi-step result, a
 variant is additionally run in which the agent's single layer-role factor is
 refined from 3 bins (early/middle/late) to 6, via \texttt{-{}-n-layer-role 6}, so
 that deeper layer structure can be represented in the belief state. The outcome is
