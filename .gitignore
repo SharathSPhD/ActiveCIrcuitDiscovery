@@ -93,3 +93,8 @@ results/graphs/
 
 # Serena MCP cache
 .serena/
+
+# Reviewer-response auxiliary files
+reviewer-response/*.aux
+reviewer-response/*.log
+reviewer-response/*.out

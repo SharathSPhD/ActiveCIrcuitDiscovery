@@ -4,28 +4,31 @@
     group style={group size=2 by 1, horizontal sep=1.2cm, ylabels at=edge left},
     width=0.52\columnwidth, height=4.7cm,
     ylabel={Bounded oracle eff.\ (\%)},
-    symbolic x coords={Random, Greedy, EAP, Bandit, POMDP-abl},
+    symbolic x coords={Random, Greedy, EAP, Bandit, UCB, POMDP-abl},
     xtick=data,
     x tick label style={font=\tiny, rotate=25, anchor=east},
     y tick label style={font=\scriptsize},
     ylabel style={font=\scriptsize},
     title style={font=\scriptsize\bfseries},
     ymin=0,
-    enlarge x limits=0.15,
+    enlarge x limits=0.12,
     nodes near coords,
     nodes near coords style={font=\tiny},
     every node near coord/.append style={/pgf/number format/fixed,
         /pgf/number format/precision=1},
-    legend style={font=\tiny, at={(0.5,-0.42)}, anchor=north, legend columns=2},
+    legend image code/.code={\draw[#1] (0cm,-0.08cm) rectangle (0.30cm,0.12cm);},
+    legend style={font=\tiny, legend columns=-1, draw=none,
+        at={(1.18,-0.42)}, anchor=north,
+        /tikz/every even column/.append style={column sep=6pt}},
 ]
 
 \nextgroupplot[ybar, bar width=4pt, title={Gemma-2-2B}, ymax=113]
-\addplot[fill=blue!40, draw=blue!60] coordinates { (Random, 57.1) (Greedy, 66.9) (EAP, 91.9) (Bandit, 74.4) (POMDP-abl, 82.0) };
-\addplot[fill=red!40, draw=red!60] coordinates { (Random, 56.2) (Greedy, 79.4) (EAP, 98.1) (Bandit, 78.4) (POMDP-abl, 73.0) };
+\addplot[fill=blue!40, draw=blue!60] coordinates { (Random, 57.1) (Greedy, 66.9) (EAP, 91.9) (Bandit, 74.4) (UCB, 73.7) (POMDP-abl, 82.0) };
+\addplot[fill=red!40, draw=red!60] coordinates { (Random, 56.2) (Greedy, 79.4) (EAP, 98.1) (Bandit, 78.4) (UCB, 73.6) (POMDP-abl, 73.0) };
 \legend{IOI, Multi-step}
 
 \nextgroupplot[ybar, bar width=4pt, title={Llama-3.2-1B}, ymax=112]
-\addplot[fill=blue!40, draw=blue!60] coordinates { (Random, 48.4) (Greedy, 40.8) (EAP, 95.2) (Bandit, 88.2) (POMDP-abl, 52.1) };
-\addplot[fill=red!40, draw=red!60] coordinates { (Random, 44.8) (Greedy, 9.5) (EAP, 97.6) (Bandit, 76.4) (POMDP-abl, 9.3) };
+\addplot[fill=blue!40, draw=blue!60] coordinates { (Random, 48.4) (Greedy, 40.8) (EAP, 95.2) (Bandit, 88.2) (UCB, 55.2) (POMDP-abl, 52.1) };
+\addplot[fill=red!40, draw=red!60] coordinates { (Random, 44.8) (Greedy, 9.5) (EAP, 97.6) (Bandit, 76.4) (UCB, 75.9) (POMDP-abl, 9.3) };
 \end{groupplot}
 \end{tikzpicture}

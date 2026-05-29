@@ -25,35 +25,37 @@ and Llama-3.2-1B~\cite{Dubey2024llama}) and four
 benchmarks: IOI circuit recovery, multi-step reasoning, feature
 steering, and a multi-domain benchmark spanning geography, mathematics,
 science, logic, and history.  The agent is compared against a
-UCB-style bandit heuristic, greedy importance ranking, a direct EAP
-attribution ranking, random selection, action-matched (steering-enabled)
-variants of these heuristics, and an oracle upper bound.
+heuristic UCB-style bandit, a plain UCB baseline, greedy importance
+ranking, a direct EAP attribution ranking, random selection,
+action-matched (steering-enabled) variants of these heuristics, and an
+oracle upper bound.
 
-Against the four hypotheses stated in Section~\ref{sec:intro} (exact
-figures, confidence intervals, and tests in Section~\ref{sec:results}):
-\textbf{H1} (efficiency) is accepted on Gemma, where the agent's per-intervention
-KL exceeds random selection under both a paired $t$-test and an exact permutation
-test; on Llama IOI the effect is \emph{not} significant under the permutation test,
-so following reviewer guidance we do not accept H1 there.
-\textbf{H2} (causal controllability) is partially supported: scaling features changes
-the top-1 prediction far above chance and dose-dependently (H2a accepted), but
-circuit-selected features are not significantly more steerable than matched random
-features (H2b not accepted), so we attribute much of the steering effect to generic
-activation scaling.
-\textbf{H3} (discovery quality) is assessed on the \emph{bounded} oracle efficiency
-of the ablation-only agent (POMDP-abl) against the ablation oracle, the fair
-comparison that cannot exceed $100\%$.
-\textbf{H4} (cross-architecture transfer) holds qualitatively, with the caveat that
-the bandit ties the agent on several Llama conditions and that Llama multi-step is a
-genuine negative result (Section~\ref{sec:discussion}).
+The four hypotheses stated in Section~\ref{sec:intro} are evaluated as
+follows (exact figures, confidence intervals, and tests appear in
+Section~\ref{sec:results}). Hypothesis H1 (efficiency) is accepted on
+Gemma, where the agent's per-intervention KL exceeds random selection
+under both a paired $t$-test and an exact permutation test; on Llama IOI
+the effect is not significant under the permutation test, so H1 is not
+accepted there. Hypothesis H2 (causal controllability) is partially
+supported: scaling features changes the top-1 prediction far above
+chance and dose-dependently (H2a accepted), but circuit-selected
+features are not significantly more steerable than matched random
+features (H2b not accepted), so much of the steering effect is
+attributable to generic activation scaling. Hypothesis H3 (discovery
+quality) is assessed on the bounded oracle efficiency of the
+ablation-only agent (POMDP-abl) against the ablation oracle, the fair
+comparison that cannot exceed $100\%$. Hypothesis H4 (cross-architecture
+transfer) holds qualitatively, with the caveat that the bandit ties the
+agent on several Llama conditions and that Llama multi-step is a genuine
+negative result (Section~\ref{sec:discussion}).
 
 A notable finding is the task-dependent layer structure of circuits:
 IOI circuits concentrate in late layers, while reasoning and logic
 features concentrate in early layers, and science prompts show a
 more uniform distribution.  This pattern holds across both architectures.
-The full multi-action agent attains a Relative Cumulative KL above $100\%$ on Gemma;
-we report this as a steering-driven amplification factor (Equation~\ref{eq:rck}),
-distinct from the bounded efficiency used for our discovery-quality claims.
+The full multi-action agent attains a Relative Cumulative KL above $100\%$ on Gemma,
+reported as a steering-driven amplification factor (Equation~\ref{eq:rck}) that is
+distinct from the bounded efficiency used for the discovery-quality claims.
 
 Future work will increase prompt set sizes for statistical power,
 explore multi-step planning where the agent can compose sequences of

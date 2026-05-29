@@ -50,10 +50,10 @@ attribution graph and stresses the agent's ability to allocate its
 budget across layers rather than exploit a known late-layer prior.
 For each prompt the KL divergence between the clean and intervened
 next-token distributions is measured, using the same $B=20$ budget
-and the same bandit, greedy, EAP, random, and oracle baselines as the
+and the same bandit, UCB, greedy, EAP, random, and oracle baselines as the
 IOI benchmark so that bounded oracle efficiency is directly comparable
-across tasks. This is also the benchmark on which we evaluate the
-finer-layer-bin remedy (Section~\ref{sec:stats_protocol}).
+across tasks. This is also the benchmark used to evaluate the
+finer-layer-bin variant (Section~\ref{sec:stats_protocol}).
 
 \subsubsection{Feature Steering}
 
@@ -62,17 +62,20 @@ Great Wall of China, Statue of Liberty).
 For each, the top 10 features by graph importance are identified and
 their activations scaled across a multiplier sweep
 $m \in \{0, 1.5, 2, 3, 5, 10\}$. Because large multipliers can push
-activations out of distribution (R1.3), we (a) include smaller factors
-(1.5, 2, 3) to characterise the dose--response curve, and (b) add a
-\emph{random-feature control}: a matched set of randomly chosen
+activations out of distribution, the protocol (a) includes smaller factors
+(1.5, 2, 3) to characterise the dose-response curve, and (b) adds a
+random-feature control: a matched set of randomly chosen
 lower-importance features steered at the same multipliers. Genuine causal
 control is evidenced only to the extent that circuit-selected features shift
-predictions more than this control. The KL divergence and whether the
+predictions more than this control. For every steered feature the top-five
+next-token probabilities are recorded at each multiplier, so that
+concept amplification at large factors can be distinguished from generic
+distributional collapse. The KL divergence and whether the
 model's top-1 prediction changes are measured for both sets.
 
 \subsubsection{Multi-Domain Benchmark}
 
-Following the Initial Research Proposal, the framework is evaluated
+The framework is also evaluated
 across five cognitive domains with two prompts each:
 geography (e.g.\ ``The capital of France is''),
 mathematics (e.g.\ ``The square root of 64 is''),
@@ -147,9 +150,9 @@ History prompts:
 
 \subsection{Baselines}
 
-We group baselines into \emph{ablation-only} selectors (which, like POMDP-abl,
+Baselines are grouped into ablation-only selectors (which, like POMDP-abl,
 only ablate and are therefore directly comparable to the ablation oracle) and
-\emph{action-matched} selectors (which, like the full POMDP, may also steer, and
+action-matched selectors (which, like the full POMDP, may also steer, and
 are used only for the secondary RCK analysis of Section~\ref{sec:results}).
 
 \paragraph{Ablation-only baselines.}
@@ -174,7 +177,7 @@ the \texttt{circuit-tracer} graph, i.e.\ the feature's column summed over the lo
 rows of the adjacency matrix, $\mathrm{eap}(i)=\sum_{t\in\mathcal{L}}|W_{t,i}|$
 (normalised to $[0,1]$). This isolates the classic EAP ``direct effect on the
 output'' signal, distinct from the total bidirectional connectivity used by Greedy,
-and provides the established-method comparison requested for the SOTA claim.
+and provides an established-method point of comparison.
 The \emph{bandit}
 selector combines graph importance with a decaying uncertainty bonus
 and learned per-layer priors, providing a comparison point that
@@ -186,7 +189,12 @@ uncertainty heuristics:
 \end{equation}
 where $u(i)$ is the uncertainty bonus (initialised to 1, decayed on
 visit) and $\lambda_\ell$ is the per-layer prior updated from
-observations.  The \emph{oracle} selects features in descending order
+observations. A \emph{plain UCB} baseline removes these engineered
+priors and instead applies the textbook UCB1 rule over layers, using the
+observed KL as reward; it isolates how much of the heuristic bandit's
+performance comes from its hand-built importance and locality priors
+rather than from upper-confidence exploration alone.
+The \emph{oracle} selects features in descending order
 of true KL divergence, an upper bound that requires all ablations in
 advance:
 \begin{equation}
@@ -195,14 +203,14 @@ advance:
 \end{equation}
 
 \paragraph{Action-matched baselines.}
-To separate the contribution of the agent's \emph{selection} policy from that of
-the steering \emph{action} (R1.7), we evaluate steering-enabled counterparts of the
-heuristics that use the identical selection order but apply the feature-steering
-intervention: \emph{Greedy+steer}, \emph{Bandit+steer}, and \emph{Random+steer}. We
-further include a \emph{Random-action} baseline that selects a feature uniformly at
-random \emph{and} chooses its intervention type uniformly at random, isolating the
-value of learned action selection. (Activation patching to the zero reference
-coincides with ablation in our setup, so this control effectively samples between
+To separate the contribution of the agent's selection policy from that of
+the steering action, steering-enabled counterparts of the
+heuristics are evaluated that use the identical selection order but apply the
+feature-steering intervention: \emph{Greedy+steer}, \emph{Bandit+steer}, and
+\emph{Random+steer}. A \emph{Random-action} baseline that selects a feature uniformly
+at random and chooses its intervention type uniformly at random is also included,
+isolating the value of learned action selection. (Activation patching to the zero reference
+coincides with ablation in this setup, so this control effectively samples between
 ablation and steering.) The
 corresponding \emph{multi-action oracle} ranks features by
 $\max(\text{KL}^{\text{abl}}_i,\text{KL}^{\text{steer}}_i)$.
@@ -213,9 +221,10 @@ per prompt.
 
 \subsection{Metrics}
 
-We report metrics of two kinds, and---following reviewer feedback---keep them
-strictly separate to avoid the misleading ``$>100\%$'' efficiencies of earlier
-drafts.
+Metrics of two kinds are reported, and they are kept
+strictly separate because they live on different scales: a bounded efficiency for
+ablation-only selectors and a relative amplification factor for steering-enabled
+selectors.
 
 \emph{Mean KL per intervention} is the average KL divergence across selected
 features; higher values indicate that the method finds more causally important
@@ -223,8 +232,8 @@ features. \emph{Cumulative KL} (CumKL) is the total information gained over the
 budget.
 
 \emph{(i) Bounded oracle efficiency.} For \emph{ablation-only} methods (POMDP-abl,
-Random, Greedy, EAP, Bandit), every selector and the oracle draw from the same
-quantity---ablation KL---so their ratio to the ablation oracle is bounded in
+Random, Greedy, EAP, Bandit, UCB), every selector and the oracle draw from the same
+quantity, ablation KL, so their ratio to the ablation oracle is bounded in
 $[0,100]\%$ and is a genuine efficiency:
 \begin{equation}
   \label{eq:oracle_eff}
@@ -232,13 +241,13 @@ $[0,100]\%$ and is a genuine efficiency:
               {\text{CumKL}^{\text{abl}}_{\text{oracle}}} \times 100\%,
   \qquad \eta \in [0,100]\%.
 \end{equation}
-This is our primary discovery-quality metric.
+This is the primary discovery-quality metric.
 
 \emph{(ii) Relative Cumulative KL (RCK).} The full multi-action agent may steer,
 and steering can produce larger KL shifts than ablation; comparing its cumulative
 KL to the \emph{ablation} oracle is therefore a ratio of two different quantities,
-not a bounded efficiency, and can exceed $100\%$. To prevent confusion we name this
-quantity Relative Cumulative KL,
+not a bounded efficiency, and can exceed $100\%$. This quantity is named the
+Relative Cumulative KL,
 \begin{equation}
   \label{eq:rck}
   \text{RCK} = \frac{\text{CumKL}_{\text{agent}}}
@@ -256,38 +265,47 @@ The KL divergence per intervention is computed as in Equation~\ref{eq:kl_def}:
 The \emph{prediction change rate} is the fraction of steering experiments
 in which the model's top-1 prediction changes.
 
-In summary, our \emph{primary} discovery-quality claim uses the bounded oracle
+In summary, the primary discovery-quality claim uses the bounded oracle
 efficiency of Equation~\ref{eq:oracle_eff} applied to the ablation-only agent
 (POMDP-abl) against the ablation oracle, so that all quantities are on the same
 scale and the metric cannot exceed $100\%$. The RCK of Equation~\ref{eq:rck} is
-reported \emph{separately} as a relative amplification factor for the full
-multi-action agent and its action-matched baselines, never as an ``efficiency''.
+reported separately as a relative amplification factor for the full
+multi-action agent and its action-matched baselines, never as an efficiency.
 The Correspondence Metric is formally defined in Appendix~\ref{app:correspondence}.
 
 \subsection{Statistical Analysis and Sensitivity}
 \label{sec:stats_protocol}
 
 \paragraph{Bootstrap confidence intervals.} Given the modest prompt counts and the
-high coefficient of variation of per-prompt KL, we accompany every reported mean,
-bounded efficiency, and RCK with a percentile bootstrap 95\% confidence interval
-obtained by resampling prompts with replacement ($10^4$ resamples; R2). Hypothesis
-H1 is assessed by both a one-sided paired $t$-test and an exact paired-permutation
-test of agent-vs-random per-prompt mean KL; we report a result as significant only
-when $p<0.05$ under the permutation test. Following R2, we do \emph{not} accept H1
-where it is not significant (e.g.\ Llama IOI).
+high coefficient of variation of per-prompt KL, every reported mean,
+bounded efficiency, and RCK is accompanied by a percentile bootstrap 95\% confidence
+interval obtained by resampling prompts with replacement ($10^4$ resamples).
+Hypothesis H1 is assessed by both a one-sided paired $t$-test and an exact
+paired-permutation test of agent-versus-random per-prompt mean KL; a result is
+reported as significant only when $p<0.05$ under the permutation test. H1 is not
+accepted where it is not significant (for example, Llama IOI).
 
 \paragraph{Discretisation sensitivity ($\pm 20\%$).} The agent discretises
 continuous observations (KL, activation, connectivity) at fixed thresholds, and maps
 graph importance into the KL-prior range through a $0.01$ scaling factor
 (Appendix~\ref{app:generative_model}). To show that conclusions are not artefacts of
-these choices (R2), we re-run the Gemma IOI benchmark with the KL and activation
-thresholds independently scaled by $0.8$ and $1.2$ and report the resulting change in
-bounded efficiency. The scaling is exposed through the experiment runner flags
-\texttt{-{}-kl-threshold-scale}, \texttt{-{}-act-threshold-scale}, and
+these choices, the Gemma IOI benchmark is re-run with the KL and activation
+thresholds independently scaled by $0.8$ and $1.2$, and the resulting change in
+bounded efficiency is reported. The scaling is exposed through the experiment runner
+flags \texttt{-{}-kl-threshold-scale}, \texttt{-{}-act-threshold-scale}, and
 \texttt{-{}-imp-scale}.
 
-\paragraph{Finer layer-role bins.} To probe the Llama multi-step result (R1.6/R2),
-we additionally run a variant in which the agent's single layer-role factor is
+\paragraph{Hyperparameter sensitivity.} To characterise robustness to the agent's
+core hyperparameters, the Gemma and Llama IOI benchmarks are additionally re-run
+while independently varying the action precision ($\gamma \in \{4, 16, 64\}$), the
+Dirichlet likelihood learning rate ($\eta \in \{0.5, 1.0, 2.0\}$), and the pragmatic
+preference weight ($\{0.5, 1.0, 2.0\}$), one factor at a time about the default.
+These factors are exposed through \texttt{-{}-gamma}, \texttt{-{}-lr-pa}, and
+\texttt{-{}-pragmatic-weight}, and the resulting bounded efficiencies are reported in
+Section~\ref{sec:results}.
+
+\paragraph{Finer layer-role bins.} To probe the Llama multi-step result, a
+variant is additionally run in which the agent's single layer-role factor is
 refined from 3 bins (early/middle/late) to 6, via \texttt{-{}-n-layer-role 6}, so
 that deeper layer structure can be represented in the belief state. The outcome is
 reported in Section~\ref{sec:results} regardless of whether it improves the result.
@@ -317,7 +335,7 @@ Raw experiment outputs are stored in \texttt{results/} as JSON.
 The \ACD{} framework ships with two Docker targets so that results are not
 tied to a single architecture.  \texttt{Dockerfile.dgx-spark} (with
 \texttt{docker-compose.yml}) targets the NVIDIA DGX Spark platform on which
-our headline numbers were produced (GB10 GPU, 128~GB unified memory,
+the headline numbers were produced (GB10 GPU, 128~GB unified memory,
 CUDA~12.8, aarch64).  \texttt{Dockerfile.amd64} (with
 \texttt{docker-compose.amd64.yml}) provides a standard \texttt{x86\_64}
 image built on the upstream \texttt{pytorch/pytorch:2.4.0-cuda12.1} base; it

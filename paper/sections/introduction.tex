@@ -28,22 +28,21 @@ efficiency and may miss higher-order interactions. Neither method incorporates
 uncertainty about the circuit structure or adapts its search strategy based on what
 has already been discovered.
 
-Novelty: an uncertainty-guided \emph{intervention-selection} layer, not a new
-attribution backend.
-We emphasise at the outset that \ACD{} is not a replacement for attribution-graph
-construction methods such as \EAP{} or \texttt{circuit-tracer}; it consumes their
-output (a pruned attribution graph over transcoder features) and contributes a
-\emph{policy for choosing which feature to intervene on next, and how}, under a fixed
-intervention budget. The novelty therefore lies in the adaptive search strategy
-rather than in how the candidate graph is built.
+The novelty of this work lies in an uncertainty-guided intervention-selection
+layer, not in a new attribution backend. \ACD{} is not a replacement for
+attribution-graph construction methods such as \EAP{} or \texttt{circuit-tracer};
+it consumes their output, a pruned attribution graph over transcoder features, and
+contributes a policy for choosing which feature to intervene on next, and how, under
+a fixed intervention budget. The novelty therefore lies in the adaptive search
+strategy rather than in how the candidate graph is built.
 To date, automated circuit discovery has pursued either exhaustive search (as in
 \ACDC) or gradient-based ranking (as in \EAP and Causal Tracing~\cite{Meng2022}),
 with Sparse Feature Circuits~\cite{marks2024sparse} and Dictionary Learning
 approaches~\cite{He2024} following similar gradient-plus-pruning paradigms. None of
 these methods explicitly maintains a belief distribution over circuit components or
 uses uncertainty to guide adaptive, budget-aware exploration. This poses a practical
-problem: in production systems, the number of interventions is constrained by
-compute budgets, yet existing methods do not optimize for informativeness per
+problem: in production systems the number of interventions is constrained by
+compute budgets, yet existing methods do not optimise for informativeness per
 intervention. The statistical literature on active learning and Bayesian experimental
 design~\cite{MacKay2003} has long established that uncertainty-guided selection
 outperforms passive ranking when the goal is to resolve ambiguity with minimal
@@ -96,41 +95,43 @@ direct Edge-Attribution-Patching (\EAP) ranking baseline computed from
 \texttt{circuit-tracer} attribution scores, random selection, and an oracle upper
 bound, on two models (Gemma-2-2B and Llama-3.2-1B) across four benchmarks (IOI,
 multi-step reasoning, feature steering, and a five-domain cognitive benchmark).
-To isolate the contribution of \emph{selection} from that of the intervention
-\emph{type}, we evaluate an ablation-only agent (POMDP-abl) against the ablation
-oracle as our primary, fair comparison, and report action-matched
-(steering-enabled) variants of the random, greedy, and bandit baselines separately.
+To isolate the contribution of selection from that of the intervention
+type, an ablation-only agent (POMDP-abl) is evaluated against the ablation
+oracle as the primary, fair comparison, and action-matched
+(steering-enabled) variants of the random, greedy, and bandit baselines are reported
+separately. A plain UCB baseline is also included to isolate the heuristic bandit's
+engineered inductive bias.
 
 \emph{(C4) Causal controllability, with controls.} Feature steering experiments
 show that scaling transcoder features changes predictions in a clear dose-dependent
-manner, far above chance. Crucially, our random-feature control reveals that
-circuit-selected features are only marginally---and \emph{not} significantly---more
+manner, far above chance. A random-feature control reveals that
+circuit-selected features are only marginally, and not significantly, more
 steerable than randomly chosen features at large multipliers, indicating that a
 substantial part of the effect is generic activation scaling rather than
-selection-specific causal control. We therefore state the causal claim cautiously
-and report the controls in full.
+selection-specific causal control. The causal claim is therefore stated cautiously
+and the controls are reported in full.
 
 \emph{(C5) Reproducibility artifacts.} Three Google Colab notebooks (free T4 GPU),
 both an aarch64 (DGX Spark) and a standard \texttt{x86\_64}/amd64 Docker image, and
 raw experiment results (JSON) are released for full reproduction.
 
-Positioning statement. To the best of the authors' knowledge, this is the first
+To the best of the authors' knowledge, this is the first
 work to cast circuit discovery as a POMDP with principled Expected Free Energy
-minimization for uncertainty-guided adaptive intervention selection. Prior work has
-not combined (a) uncertainty-aware feature importance estimation via belief state
-evolution, (b) a multi-action intervention space with learnable action-type
-selection, (c) online generative model learning via Dirichlet posterior updates,
-and (d) transcoder-level causal interventions across the full feature space. These
-components together constitute, to our knowledge, a previously unexplored design
-point for the \emph{intervention-selection} sub-problem. We do not claim
+minimisation for uncertainty-guided adaptive intervention selection. Prior work has
+not combined uncertainty-aware feature importance estimation via belief-state
+evolution, a multi-action intervention space with learnable action-type
+selection, online generative-model learning via Dirichlet posterior updates,
+and transcoder-level causal interventions across the full feature space. These
+components together constitute a previously unexplored design
+point for the intervention-selection sub-problem. No claim is made of
 state-of-the-art circuit recovery relative to \ACDC{} or \EAP{}. On a shared
 attribution-graph backend and a fixed budget, EFE-guided selection (POMDP-abl)
-reliably beats random and is competitive with greedy and a UCB bandit; however, a
-direct \EAP{} attribution ranking is itself a strong ablation-KL baseline and is not
-consistently beaten (Section~\ref{sec:results}). The agent's distinctive value is
-thus the explicit belief-state uncertainty, the multi-action space, and online model
-learning---capabilities the static baselines lack---rather than a raw efficiency win,
-and we frame the contribution accordingly.
+reliably beats random selection and is competitive with greedy, a heuristic UCB
+bandit, and a plain UCB baseline; a direct \EAP{} attribution ranking is itself a
+strong ablation-KL baseline and is not consistently beaten
+(Section~\ref{sec:results}). The agent's distinctive value is therefore the explicit
+belief-state uncertainty, the multi-action space, and online model learning,
+capabilities the static baselines lack, rather than a raw efficiency win.
 
 The following testable hypotheses guide the evaluation.
 
@@ -138,18 +139,18 @@ The following testable hypotheses guide the evaluation.
 action for a fair comparison (the ablation-only variant ``POMDP-abl''),
 identifies causally important features with higher cumulative KL
 divergence than random selection within a fixed budget of $B=20$
-interventions. Assessed via a one-sided paired $t$-test and an exact
-one-sided paired permutation test across prompts ($\alpha = 0.05$); we
-treat the permutation test as primary given the small prompt counts.
+interventions. This is assessed via a one-sided paired $t$-test and an exact
+one-sided paired permutation test across prompts ($\alpha = 0.05$), with the
+permutation test treated as primary given the small prompt counts.
 
-\emph{H2 (Causal controllability).}  We separate two sub-claims.
-\emph{H2a (manipulability):} scaling transcoder features changes the
+\emph{H2 (Causal controllability).}  This hypothesis comprises two sub-claims.
+Under H2a (manipulability), scaling transcoder features changes the
 model's top-1 prediction far above chance, in a dose-dependent manner
-across the multiplier sweep (one-sided binomial test vs.\ a 1\%
-chance baseline). \emph{H2b (selectivity):} circuit-selected features
-are \emph{more} controllable than matched randomly chosen features
-(one-sided Fisher exact test of selected vs.\ control flip rates,
-$\alpha = 0.05$). Separating these lets the controls (R1.3) reveal how
+across the multiplier sweep (one-sided binomial test against a 1\%
+chance baseline). Under H2b (selectivity), circuit-selected features
+are more controllable than matched randomly chosen features
+(one-sided Fisher exact test of selected versus control flip rates,
+$\alpha = 0.05$). Separating these sub-claims lets the controls reveal how
 much of the steering effect is specific to selected features versus
 generic activation scaling.
 

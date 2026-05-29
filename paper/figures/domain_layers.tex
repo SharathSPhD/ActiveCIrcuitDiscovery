@@ -19,11 +19,12 @@
     enlarge x limits=0.15,
     nodes near coords,
     nodes near coords style={font=\tiny, rotate=90, anchor=west},
+    legend image code/.code={\draw[#1] (0cm,-0.08cm) rectangle (0.30cm,0.12cm);},
     legend style={
-        font=\tiny,
-        at={(0.5,-0.30)},
+        font=\tiny, draw=none,
+        at={(1.15,-0.32)},
         anchor=north,
-        legend columns=3
+        legend columns=-1
     },
 ]
 

@@ -14,9 +14,7 @@ data flow between these three layers.
 
 \begin{figure}[H]
 \centering
-\resizebox{\linewidth}{!}{%
-\input{figures/architecture}%
-}
+\includegraphics[width=\linewidth]{figures/fig1.png}
 \caption{System architecture of \ACD{}: attribution backend (left) and POMDP agent loop (right).}
 \label{fig:architecture}
 \end{figure}
@@ -75,9 +73,7 @@ in the subsections that follow.
 
 \begin{figure}[H]
 \centering
-\resizebox{\linewidth}{!}{%
-\input{figures/efe_pipeline}%
-}
+\includegraphics[width=\linewidth]{figures/fig2.png}
 \caption{Active Inference POMDP agent pipeline: inference, EFE evaluation, and action selection.}
 \label{fig:scoring}
 \end{figure}
@@ -145,8 +141,8 @@ change upon intervention.  The preference model $\mat{C}$
 is a log-prior over preferred observations in which higher KL
 divergence and higher activation are favoured, encoding the goal of
 finding causally important features.  Finally, the prior $\mat{D}$
-over hidden states is biased toward low importance---since most
-features are not causally critical---and uniform over layer role.
+over hidden states is biased toward low importance, since most
+features are not causally critical, and uniform over layer role.
 
 
 \subsection{Intervention Selection via Expected Free Energy}
