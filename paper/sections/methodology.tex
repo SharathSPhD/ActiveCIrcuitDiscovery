@@ -147,16 +147,18 @@ features are not causally critical, and uniform over layer role.
 
 \subsection{Intervention Selection via Expected Free Energy}
 
-At each step, the agent evaluates each unobserved candidate feature $i$
-and each action $a$ by computing the Expected Free Energy:
+In the single-step \ACD\ setting, each policy $\pi$ corresponds to a
+single candidate feature $i$ and intervention type $a$; substituting
+$\pi = (i, a)$ into Equation~\ref{eq:efe} yields the following per-step EFE.
 \begin{equation}
   \label{eq:efe_agent}
-  G(i, a) = \underbrace{\mathbb{E}_{q}\!\bigl[\log q(s_\tau | \pi) - \log q(s_\tau | o_\tau, \pi)\bigr]}_{\text{epistemic}} + \underbrace{\mathbb{E}_{q}\!\bigl[\log p(o_\tau) - \log q(o_\tau | \pi)\bigr]}_{\text{pragmatic}}
+  \EFE(i, a) = \underbrace{\mathbb{E}_{q}\!\bigl[\log q(s_\tau | \pi) - \log q(s_\tau | o_\tau, \pi)\bigr]}_{\text{epistemic}} + \underbrace{\mathbb{E}_{q}\!\bigl[\log p(o_\tau) - \log q(o_\tau | \pi)\bigr]}_{\text{pragmatic}}
 \end{equation}
 
 The candidate--action pair with the lowest EFE is selected:
 \begin{equation}
-  (i^*, a^*) = \arg\min_{(i,a)} G(i, a)
+  \label{eq:efe_select}
+  (i^*, a^*) = \argmin_{(i,a)}\; \EFE(i, a)
 \end{equation}
 
 This selection criterion naturally trades off exploration (choosing
@@ -221,14 +223,14 @@ The engine implements three manipulation types, each dispatched
 via the \texttt{feature\_in\-ter\-ven\-tion} API according to the
 action selected by the POMDP agent at each step:
 
-\textbf{Ablation:} Sets transcoder feature $(l, p, f)$ to zero:
+Ablation sets transcoder feature $(l, p, f)$ to zero:
 \begin{equation}
   \label{eq:ablation}
   \text{logits}_{\text{abl}} = \text{feature\_intervention}(\text{prompt},
   [(l, p, f, 0)])
 \end{equation}
 
-\textbf{Activation Patching:} Replaces feature activation with a
+Activation patching replaces the feature activation with a
 mean-centred reference value $r$:
 \begin{equation}
   \label{eq:patching}
@@ -236,7 +238,7 @@ mean-centred reference value $r$:
   [(l, p, f, r)])
 \end{equation}
 
-\textbf{Feature Steering:} Scales activation by multiplier $m$:
+Feature steering scales the activation by a multiplier $m$:
 \begin{equation}
   \label{eq:steering}
   \text{logits}_{\text{steer}} = \text{feature\_intervention}(\text{prompt},

@@ -81,7 +81,7 @@ intervention type.  These are calibrated priors informed by the
 distinct informational roles of ablation, activation patching, and
 feature steering.
 
-\textbf{Ablation (action~0)} is an exploratory intervention that
+Ablation (action~0) is an exploratory intervention that
 removes a feature entirely, producing the broadest distribution of
 possible outcomes.  Its transition matrix has the lowest diagonal
 concentration (50\% stay, 25\% down, 25\% up), yielding the highest
@@ -90,14 +90,14 @@ decomposition, this high entropy translates into high expected
 information gain, making ablation the preferred action when the
 agent is uncertain about a feature's importance.
 
-\textbf{Activation patching (action~1)} replaces the feature
+Activation patching (action~1) replaces the feature
 activation with a reference value, providing a moderately
 informative signal.  The transition is more concentrated
 (70\% stay, 15\% down, 15\% up), producing moderate information
 gain.  Patching is selected when the agent has partial evidence
 and seeks to refine its importance estimate.
 
-\textbf{Feature steering (action~2)} scales the feature activation
+Feature steering (action~2) scales the feature activation
 by a multiplier while preserving its directional contribution.
 This near-identity transition (90\% stay, 5\% down, 5\% up) has
 the lowest transition entropy, making it the preferred action
@@ -108,7 +108,7 @@ All transition probabilities are symmetric around the current state
 to ensure that the expected utility is similar across actions, so
 that the epistemic term (information gain) drives action selection.
 
-\textbf{Why these specific values.} The three diagonals are not tuned to
+The three diagonals are not tuned to
 maximise a metric; they encode a deliberate ordering of transition entropy
 that mirrors the operational semantics of the interventions. Ablation deletes a
 feature and is the most disruptive, so it should admit the widest range of
@@ -124,7 +124,7 @@ distributions; the boundary states absorb the missing mass, giving the corner
 diagonals of $0.75/0.85/0.95$ shown in
 Appendix~\ref{app:generative_model}.
 
-\textbf{The $0.01$ importance-scaling factor.} The factor in
+The $0.01$ importance-scaling factor in
 Appendix~\ref{app:selector} is not arbitrary: normalised graph importance lies in
 $[0,1]$, whereas observed ablation KL on these models lies in roughly
 $[10^{-4},10^{-2}]$. Multiplying by $0.01$ maps the top of the importance range onto
@@ -133,7 +133,7 @@ is discretised into the same bins the agent will later see from real interventio
 without it, every candidate would saturate the ``large-KL'' bin and the prior would
 be uninformative.
 
-\textbf{Sensitivity.} Because these are fixed rather than learned, their
+Because these thresholds are fixed rather than learned, their
 influence is tested directly. Section~\ref{sec:stats_protocol} re-runs Gemma IOI with the KL
 and activation discretisation thresholds scaled by $\pm 20\%$; the resulting bounded
 oracle efficiencies are reported in Table~\ref{tab:sensitivity}. Efficiency is stable
@@ -176,7 +176,7 @@ KL achieved by an ablation-only selector to that achieved by the ablation oracle
                                   {\sum_{t=1}^{B} \text{KL}^{\text{abl}}_{i_t^{\text{oracle}}}}
                              \times 100\% \in [0,100]\%.
 \end{equation}
-Both numerator and denominator are ablation KL, so $\eta$ is genuinely bounded by
+Both numerator and denominator are ablation KL, so $\eta$ is bounded by
 $100\%$. For the full multi-action agent the Relative Cumulative KL is reported
 instead (RCK, Equation~\ref{eq:rck}), which divides the agent's (possibly
 steering-inflated) cumulative KL by the same ablation-oracle denominator and may

@@ -57,6 +57,10 @@ refer to the revised compiled PDF.
   \item Action-matched (steering-enabled) variants of random, greedy, and bandit
         were added, plus a random-action control, and the Llama multi-step
         shortfall is now treated as a limitation.
+  \item A plain UCB baseline, a cross-task head-to-head efficiency table
+        (Table~9, p.~29), a hyperparameter-sensitivity table (Table~8, p.~29),
+        and an online belief-convergence figure (Figure~9, p.~24) were added to
+        strengthen the empirical comparison.
 \end{itemize}
 
 \section*{Point-by-point responses}
@@ -84,7 +88,7 @@ upper bound. This should be mathematically explained or renamed.
 \end{comment}
 \response The metric has been split and renamed. For ablation-only selectors,
 every method and the oracle draw from the same quantity (ablation KL), so the
-ratio is a genuine bounded efficiency $\eta\in[0,100]\%$
+ratio is a bounded efficiency $\eta\in[0,100]\%$
 (Equation for $\eta$, Section ``Metrics'', p.~16). For the full multi-action
 agent, which may steer, the cumulative KL is compared with the ablation oracle
 through a separate quantity, the Relative Cumulative KL
@@ -136,7 +140,7 @@ explicit.
 multi-step test (33.6\% vs.\ 76.4\%). This negative result is significant and
 should be treated as a limitation, not an architectural explanation.
 \end{comment}
-\response The Llama multi-step shortfall is now reported as a genuine limitation.
+\response The Llama multi-step shortfall is now reported as a limitation.
 Under the fair ablation-only protocol the multi-step results appear in Table~5
 (p.~26), and the Discussion (``Cross-Model Generality'' and ``Limitations'',
 p.~31) states that the agent underperforms on Llama multi-step and that a
@@ -158,7 +162,12 @@ these show that on Gemma every steering-enabled strategy, including random+steer
 (888\%), produces RCK well above 100\%, so the amplification is attributable to
 the steering action itself rather than to which feature is selected. This
 decomposition is exactly what isolates EFE-guided selection from the steering
-effect, and is discussed in Section ``Multi-Action Amplification'' (p.~22).
+effect, and is discussed in Section ``Multi-Action Amplification'' (p.~22). A
+plain UCB baseline (textbook UCB1 over layers, using observed KL as reward) was
+also added to separate the contribution of the heuristic bandit's hand-built
+importance and locality priors from upper-confidence exploration alone, and a
+cross-task head-to-head comparison of all ablation-only selectors is reported in
+Table~9 (p.~29).
 
 \begin{comment}
 \reviewerpoint{8} In Gemma IOI the agent selects feature steering in 94 of 100
@@ -192,7 +201,10 @@ full $B$ matrices for every action are now given explicitly in the appendix
 sweep over the discretisation thresholds (Table~7, p.~28) together with a
 hyperparameter sweep over the agent's core parameters (Table~8, p.~29) shows the
 qualitative ordering is preserved, so the conclusions are not artefacts of these
-fixed values.
+fixed values. The online Dirichlet learning is also shown to converge: Figure~9
+(p.~24) plots the mean per-step L1 drift of the KL-likelihood matrix decreasing
+across IOI prompts, confirming that the learned observation model stabilises
+within the intervention budget.
 
 \section*{English language and style}
 The manuscript has been copy-edited throughout for concision and a consistent

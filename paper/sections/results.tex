@@ -24,9 +24,8 @@ cumulative oracle KL, $\leq 100\%$ by construction) are reported with bootstrap
 \begin{table}[H]
 \centering
 \caption{IOI feature discovery under the fair ablation-only protocol:
-per-prompt mean KL with median and inter-quartile range [Q1, Q3], and
-bounded oracle efficiency ($\leq 100\%$) with bootstrap 95\% CIs over
-5 prompts.}
+per-prompt mean KL, median, inter-quartile range [Q1, Q3], and bounded
+oracle efficiency with bootstrap 95\% CIs over 5 prompts.}
 \label{tab:ioi}
 {\small
 \begin{tabular}{llcccc}
@@ -146,9 +145,8 @@ pure random-action control (Table~\ref{tab:rck}).
 \begin{table}[H]
 \centering
 \caption{Relative Cumulative KL (RCK, \%) of the multi-action POMDP
-versus action-matched baselines, relative to the ablation oracle
-(100\%).  Bootstrap 95\% CIs over prompts.  Values $>100\%$ reflect
-steering-driven amplification, not better structure discovery.}
+versus action-matched baselines, relative to the ablation oracle (100\%),
+with bootstrap 95\% CIs over prompts.}
 \label{tab:rck}
 {\small
 \begin{tabular}{llcc}
@@ -193,9 +191,7 @@ Figure~\ref{fig:rck} visualises the decomposition.
 \input{figures/rck_comparison}
 \caption{Relative Cumulative KL of the multi-action POMDP against
 action-matched baselines (Gr+st, Ba+st, Rnd+st) and a random-action
-control (RndAct), relative to the ablation oracle (100\%, dashed).
-On Gemma even random steering exceeds 100\%; on Llama the POMDP
-chooses ablation and stays near the oracle.}
+control (RndAct), relative to the ablation oracle (100\%, dashed).}
 \label{fig:rck}
 \end{figure}
 
@@ -205,7 +201,7 @@ Causal controllability is tested by scaling individual transcoder
 feature activations across a multiplier sweep
 $m \in \{0, 1.5, 2, 3, 5, 10\}$ on 5 concept prompts with 10
 circuit-selected features each (50 features per model).  To separate
-genuine selectivity from out-of-distribution (OOD) effects of large
+selectivity from out-of-distribution (OOD) effects of large
 multipliers, a matched random-feature control of 10 random
 active features per prompt is subjected to the identical sweep.  At
 each multiplier, the number of top-token prediction changes
@@ -261,8 +257,8 @@ privileged selectivity.
 A complementary view of the largest multipliers confirms that steering
 amplifies coherent concepts rather than merely degrading the model. As
 the multiplier increases from $0$ to $10$, the mean probability mass on
-the steered top-1 token remains high (approximately $0.43$ on Gemma),
-while the set of distinct dominant tokens broadens from 5 to 11 and
+the steered top-1 token remains high (approximately $0.43$ on Gemma).
+At the same time, the set of distinct dominant tokens broadens from 5 to 11 and
 increasingly features content tokens associated with the steered
 concepts (for example geographic and landmark tokens) rather than
 collapsing onto generic function words. This indicates that large
@@ -349,9 +345,7 @@ reports bounded oracle efficiency under the fair ablation-only protocol.
 \begin{table}[H]
 \centering
 \caption{Multi-step reasoning under the fair ablation-only protocol:
-bounded oracle efficiency with bootstrap 95\% CIs over 3 prompts.
-The oracle's cumulative KL (efficiency denominator) is $0.0101$ (Gemma)
-and $0.2447$ (Llama).}
+bounded oracle efficiency with bootstrap 95\% CIs over 3 prompts.}
 \label{tab:multistep}
 {\small
 \begin{tabular}{llccc}
@@ -379,10 +373,12 @@ and $0.2447$ (Llama).}
 }
 \end{table}
 
+The oracle's cumulative KL, which forms the efficiency denominator, is
+$0.0101$ on Gemma and $0.2447$ on Llama.
 On Gemma, POMDP-abl (73.0\%) again beats random (56.2\%) and is
 competitive with the bandit (78.4\%), plain UCB (73.6\%), and greedy
-(79.4\%), with EAP strongest (98.1\%).  On Llama, however, the result is
-a genuine negative: POMDP-abl collapses to 9.3\%, below random (44.8\%)
+(79.4\%), with EAP strongest (98.1\%).  On Llama, by contrast,
+POMDP-abl reaches 9.3\%, below random (44.8\%)
 and far below the bandit (76.4\%) and plain UCB (75.9\%).  The
 per-prompt bounded efficiencies make the
 failure mode concrete: the agent reaches only 4.4\% and 15.2\% on the
@@ -541,8 +537,7 @@ stream rather than by fine hyperparameter tuning.
 \centering
 \caption{Hyperparameter sensitivity of POMDP-abl bounded oracle
 efficiency (\%) on IOI, varying one factor at a time about the default
-($\gamma{=}16$, $\eta{=}1.0$, pragmatic weight $1.0$; efficiency 82.0\%
-Gemma, 52.1\% Llama).}
+($\gamma{=}16$, $\eta{=}1.0$, pragmatic weight $1.0$).}
 \label{tab:hpsensitivity}
 {\small
 \begin{tabular}{llcc}
@@ -613,10 +608,10 @@ single-step domain tasks (79.9\%, above both bandit and UCB), but on
 IOI its efficiency (52.1\%) is only marginally above random (48.4\%)
 and well below the bandit (88.2\%) and EAP (95.2\%), and the coarse
 layer-role discretisation hurts it badly on multi-step reasoning
-(Section~\ref{sec:multistep}).  A notable contrast is that the heuristic
+(Section~\ref{sec:multistep}).  The heuristic
 bandit and the plain UCB baseline track each other closely on Gemma
 (both near 74--78\%), indicating that the bandit's hand-built importance
-and locality priors add little there, whereas on Llama IOI the heuristic
+and locality priors add little there. On Llama IOI, by contrast, the heuristic
 bandit (88.2\%) far exceeds plain UCB (55.2\%), showing that those priors
 carry the bandit on the shallower architecture.  Overall the agent is
 competitive with, and often slightly ahead of, the action-matched
@@ -650,32 +645,28 @@ H4: Transfer     & Qualitative replication & Partial (Gemma full, Llama partial)
 }
 \end{table}
 
-\textbf{H1 (Efficiency).}  Under the fair ablation-only protocol,
-POMDP-abl significantly beats random on Gemma IOI ($+43.5\%$,
-paired permutation $p=0.031$, $n=5$) but not on Llama IOI ($+7.8\%$,
-$p=0.41$).  \emph{Verdict:} accepted for Gemma; not accepted for Llama.
-No claim is made of beating EAP, which is the strongest ablation
-baseline throughout.
+Hypothesis H1 (efficiency) is accepted on Gemma but not on Llama. Under the fair
+ablation-only protocol, POMDP-abl beats random on Gemma IOI ($+43.5\%$,
+paired permutation $p=0.031$, $n=5$) but the gain on Llama IOI is not significant
+($+7.8\%$, $p=0.41$). No claim is made of beating EAP, which is the strongest
+ablation baseline throughout.
 
-\textbf{H2 (Causal controllability).}  H2a (manipulability) is
-supported: steering produces dose-dependent prediction changes far
-above chance ($p<10^{-8}$ at $m{=}10$).  H2b (selectivity) is
-\emph{not} supported: circuit-selected features are only marginally,
-and not significantly (Fisher exact, n.s.), more likely to change
-predictions than random active features, and the largest multipliers
-are off-distribution.  \emph{Verdict:} manipulability accepted,
-selectivity not established.
+Hypothesis H2 (causal controllability) is partially supported. H2a (manipulability)
+holds, as steering produces dose-dependent prediction changes far above chance
+($p<10^{-8}$ at $m{=}10$). H2b (selectivity) is not supported: circuit-selected
+features are only marginally, and not significantly (Fisher exact, n.s.), more
+likely to change predictions than random active features, and the largest
+multipliers are off-distribution.
 
-\textbf{H3 (Discovery quality).}  Bounded oracle efficiency exceeds the
-50\% criterion on Gemma IOI (82.0\%), Gemma multi-step (73.0\%), Llama
-IOI (52.1\%) and all domain tasks, but \emph{fails} on Llama multi-step
-(9.3\%, partially remedied to 37.8\% with finer bins).
-\emph{Verdict:} accepted except for Llama multi-step.
+Hypothesis H3 (discovery quality) is accepted except for Llama multi-step.
+Bounded oracle efficiency exceeds the 50\% criterion on Gemma IOI (82.0\%),
+Gemma multi-step (73.0\%), Llama IOI (52.1\%) and all domain tasks, and falls to
+9.3\% on Llama multi-step (37.8\% with finer bins).
 
-\textbf{H4 (Cross-architecture transfer).}  Findings replicate fully on
-Gemma and partially on Llama, where the agent is competitive on IOI and
-domain tasks but the layer-role discretisation degrades multi-step
-performance.  \emph{Verdict:} partially accepted.
+Hypothesis H4 (cross-architecture transfer) is partially accepted. Findings
+replicate fully on Gemma and partially on Llama, where the agent is competitive
+on IOI and domain tasks but the layer-role discretisation reduces multi-step
+performance.
 
 Limitations of the present work are discussed in Section~\ref{sec:discussion}.
 
@@ -697,66 +688,58 @@ multi-action RCK noted separately.
 \begin{table}[H]
 \centering
 \caption{Contextual comparison of \ACD{} with published circuit
-discovery methods on IOI.  \ACD{} adds an intervention-selection layer
-on top of an existing attribution backend.}
+discovery methods on IOI.}
 \label{tab:sota}
 \resizebox{\textwidth}{!}{%
 \small
-\begin{tabular}{p{3.2cm}p{3.2cm}p{2.8cm}p{3.0cm}p{2.0cm}p{1.5cm}p{2.0cm}}
+\begin{tabular}{p{3.5cm}p{3.0cm}p{3.2cm}p{2.0cm}p{1.5cm}p{2.0cm}}
 \toprule
-\textbf{Method} & \textbf{Authors (Reference)} & \textbf{Approach} &
+\textbf{Method} & \textbf{Approach} &
   \textbf{Model} & \textbf{Budget $B$} & \textbf{Adapt.} & \textbf{Oracle Eff.} \\
 \midrule
-ACDC
-  & Conmy et al.\ (NeurIPS 2023~\cite{Conmy2023})
+\ACDC~\cite{Conmy2023}
   & Exhaustive edge pruning
-  & GPT-2 Small (117M)
+  & GPT-2 Small: 117M
   & $O(E)$, $\sim$5k--50k
   & Thresh.
   & N/A \\
-EAP
-  & Syed et al.\ (arXiv 2023~\cite{Syed2023})
+\EAP~\cite{Syed2023}
   & Gradient attribution
-  & GPT-2 Small (117M)
+  & GPT-2 Small: 117M
   & $O(E)$, single pass
   & No
   & N/A \\
-Causal Tracing
-  & Meng et al.\ (NeurIPS 2022~\cite{Meng2022})
+Causal Tracing~\cite{Meng2022}
   & Activation patch sweep
   & GPT (up to 175B)
   & $O(L{\times}T)$
   & No
   & N/A \\
-Sparse Feature Circuits
-  & Marks et al.\ (arXiv 2024~\cite{marks2024sparse})
+Sparse Feature Circuits~\cite{marks2024sparse}
   & EAP + SAE features
   & Pythia 2.8B
   & $O(E)$, single pass
   & No
   & N/A \\
-Dict.\ Learning Circuits
-  & He et al.\ (arXiv 2024~\cite{He2024})
+Dict.\ Learning Circuits~\cite{He2024}
   & Patch-free + dict.\ learning
   & Various $\leq$7B
   & $O(E)$, single pass
   & No
   & N/A \\
 \midrule
-EAP ranking (this backend)
-  & this work
+\EAP{} ranking (this backend)
   & Attribution-ranked ablation
-  & Gemma-2-2B / Llama-3.2-1B
+  & Gemma-2-2B; Llama-3.2-1B
   & $B=20$
   & No
-  & 91.9\% / 95.2\% \\
+  & 91.9\%; 95.2\% \\
 \textbf{\ACD{} POMDP-abl (this work)}
-  & Sathish et al.\ (this work)
   & POMDP-EFE, ablation only
-  & Gemma-2-2B / Llama-3.2-1B
+  & Gemma-2-2B; Llama-3.2-1B
   & $B=20$
   & Yes
-  & 82.0\% / 52.1\% \\
+  & 82.0\%; 52.1\% \\
 \bottomrule
 \end{tabular}%
 }

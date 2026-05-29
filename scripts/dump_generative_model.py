@@ -111,6 +111,7 @@ def main():
                  "$P(o^{\\mathrm{KL}}\\mid s_{\\mathrm{imp}}, s_{\\mathrm{causal}})$ "
                  "over the four KL levels (negligible, small, medium, large):")
     lines.append("\\[")
+    lines.append("\\mathbf{A}^{(0)} =")
     lines.append("\\begin{array}{ll|cccc}")
     lines.append("\\text{imp.} & \\text{causal} & \\text{neg.} & \\text{small} & \\text{med.} & \\text{large} \\\\ \\hline")
     for s0 in range(A[0].shape[1]):
@@ -127,6 +128,7 @@ def main():
                  "$P(o^{\\mathrm{act}}\\mid s_{\\mathrm{imp}}, s_{\\mathrm{role}})$ "
                  "over the four activation levels (inactive, low, moderate, high):")
     lines.append("\\[")
+    lines.append("\\mathbf{A}^{(1)} =")
     lines.append("\\begin{array}{ll|cccc}")
     lines.append("\\text{imp.} & \\text{role} & \\text{inact.} & \\text{low} & \\text{mod.} & \\text{high} \\\\ \\hline")
     n_role = A[1].shape[2]
@@ -145,6 +147,7 @@ def main():
                  "$P(o^{\\mathrm{conn}}\\mid s_{\\mathrm{role}}, s_{\\mathrm{causal}})$ "
                  "over the three connectivity levels (sparse, moderate, dense):")
     lines.append("\\[")
+    lines.append("\\mathbf{A}^{(2)} =")
     lines.append("\\begin{array}{ll|ccc}")
     lines.append("\\text{role} & \\text{causal} & \\text{sparse} & \\text{mod.} & \\text{dense} \\\\ \\hline")
     for s1 in range(A[2].shape[2]):

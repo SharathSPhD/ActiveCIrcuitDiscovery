@@ -52,6 +52,7 @@ The priors $\mathbf{D}$ over the three hidden-state factors are:
 \]
 The observation likelihood $\mathbf{A}^{(0)}$ for the KL modality is independent of layer role; each row gives $P(o^{\mathrm{KL}}\mid s_{\mathrm{imp}}, s_{\mathrm{causal}})$ over the four KL levels (negligible, small, medium, large):
 \[
+\mathbf{A}^{(0)} =
 \begin{array}{ll|cccc}
 \text{imp.} & \text{causal} & \text{neg.} & \text{small} & \text{med.} & \text{large} \\ \hline
 \text{negligible} & \text{weak} & 0.631 & 0.243 & 0.078 & 0.049 \\
@@ -70,6 +71,7 @@ The observation likelihood $\mathbf{A}^{(0)}$ for the KL modality is independent
 \]
 The activation modality $\mathbf{A}^{(1)}$ depends on importance and layer role (it is independent of causal strength); each row gives $P(o^{\mathrm{act}}\mid s_{\mathrm{imp}}, s_{\mathrm{role}})$ over the four activation levels (inactive, low, moderate, high):
 \[
+\mathbf{A}^{(1)} =
 \begin{array}{ll|cccc}
 \text{imp.} & \text{role} & \text{inact.} & \text{low} & \text{mod.} & \text{high} \\ \hline
 \text{negligible} & \text{early} & 0.550 & 0.250 & 0.120 & 0.080 \\
@@ -88,6 +90,7 @@ The activation modality $\mathbf{A}^{(1)}$ depends on importance and layer role 
 \]
 The connectivity modality $\mathbf{A}^{(2)}$ depends on layer role and causal strength (it is independent of importance); each row gives $P(o^{\mathrm{conn}}\mid s_{\mathrm{role}}, s_{\mathrm{causal}})$ over the three connectivity levels (sparse, moderate, dense):
 \[
+\mathbf{A}^{(2)} =
 \begin{array}{ll|ccc}
 \text{role} & \text{causal} & \text{sparse} & \text{mod.} & \text{dense} \\ \hline
 \text{early} & \text{weak} & 0.560 & 0.300 & 0.140 \\
