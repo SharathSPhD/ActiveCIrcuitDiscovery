@@ -178,6 +178,69 @@ class BanditSelector:
                 self.uncertainties[j] *= 0.9
 
 
+class BanditUCBSelector:
+    """Plain UCB1 bandit over layers (no hand-tuned inductive bias).
+
+    Unlike :class:`BanditSelector`, which folds in graph-importance priors and
+    positional/layer locality heuristics, this baseline treats each layer as an
+    arm and applies the textbook UCB1 rule using the observed KL as reward.
+    Within the chosen arm it picks the highest-importance unobserved candidate
+    purely as a tie-break.  It isolates how much of the heuristic bandit's
+    performance comes from its engineered priors rather than from
+    upper-confidence exploration alone.
+    """
+
+    def __init__(self, candidates: List[Dict], exploration_weight: float = 2.0):
+        self.candidates = candidates
+        self.exploration_weight = exploration_weight
+        self.observed: set = set()
+        self.selection_order: List[int] = []
+        self.layers = sorted({c['layer'] for c in candidates})
+        self.layer_reward_sum: Dict[int, float] = defaultdict(float)
+        self.layer_pulls: Dict[int, int] = defaultdict(int)
+        self._by_layer: Dict[int, List[int]] = defaultdict(list)
+        for i, c in enumerate(candidates):
+            self._by_layer[c['layer']].append(i)
+        for l in self._by_layer:
+            self._by_layer[l].sort(key=lambda i: candidates[i]['imp'], reverse=True)
+        self._t = 0
+
+    def _layer_ucb(self, layer: int) -> float:
+        n = self.layer_pulls[layer]
+        if n == 0:
+            return float('inf')  # optimistic initialisation: try every arm once
+        mean = self.layer_reward_sum[layer] / n
+        bonus = self.exploration_weight * np.sqrt(np.log(self._t + 1) / n)
+        return mean + bonus
+
+    def _next_in_layer(self, layer: int) -> Optional[int]:
+        for i in self._by_layer[layer]:
+            if i not in self.observed:
+                return i
+        return None
+
+    def select_next(self) -> Tuple[int, Dict]:
+        self._t += 1
+        order = sorted(self.layers, key=self._layer_ucb, reverse=True)
+        for layer in order:
+            idx = self._next_in_layer(layer)
+            if idx is not None:
+                self.selection_order.append(idx)
+                return idx, self.candidates[idx]
+        # all candidates observed; fall back to first unobserved overall
+        for i in range(len(self.candidates)):
+            if i not in self.observed:
+                self.selection_order.append(i)
+                return i, self.candidates[i]
+        return 0, self.candidates[0]
+
+    def update(self, idx: int, kl_value: float) -> None:
+        self.observed.add(idx)
+        layer = self.candidates[idx]['layer']
+        self.layer_reward_sum[layer] += kl_value
+        self.layer_pulls[layer] += 1
+
+
 # ======================================================================
 # Candidate extraction
 # ======================================================================
@@ -288,6 +351,37 @@ def steer_feature(
     return max(0, kl), ld, new_top
 
 
+def steer_feature_topk(
+    model: ReplacementModel, prompt: str, feat: Dict,
+    multiplier: float, clean_probs: torch.Tensor, clean_last: torch.Tensor,
+    k: int = 5,
+) -> Tuple[float, float, str, List[Tuple[str, float]]]:
+    """Steer a feature and return (KL, logit_diff, new_top, top-k tokens).
+
+    The top-k decoded tokens with their probabilities let us check whether a
+    large steering factor amplifies an interpretable concept rather than merely
+    degrading the distribution.
+    """
+    target_val = feat['act'] * multiplier
+    iv, _ = model.feature_intervention(
+        prompt, [(feat['layer'], feat['pos'], feat['fidx'], target_val)],
+        return_activations=False
+    )
+    iv_last = iv[0, -1, :]
+    iv_probs = torch.softmax(iv_last, -1)
+    kl = float(torch.nn.functional.kl_div(
+        torch.log(iv_probs + 1e-10), clean_probs, reduction='sum'
+    ).item())
+    ld = float(torch.norm(iv_last - clean_last).item())
+    topv, topi = torch.topk(iv_probs, k)
+    topk = [
+        (model.tokenizer.decode([int(i)]), float(p))
+        for p, i in zip(topv.tolist(), topi.tolist())
+    ]
+    new_top = topk[0][0] if topk else ""
+    return max(0, kl), ld, new_top, topk
+
+
 def patch_feature(
     model: ReplacementModel, prompt: str, feat: Dict,
     clean_probs: torch.Tensor, clean_last: torch.Tensor,
@@ -389,12 +483,15 @@ def _precompute_ground_truth(model, prompt, candidates, clean_probs, clean_last)
     return gt, gt_sorted
 
 
-def _run_baselines(candidates, gt, gt_sorted, budget):
+def _run_baselines(candidates, gt, gt_sorted, budget, baseline_kwargs=None):
     """Run all ablation-only and action-matched baselines from precomputed KL."""
     nb = min(budget, len(candidates))
+    bk = baseline_kwargs or {}
+    expl_w = bk.get("exploration_weight", 2.0)
+    seed = bk.get("seed", RANDOM_SEED)
 
     # --- ablation-only baselines ---
-    bandit = BanditSelector(candidates, exploration_weight=2.0)
+    bandit = BanditSelector(candidates, exploration_weight=expl_w)
     bandit_kls = []
     for _ in range(nb):
         idx, feat = bandit.select_next()
@@ -402,6 +499,15 @@ def _run_baselines(candidates, gt, gt_sorted, budget):
         bandit.update(idx, kl)
         bandit_kls.append(kl)
     bandit_order = list(bandit.selection_order)
+
+    # plain UCB1-over-layers bandit (no engineered priors)
+    ucb = BanditUCBSelector(candidates, exploration_weight=expl_w)
+    ucb_kls = []
+    for _ in range(nb):
+        idx, feat = ucb.select_next()
+        kl = gt[feat['fid']]['kl']
+        ucb.update(idx, kl)
+        ucb_kls.append(kl)
 
     greedy_kls = [gt[candidates[i]['fid']]['kl'] for i in range(nb)]
 
@@ -423,7 +529,7 @@ def _run_baselines(candidates, gt, gt_sorted, budget):
     bandit_steer_kls = [gt[candidates[idx]['fid']]['kl_steer'] for idx in bandit_order[:budget]]
 
     # --- stochastic baselines (10 trials) ---
-    rng = np.random.default_rng(RANDOM_SEED)
+    rng = np.random.default_rng(seed)
     rand_abl, rand_steer, rand_act = [], [], []
     for _ in range(N_RANDOM_TRIALS):
         sh = list(range(len(candidates)))
@@ -448,16 +554,19 @@ def _run_baselines(candidates, gt, gt_sorted, budget):
     return {
         # ablation-only
         'bandit_kls': bandit_kls,
+        'ucb_kls': ucb_kls,
         'greedy_kls': greedy_kls,
         'eap_kls': eap_kls,
         'oracle_kls': oracle_kls,
         'oracle_steer_kls': oracle_steer_kls,
         'bandit_cumkl': float(np.sum(bandit_kls)),
+        'ucb_cumkl': float(np.sum(ucb_kls)),
         'greedy_cumkl': float(np.sum(greedy_kls)),
         'eap_cumkl': float(np.sum(eap_kls)),
         'oracle_cumkl': float(np.sum(oracle_kls)),
         'oracle_steer_cumkl': float(np.sum(oracle_steer_kls)),
         'bandit_mean': float(np.mean(bandit_kls)) if bandit_kls else 0.0,
+        'ucb_mean': float(np.mean(ucb_kls)) if ucb_kls else 0.0,
         'greedy_mean': float(np.mean(greedy_kls)),
         'eap_mean': float(np.mean(eap_kls)) if eap_kls else 0.0,
         # action-matched
@@ -483,7 +592,7 @@ def _layer_dist(gt_sorted, n_layers, top=10):
 
 def _evaluate_prompt(
     model, prompt, candidates, clean_probs, clean_last,
-    budget, n_layers, agent_kwargs=None,
+    budget, n_layers, agent_kwargs=None, baseline_kwargs=None,
 ) -> Tuple[Dict[str, Any], Any]:
     """Run every selector on a single prompt and return the per-prompt record.
 
@@ -493,11 +602,11 @@ def _evaluate_prompt(
     ai_kls, ai_actions, agent = _run_agent_multi(
         model, prompt, candidates, clean_probs, clean_last, budget, n_layers, agent_kwargs
     )
-    ai_abl_kls, _ = _run_agent_abl(
+    ai_abl_kls, abl_agent = _run_agent_abl(
         model, prompt, candidates, clean_probs, clean_last, budget, n_layers, agent_kwargs
     )
     gt, gt_sorted = _precompute_ground_truth(model, prompt, candidates, clean_probs, clean_last)
-    bl = _run_baselines(candidates, gt, gt_sorted, budget)
+    bl = _run_baselines(candidates, gt, gt_sorted, budget, baseline_kwargs)
 
     record = {
         'prompt': prompt,
@@ -512,6 +621,8 @@ def _evaluate_prompt(
         'layer_distribution': _layer_dist(gt_sorted, n_layers),
         'agent_entropy_history': agent.get_belief_entropy_history(),
         'agent_efe_history': agent.get_efe_history(),
+        'agent_a_convergence': agent.get_a_drift_history(),
+        'agent_abl_a_convergence': abl_agent.get_a_drift_history(),
         'agent_converged': agent.is_converged,
     }
     record.update(bl)
@@ -531,6 +642,7 @@ def _aggregate(all_results: List[Dict[str, Any]], task: str, budget: int) -> Dic
     ai_mean = sm('ai_mean')
     ai_abl_mean = sm('ai_abl_mean')
     bandit_mean = sm('bandit_mean')
+    ucb_mean = sm('ucb_mean')
     greedy_mean = sm('greedy_mean')
     eap_mean = sm('eap_mean')
     rand_mean = sm('random_mean')
@@ -538,6 +650,7 @@ def _aggregate(all_results: List[Dict[str, Any]], task: str, budget: int) -> Dic
     ai_cum = sm('ai_cumkl')
     ai_abl_cum = sm('ai_abl_cumkl')
     bandit_cum = sm('bandit_cumkl')
+    ucb_cum = sm('ucb_cumkl')
     greedy_cum = sm('greedy_cumkl')
     eap_cum = sm('eap_cumkl')
     rand_cum = sm('random_cumkl')
@@ -557,6 +670,7 @@ def _aggregate(all_results: List[Dict[str, Any]], task: str, budget: int) -> Dic
         'ai_mean_kl': ai_mean, 'ai_std_kl': ss('ai_mean'),
         'ai_abl_mean_kl': ai_abl_mean, 'ai_abl_std_kl': ss('ai_abl_mean'),
         'bandit_mean_kl': bandit_mean, 'bandit_std_kl': ss('bandit_mean'),
+        'ucb_mean_kl': ucb_mean, 'ucb_std_kl': ss('ucb_mean'),
         'greedy_mean_kl': greedy_mean, 'greedy_std_kl': ss('greedy_mean'),
         'eap_mean_kl': eap_mean, 'eap_std_kl': ss('eap_mean'),
         'random_mean_kl': rand_mean, 'random_std_kl': ss('random_mean'),
@@ -566,6 +680,7 @@ def _aggregate(all_results: List[Dict[str, Any]], task: str, budget: int) -> Dic
         # ablation-comparable oracle efficiency (bounded by the ablation oracle)
         'ai_abl_oracle_efficiency': float(ai_abl_cum / od * 100),
         'bandit_oracle_efficiency': float(bandit_cum / od * 100),
+        'ucb_oracle_efficiency': float(ucb_cum / od * 100),
         'greedy_oracle_efficiency': float(greedy_cum / od * 100),
         'eap_oracle_efficiency': float(eap_cum / od * 100),
         'random_oracle_efficiency': float(rand_cum / od * 100),
@@ -593,6 +708,7 @@ def run_ioi_experiment(
     max_per_layer: int = 3,
     max_candidates: int = 40,
     agent_kwargs: Optional[Dict[str, Any]] = None,
+    baseline_kwargs: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
     """IOI experiment comparing all selectors."""
     n_layers = model.cfg.n_layers
@@ -613,7 +729,7 @@ def run_ioi_experiment(
 
         record, gt_sorted = _evaluate_prompt(
             model, prompt, candidates, clean_probs, clean_last,
-            budget, n_layers, agent_kwargs,
+            budget, n_layers, agent_kwargs, baseline_kwargs,
         )
         record['n_features'] = int(raw.active_features.shape[0])
         record['ground_truth_top5'] = [(fid, v['kl']) for fid, v in gt_sorted[:5]]
@@ -679,12 +795,13 @@ def run_steering_experiment(
             for feat in feats:
                 fr = {'fid': feat['fid'], 'layer': feat['layer'], 'act': feat['act']}
                 for mult in multipliers:
-                    kl, ld, new_top = steer_feature(
-                        model, prompt, feat, mult, clean_probs, clean_last
+                    kl, ld, new_top, topk = steer_feature_topk(
+                        model, prompt, feat, mult, clean_probs, clean_last, k=5
                     )
                     fr[f'mult_{mult}'] = {
                         'kl': kl, 'logit_diff': ld, 'new_top': new_top,
                         'prediction_changed': new_top != clean_top,
+                        'top_tokens': topk,
                     }
                     per_mult[mult].append(kl)
                 results.append(fr)
@@ -723,6 +840,7 @@ def run_multistep_experiment(
     max_per_layer: int = 3,
     max_candidates: int = 40,
     agent_kwargs: Optional[Dict[str, Any]] = None,
+    baseline_kwargs: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
     """Multi-step reasoning experiment with pymdp agent."""
     n_layers = model.cfg.n_layers
@@ -744,7 +862,7 @@ def run_multistep_experiment(
 
         record, gt_sorted = _evaluate_prompt(
             model, prompt, candidates, clean_probs, clean_last,
-            budget, n_layers, agent_kwargs,
+            budget, n_layers, agent_kwargs, baseline_kwargs,
         )
         record['clean_prediction'] = clean_top
         record['top10_features'] = [
@@ -772,6 +890,7 @@ def run_domain_experiment(
     max_per_layer: int = 3,
     max_candidates: int = 40,
     agent_kwargs: Optional[Dict[str, Any]] = None,
+    baseline_kwargs: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
     """Multi-domain experiment across 5 cognitive domains."""
     n_layers = model.cfg.n_layers
@@ -797,7 +916,7 @@ def run_domain_experiment(
 
             record, gt_sorted = _evaluate_prompt(
                 model, prompt, candidates, clean_probs, clean_last,
-                budget, n_layers, agent_kwargs,
+                budget, n_layers, agent_kwargs, baseline_kwargs,
             )
             record['clean_prediction'] = clean_top
             record['top10_features'] = [
@@ -810,9 +929,16 @@ def run_domain_experiment(
         ai_means     = [r['ai_mean'] for r in domain_results]
         ai_abl_means = [r['ai_abl_mean'] for r in domain_results]
         bandit_means = [r['bandit_mean'] for r in domain_results]
+        ucb_means    = [r['ucb_mean'] for r in domain_results]
         greedy_means = [r['greedy_mean'] for r in domain_results]
         eap_means    = [r['eap_mean'] for r in domain_results]
         rand_means   = [r['random_mean'] for r in domain_results]
+
+        # cumulative-KL means (for bounded oracle efficiency / RCK in the
+        # head-to-head table)
+        def _cm(key):
+            return float(np.mean([r[key] for r in domain_results if key in r]))
+        oracle_cum = _cm('oracle_cumkl') or 1e-10
 
         by_domain[domain] = {
             'per_prompt': domain_results,
@@ -820,9 +946,15 @@ def run_domain_experiment(
             'ai_mean_kl': float(np.mean(ai_means)),
             'ai_abl_mean_kl': float(np.mean(ai_abl_means)),
             'bandit_mean_kl': float(np.mean(bandit_means)),
+            'ucb_mean_kl': float(np.mean(ucb_means)),
             'greedy_mean_kl': float(np.mean(greedy_means)),
             'eap_mean_kl': float(np.mean(eap_means)),
             'random_mean_kl': float(np.mean(rand_means)),
+            'ai_abl_oracle_efficiency': float(_cm('ai_abl_cumkl') / oracle_cum * 100),
+            'bandit_oracle_efficiency': float(_cm('bandit_cumkl') / oracle_cum * 100),
+            'ucb_oracle_efficiency': float(_cm('ucb_cumkl') / oracle_cum * 100),
+            'eap_oracle_efficiency': float(_cm('eap_cumkl') / oracle_cum * 100),
+            'ai_rck': float(_cm('ai_cumkl') / oracle_cum * 100),
             'ai_vs_random_pct': float((np.mean(ai_means) - np.mean(rand_means)) / max(np.mean(rand_means), 1e-10) * 100),
             'ai_vs_greedy_pct': float((np.mean(ai_means) - np.mean(greedy_means)) / max(np.mean(greedy_means), 1e-10) * 100),
         }
@@ -830,9 +962,15 @@ def run_domain_experiment(
     all_ai     = [d['ai_mean_kl'] for d in by_domain.values()]
     all_ai_abl = [d['ai_abl_mean_kl'] for d in by_domain.values()]
     all_bandit = [d['bandit_mean_kl'] for d in by_domain.values()]
+    all_ucb    = [d['ucb_mean_kl'] for d in by_domain.values()]
     all_greedy = [d['greedy_mean_kl'] for d in by_domain.values()]
     all_eap    = [d['eap_mean_kl'] for d in by_domain.values()]
     all_rand   = [d['random_mean_kl'] for d in by_domain.values()]
+    all_ai_abl_eff = [d['ai_abl_oracle_efficiency'] for d in by_domain.values()]
+    all_bandit_eff = [d['bandit_oracle_efficiency'] for d in by_domain.values()]
+    all_ucb_eff    = [d['ucb_oracle_efficiency'] for d in by_domain.values()]
+    all_eap_eff    = [d['eap_oracle_efficiency'] for d in by_domain.values()]
+    all_ai_rck     = [d['ai_rck'] for d in by_domain.values()]
 
     return {
         'task': 'Domain',
@@ -842,9 +980,15 @@ def run_domain_experiment(
             'ai_mean_kl': float(np.mean(all_ai)),
             'ai_abl_mean_kl': float(np.mean(all_ai_abl)),
             'bandit_mean_kl': float(np.mean(all_bandit)),
+            'ucb_mean_kl': float(np.mean(all_ucb)),
             'greedy_mean_kl': float(np.mean(all_greedy)),
             'eap_mean_kl': float(np.mean(all_eap)),
             'random_mean_kl': float(np.mean(all_rand)),
+            'ai_abl_oracle_efficiency': float(np.mean(all_ai_abl_eff)),
+            'bandit_oracle_efficiency': float(np.mean(all_bandit_eff)),
+            'ucb_oracle_efficiency': float(np.mean(all_ucb_eff)),
+            'eap_oracle_efficiency': float(np.mean(all_eap_eff)),
+            'ai_rck': float(np.mean(all_ai_rck)),
             'ai_vs_random_pct': float((np.mean(all_ai) - np.mean(all_rand)) / max(np.mean(all_rand), 1e-10) * 100),
             'ai_vs_greedy_pct': float((np.mean(all_ai) - np.mean(all_greedy)) / max(np.mean(all_greedy), 1e-10) * 100),
         }
@@ -908,6 +1052,30 @@ def _parse_args() -> argparse.Namespace:
              "(default 0.01; sensitivity analysis).",
     )
     parser.add_argument(
+        "--gamma", type=float, default=None,
+        help="Override the POMDP action-precision gamma "
+             "(agent default 16.0; sensitivity analysis).",
+    )
+    parser.add_argument(
+        "--lr-pa", type=float, default=None,
+        help="Override the Dirichlet likelihood learning rate eta=lr_pA "
+             "(agent default 1.0; sensitivity analysis).",
+    )
+    parser.add_argument(
+        "--pragmatic-weight", type=float, default=None,
+        help="Override the pragmatic (preference) weight on C "
+             "(agent default 1.0; sensitivity analysis).",
+    )
+    parser.add_argument(
+        "--exploration-weight", type=float, default=2.0,
+        help="UCB exploration weight for the heuristic bandit baseline "
+             "(default 2.0).",
+    )
+    parser.add_argument(
+        "--seed", type=int, default=RANDOM_SEED,
+        help=f"Random seed for stochastic baselines (default {RANDOM_SEED}).",
+    )
+    parser.add_argument(
         "--suffix", type=str, default="",
         help="Optional filename suffix for result JSON (e.g. '_finebins').",
     )
@@ -934,12 +1102,27 @@ def main():
         else [args.experiment]
     )
 
-    # Build agent kwargs for the finer-layer-bin remedy / importance scaling.
+    # Build agent kwargs for the finer-layer-bin remedy / importance scaling /
+    # hyperparameter sensitivity sweeps.
     agent_kwargs: Dict[str, Any] = {}
     if args.n_layer_role is not None:
         agent_kwargs["n_layer_role"] = args.n_layer_role
     if args.imp_scale is not None:
         agent_kwargs["imp_scale"] = args.imp_scale
+    if args.gamma is not None:
+        agent_kwargs["gamma"] = args.gamma
+    if args.lr_pa is not None:
+        agent_kwargs["lr_pA"] = args.lr_pa
+    if args.pragmatic_weight is not None:
+        agent_kwargs["pragmatic_weight"] = args.pragmatic_weight
+
+    # Baseline knobs (bandit exploration weight + global seed).
+    global RANDOM_SEED
+    RANDOM_SEED = args.seed
+    baseline_kwargs: Dict[str, Any] = {
+        "exploration_weight": args.exploration_weight,
+        "seed": args.seed,
+    }
 
     _apply_discretisation_overrides(args.kl_threshold_scale, args.act_threshold_scale)
 
@@ -980,7 +1163,7 @@ def main():
             logger.info(f"Running IOI experiment [{model_key}]...")
             _save_graph_for_prompt(model, IOI_PROMPTS[0], f"ioi_{model_key}", graphs_dir)
             t0 = time.time()
-            ioi_results = run_ioi_experiment(model, IOI_PROMPTS, budget=20, agent_kwargs=agent_kwargs)
+            ioi_results = run_ioi_experiment(model, IOI_PROMPTS, budget=20, agent_kwargs=agent_kwargs, baseline_kwargs=baseline_kwargs)
             ioi_results["elapsed_seconds"] = time.time() - t0
             ioi_results["model"] = cfg["model_name"]
             ioi_results["agent_kwargs"] = agent_kwargs
@@ -1005,7 +1188,7 @@ def main():
             logger.info(f"Running multi-step experiment [{model_key}]...")
             _save_graph_for_prompt(model, MULTISTEP_PROMPTS[0], f"multistep_{model_key}", graphs_dir)
             t0 = time.time()
-            ms_results = run_multistep_experiment(model, MULTISTEP_PROMPTS, budget=20, agent_kwargs=agent_kwargs)
+            ms_results = run_multistep_experiment(model, MULTISTEP_PROMPTS, budget=20, agent_kwargs=agent_kwargs, baseline_kwargs=baseline_kwargs)
             ms_results["elapsed_seconds"] = time.time() - t0
             ms_results["model"] = cfg["model_name"]
             ms_results["agent_kwargs"] = agent_kwargs
@@ -1018,7 +1201,7 @@ def main():
             logger.info(f"Running domain experiment [{model_key}]...")
             _save_graph_for_prompt(model, DOMAIN_PROMPTS["geography"][0], f"domain_{model_key}", graphs_dir)
             t0 = time.time()
-            domain_results = run_domain_experiment(model, DOMAIN_PROMPTS, budget=20, agent_kwargs=agent_kwargs)
+            domain_results = run_domain_experiment(model, DOMAIN_PROMPTS, budget=20, agent_kwargs=agent_kwargs, baseline_kwargs=baseline_kwargs)
             domain_results["elapsed_seconds"] = time.time() - t0
             domain_results["model"] = cfg["model_name"]
             domain_results["agent_kwargs"] = agent_kwargs
@@ -1045,6 +1228,7 @@ def main():
                 print(f"\n  IOI ({r['n_prompts']} prompts, budget={r['budget']}):")
                 print(f"    POMDP-abl mean KL:   {agg.get('ai_abl_mean_kl', 0):.6f}")
                 print(f"    Bandit mean KL:      {agg.get('bandit_mean_kl', 0):.6f}")
+                print(f"    UCB mean KL:         {agg.get('ucb_mean_kl', 0):.6f}")
                 print(f"    EAP mean KL:         {agg.get('eap_mean_kl', 0):.6f}")
                 print(f"    Greedy mean KL:      {agg.get('greedy_mean_kl', 0):.6f}")
                 print(f"    Random mean KL:      {agg.get('random_mean_kl', 0):.6f}")

@@ -1947,7 +1947,9 @@
     "oracle_steer_cumkl": 3.059325075626839,
     "oracle_cumkl": 0.19509450513651244
   },
-  "elapsed_seconds": 195.3157250881195,
+  "elapsed_seconds": 200.94013810157776,
   "model": "meta-llama/Llama-3.2-1B",
-  "agent_kwargs": {}
+  "agent_kwargs": {
+    "gamma": 4.0
+  }
 }

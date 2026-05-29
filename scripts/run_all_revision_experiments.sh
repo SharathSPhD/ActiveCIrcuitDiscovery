@@ -25,4 +25,16 @@ run --model gemma --experiment ioi --kl-threshold-scale 1.2 --suffix _sens_kl1.2
 run --model gemma --experiment ioi --act-threshold-scale 0.8 --suffix _sens_act0.8 2>&1 | tee logs/sens_act0.8.log
 run --model gemma --experiment ioi --act-threshold-scale 1.2 --suffix _sens_act1.2 2>&1 | tee logs/sens_act1.2.log
 
+# 4) Hyperparameter sensitivity sweeps on IOI (both models).
+#    action precision gamma (default 16), Dirichlet learning rate eta=lr_pA
+#    (default 1.0), and pragmatic preference weight (default 1.0).
+for mdl in gemma llama; do
+  run --model "$mdl" --experiment ioi --gamma 4    --suffix "_hp_gamma4"    2>&1 | tee "logs/${mdl}_hp_gamma4.log"
+  run --model "$mdl" --experiment ioi --gamma 64   --suffix "_hp_gamma64"   2>&1 | tee "logs/${mdl}_hp_gamma64.log"
+  run --model "$mdl" --experiment ioi --lr-pa 0.5  --suffix "_hp_eta0.5"    2>&1 | tee "logs/${mdl}_hp_eta0.5.log"
+  run --model "$mdl" --experiment ioi --lr-pa 2.0  --suffix "_hp_eta2.0"    2>&1 | tee "logs/${mdl}_hp_eta2.0.log"
+  run --model "$mdl" --experiment ioi --pragmatic-weight 0.5 --suffix "_hp_prag0.5" 2>&1 | tee "logs/${mdl}_hp_prag0.5.log"
+  run --model "$mdl" --experiment ioi --pragmatic-weight 2.0 --suffix "_hp_prag2.0" 2>&1 | tee "logs/${mdl}_hp_prag2.0.log"
+done
+
 echo "ALL REVISION EXPERIMENTS COMPLETE :: $(date)"

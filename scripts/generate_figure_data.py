@@ -58,6 +58,7 @@ def compute_ioi_aggregate(data: dict) -> dict:
     ai_cum     = avg("ai_cumkl")
     ai_abl_cum = avg("ai_abl_cumkl")
     bandit_cum = avg("bandit_cumkl")
+    ucb_cum    = avg("ucb_cumkl") if "ucb_cumkl" in prompts[0] else 0.0
     eap_cum    = avg("eap_cumkl")
     greedy_cum = avg("greedy_cumkl")
     random_cum = avg("random_cumkl")
@@ -75,6 +76,7 @@ def compute_ioi_aggregate(data: dict) -> dict:
         "ai_abl_oracle_eff": eff(ai_abl_cum),
         "eap_oracle_eff": eff(eap_cum),
         "bandit_oracle_eff": eff(bandit_cum),
+        "ucb_oracle_eff": eff(ucb_cum),
         "greedy_oracle_eff": eff(greedy_cum),
         "random_oracle_eff": eff(random_cum),
         # multi-action relative cumulative KL (RCK, may exceed 100%)
@@ -104,6 +106,7 @@ def _compute_cumkl_arrays(data: dict) -> Tuple[np.ndarray, ...]:
 
     ai_abl_cum = np.zeros(budget)
     bandit_cum = np.zeros(budget)
+    ucb_cum    = np.zeros(budget)
     eap_cum    = np.zeros(budget)
     greedy_cum = np.zeros(budget)
     oracle_cum = np.zeros(budget)
@@ -111,21 +114,22 @@ def _compute_cumkl_arrays(data: dict) -> Tuple[np.ndarray, ...]:
     for p in prompts:
         ai_abl_kl = p.get("ai_abl_kls", p.get("ai_kls", []))
         bandit_kl = p.get("bandit_kls", ai_abl_kl)
+        ucb_kl    = p.get("ucb_kls", bandit_kl)
         eap_kl    = p.get("eap_kls", p.get("greedy_kls", []))
         greedy_kl = p.get("greedy_kls", [])
         oracle_kl = p.get("oracle_kls", [])
 
         for arr, cum in [
-            (ai_abl_kl, ai_abl_cum), (bandit_kl, bandit_cum), (eap_kl, eap_cum),
-            (greedy_kl, greedy_cum), (oracle_kl, oracle_cum),
+            (ai_abl_kl, ai_abl_cum), (bandit_kl, bandit_cum), (ucb_kl, ucb_cum),
+            (eap_kl, eap_cum), (greedy_kl, greedy_cum), (oracle_kl, oracle_cum),
         ]:
             for i in range(min(budget, len(arr))):
                 cum[i] += sum(arr[: i + 1]) / n
 
-    return oracle_cum, ai_abl_cum, bandit_cum, eap_cum, greedy_cum, budget
+    return oracle_cum, ai_abl_cum, bandit_cum, ucb_cum, eap_cum, greedy_cum, budget
 
 
-def _write_axis_block(f, oracle, ai_abl, bandit, eap, greedy, budget, title, show_legend=True):
+def _write_axis_block(f, oracle, ai_abl, bandit, ucb, eap, greedy, budget, title, show_legend=True):
     """Write a single axis block for fair (ablation-only) cumulative KL."""
     f.write(
         f"\\nextgroupplot[title={{{title}}},\n"
@@ -140,20 +144,21 @@ def _write_axis_block(f, oracle, ai_abl, bandit, eap, greedy, budget, title, sho
     f.write(f"\\addplot[black, dashed, thick] coordinates {{ {coords(oracle)} }};\n")
     f.write(f"\\addplot[red, thick] coordinates {{ {coords(ai_abl)} }};\n")
     f.write(f"\\addplot[orange, thick] coordinates {{ {coords(bandit)} }};\n")
+    f.write(f"\\addplot[violet, thick, densely dotted] coordinates {{ {coords(ucb)} }};\n")
     f.write(f"\\addplot[teal, thick] coordinates {{ {coords(eap)} }};\n")
     f.write(f"\\addplot[blue, thick] coordinates {{ {coords(greedy)} }};\n\n")
     if show_legend:
-        f.write("\\legend{Oracle, POMDP-abl, Bandit, EAP, Greedy}\n\n")
+        f.write("\\legend{Oracle, POMDP-abl, Bandit, UCB, EAP, Greedy}\n\n")
 
 
 def write_cumulative_kl(gemma_data: dict, llama_data: Optional[dict], out_path: str):
-    g_oracle, g_ai, g_bandit, g_eap, g_greedy, g_budget = _compute_cumkl_arrays(gemma_data)
+    g_oracle, g_ai, g_bandit, g_ucb, g_eap, g_greedy, g_budget = _compute_cumkl_arrays(gemma_data)
 
     with open(out_path, "w") as f:
         f.write("% Auto-generated from experiment results.\n")
 
         if llama_data:
-            l_oracle, l_ai, l_bandit, l_eap, l_greedy, l_budget = _compute_cumkl_arrays(llama_data)
+            l_oracle, l_ai, l_bandit, l_ucb, l_eap, l_greedy, l_budget = _compute_cumkl_arrays(llama_data)
             f.write(
                 "\\begin{tikzpicture}\n"
                 "\\begin{groupplot}[\n"
@@ -162,37 +167,36 @@ def write_cumulative_kl(gemma_data: dict, llama_data: Optional[dict], out_path: 
                 "        horizontal sep=1.2cm,\n"
                 "        ylabels at=edge left,\n"
                 "    },\n"
-                "    width=0.52\\columnwidth,\n"
-                "    height=4.5cm,\n"
+                "    width=0.54\\columnwidth,\n"
+                "    height=5.0cm,\n"
                 "    x label style={font=\\scriptsize},\n"
                 "    y label style={font=\\scriptsize},\n"
                 "    tick label style={font=\\scriptsize},\n"
                 "    title style={font=\\scriptsize\\bfseries},\n"
                 "    legend style={\n"
-                "        font=\\tiny,\n"
-                "        at={(0.98,0.02)},\n"
-                "        anchor=south east\n"
+                "        font=\\tiny, legend columns=-1, draw=none,\n"
+                "        at={(1.18,-0.30)}, anchor=north,\n"
+                "        /tikz/every even column/.append style={column sep=5pt},\n"
                 "    },\n"
                 "]\n\n"
             )
-            _write_axis_block(f, g_oracle, g_ai, g_bandit, g_eap, g_greedy, g_budget, "Gemma-2-2B", show_legend=True)
-            _write_axis_block(f, l_oracle, l_ai, l_bandit, l_eap, l_greedy, l_budget, "Llama-3.2-1B", show_legend=False)
+            _write_axis_block(f, g_oracle, g_ai, g_bandit, g_ucb, g_eap, g_greedy, g_budget, "Gemma-2-2B", show_legend=True)
+            _write_axis_block(f, l_oracle, l_ai, l_bandit, l_ucb, l_eap, l_greedy, l_budget, "Llama-3.2-1B", show_legend=False)
             f.write("\\end{groupplot}\n\\end{tikzpicture}\n")
         else:
             f.write(
                 "\\begin{tikzpicture}\n"
                 "\\begin{axis}[\n"
                 "    width=\\columnwidth,\n"
-                "    height=5cm,\n"
+                "    height=5.5cm,\n"
                 "    xlabel={Intervention step},\n"
                 "    ylabel={Cumulative ablation KL},\n"
                 "    x label style={font=\\scriptsize},\n"
                 "    y label style={font=\\scriptsize},\n"
                 "    tick label style={font=\\scriptsize},\n"
                 "    legend style={\n"
-                "        font=\\tiny,\n"
-                "        at={(0.98,0.02)},\n"
-                "        anchor=south east\n"
+                "        font=\\tiny, legend columns=-1, draw=none,\n"
+                "        at={(0.5,-0.22)}, anchor=north,\n"
                 "    },\n"
                 f"    xmin=1, xmax={g_budget},\n"
                 "]\n\n"
@@ -202,9 +206,10 @@ def write_cumulative_kl(gemma_data: dict, llama_data: Optional[dict], out_path: 
             f.write(f"\\addplot[black, dashed, thick] coordinates {{ {coords(g_oracle)} }};\n")
             f.write(f"\\addplot[red, thick] coordinates {{ {coords(g_ai)} }};\n")
             f.write(f"\\addplot[orange, thick] coordinates {{ {coords(g_bandit)} }};\n")
+            f.write(f"\\addplot[violet, thick, densely dotted] coordinates {{ {coords(g_ucb)} }};\n")
             f.write(f"\\addplot[teal, thick] coordinates {{ {coords(g_eap)} }};\n")
             f.write(f"\\addplot[blue, thick] coordinates {{ {coords(g_greedy)} }};\n\n")
-            f.write("\\legend{Oracle, POMDP-abl, Bandit, EAP, Greedy}\n\n")
+            f.write("\\legend{Oracle, POMDP-abl, Bandit, UCB, EAP, Greedy}\n\n")
             f.write("\\end{axis}\n\\end{tikzpicture}\n")
 
     print(f"  Wrote {out_path}")
@@ -215,10 +220,15 @@ def write_cumulative_kl(gemma_data: dict, llama_data: Optional[dict], out_path: 
 # ======================================================================
 
 _BOUNDED_KEYS = ('random_oracle_eff', 'greedy_oracle_eff', 'eap_oracle_eff',
-                 'bandit_oracle_eff', 'ai_abl_oracle_eff')
+                 'bandit_oracle_eff', 'ucb_oracle_eff', 'ai_abl_oracle_eff')
 _BOUNDED_COORDS = (('Random', 'random_oracle_eff'), ('Greedy', 'greedy_oracle_eff'),
                    ('EAP', 'eap_oracle_eff'), ('Bandit', 'bandit_oracle_eff'),
-                   ('POMDP-abl', 'ai_abl_oracle_eff'))
+                   ('UCB', 'ucb_oracle_eff'), ('POMDP-abl', 'ai_abl_oracle_eff'))
+
+# Single rectangular swatch for bar-chart legends (avoids the default
+# double-bar legend image that the reviewers flagged).
+_BAR_LEGEND_IMG = ("    legend image code/.code={\\draw[#1] (0cm,-0.08cm) "
+                   "rectangle (0.30cm,0.12cm);},\n")
 
 
 def _panel_ymax(aggs: list) -> float:
@@ -245,18 +255,19 @@ def write_ioi_comparison(
     """Bounded oracle-efficiency bars (ablation-only methods) for IOI + multi-step."""
     common = (
         "    ylabel={Bounded oracle eff.\\ (\\%)},\n"
-        "    symbolic x coords={Random, Greedy, EAP, Bandit, POMDP-abl},\n"
+        "    symbolic x coords={Random, Greedy, EAP, Bandit, UCB, POMDP-abl},\n"
         "    xtick=data,\n"
         "    x tick label style={font=\\tiny, rotate=25, anchor=east},\n"
         "    y tick label style={font=\\scriptsize},\n"
         "    ylabel style={font=\\scriptsize},\n"
         "    title style={font=\\scriptsize\\bfseries},\n"
         "    ymin=0,\n"
-        "    enlarge x limits=0.15,\n"
+        "    enlarge x limits=0.12,\n"
         "    nodes near coords,\n"
         "    nodes near coords style={font=\\tiny},\n"
         "    every node near coord/.append style={/pgf/number format/fixed,\n"
         "        /pgf/number format/precision=1},\n"
+        + _BAR_LEGEND_IMG
     )
 
     def panel(f, title, ioi_agg, ms_agg, ymax):
@@ -275,7 +286,9 @@ def write_ioi_comparison(
                 "    group style={group size=2 by 1, horizontal sep=1.2cm, ylabels at=edge left},\n"
                 "    width=0.52\\columnwidth, height=4.7cm,\n"
                 + common +
-                "    legend style={font=\\tiny, at={(0.5,-0.42)}, anchor=north, legend columns=2},\n"
+                "    legend style={font=\\tiny, legend columns=-1, draw=none,\n"
+                "        at={(1.18,-0.42)}, anchor=north,\n"
+                "        /tikz/every even column/.append style={column sep=6pt}},\n"
                 "]\n\n"
             )
             panel(f, "Gemma-2-2B", g_ioi_agg, g_ms_agg, g_ymax)
@@ -417,8 +430,8 @@ def write_steering_heatmap(gemma_data: dict, llama_data: Optional[dict], out_pat
                 "    tick label style={font=\\scriptsize},\n"
                 "    title style={font=\\scriptsize\\bfseries},\n"
                 "    legend style={\n"
-                "        font=\\tiny,\n"
-                "        at={(0.5,-0.25)},\n"
+                "        font=\\tiny, draw=none,\n"
+                "        at={(1.18,-0.34)},\n"
                 "        anchor=north,\n"
                 "        legend columns=3\n"
                 "    },\n"
@@ -513,11 +526,12 @@ def write_layer_distribution(
                 "    enlarge x limits=0.3,\n"
                 "    nodes near coords,\n"
                 "    nodes near coords style={font=\\tiny},\n"
+                "    legend image code/.code={\\draw[#1] (0cm,-0.08cm) rectangle (0.30cm,0.12cm);},\n"
                 "    legend style={\n"
-                "        font=\\tiny,\n"
-                "        at={(0.5,-0.28)},\n"
+                "        font=\\tiny, draw=none,\n"
+                "        at={(1.15,-0.28)},\n"
                 "        anchor=north,\n"
-                "        legend columns=2\n"
+                "        legend columns=-1\n"
                 "    },\n"
                 "]\n\n"
             )
@@ -643,11 +657,12 @@ def write_domain_layers(gemma_domain: dict, llama_domain: Optional[dict], out_pa
                 "    enlarge x limits=0.15,\n"
                 "    nodes near coords,\n"
                 "    nodes near coords style={font=\\tiny, rotate=90, anchor=west},\n"
+                "    legend image code/.code={\\draw[#1] (0cm,-0.08cm) rectangle (0.30cm,0.12cm);},\n"
                 "    legend style={\n"
-                "        font=\\tiny,\n"
-                "        at={(0.5,-0.30)},\n"
+                "        font=\\tiny, draw=none,\n"
+                "        at={(1.15,-0.32)},\n"
                 "        anchor=north,\n"
-                "        legend columns=3\n"
+                "        legend columns=-1\n"
                 "    },\n"
                 "]\n\n"
             )
@@ -796,12 +811,76 @@ def write_attribution_graph(out_path: str):
             "\\draw[strong] (l21) -- (l30);\n"
             "\\draw[strong] (l12) -- (l31);\n"
             "\\end{scope}\n\n"
-            "% Legend\n"
-            "\\node[low, label=right:{\\tiny Low}] at (9.0, 0.3) {};\n"
-            "\\node[med, label=right:{\\tiny Moderate}] at (9.0, 0.9) {};\n"
-            "\\node[high, label=right:{\\tiny High}] at (9.0, 1.5) {};\n\n"
+            "% Legend: single horizontal row, centred below both graphs\n"
+            "\\node[low] (legL) at (1.3, -0.9) {};\n"
+            "\\node[label, anchor=west] at (1.55, -0.9) {\\tiny Low importance};\n"
+            "\\node[med] (legM) at (3.4, -0.9) {};\n"
+            "\\node[label, anchor=west] at (3.65, -0.9) {\\tiny Moderate};\n"
+            "\\node[high] (legH) at (5.1, -0.9) {};\n"
+            "\\node[label, anchor=west] at (5.35, -0.9) {\\tiny High};\n\n"
             "\\end{tikzpicture}\n"
         )
+    print(f"  Wrote {out_path}")
+
+
+# ======================================================================
+# A-matrix (observation model) online convergence
+# ======================================================================
+
+def _mean_a_drift(data: Optional[dict]) -> Optional[List[float]]:
+    if data is None:
+        return None
+    curves = [p["agent_a_convergence"] for p in data.get("per_prompt", [])
+              if p.get("agent_a_convergence")]
+    if not curves:
+        return None
+    max_len = max(len(c) for c in curves)
+    out = []
+    for s in range(max_len):
+        vals = [c[s] for c in curves if s < len(c)]
+        out.append(float(np.mean(vals)))
+    return out
+
+
+def write_a_convergence(g_ioi: Optional[dict], l_ioi: Optional[dict], out_path: str):
+    """Mean per-step L1 drift of the learned KL-likelihood A-matrix.
+
+    A downward trend indicates the online Dirichlet updates converge as the
+    agent accumulates observations.
+    """
+    g = _mean_a_drift(g_ioi)
+    l = _mean_a_drift(l_ioi)
+    if g is None and l is None:
+        print("  WARNING: no agent_a_convergence data; skipping convergence figure.")
+        return
+
+    def coords(vals):
+        return " ".join(f"({i+1},{v:.6e})" for i, v in enumerate(vals))
+
+    with open(out_path, "w") as f:
+        f.write("% Auto-generated: A-matrix online convergence (mean L1 drift per step).\n")
+        f.write(
+            "\\begin{tikzpicture}\n\\begin{axis}[\n"
+            "    width=\\columnwidth, height=5cm,\n"
+            "    xlabel={Belief update step}, ylabel={Mean $\\|A_t-A_{t-1}\\|_1$},\n"
+            "    x label style={font=\\scriptsize}, y label style={font=\\scriptsize},\n"
+            "    tick label style={font=\\scriptsize},\n"
+            "    legend style={font=\\tiny, legend columns=-1, draw=none,\n"
+            "        at={(0.5,-0.32)}, anchor=north},\n"
+            "    ymin=0,\n"
+            "]\n\n"
+        )
+        if g:
+            f.write(f"\\addplot[red, thick, mark=*, mark size=1pt] coordinates {{ {coords(g)} }};\n")
+        if l:
+            f.write(f"\\addplot[blue, thick, mark=square*, mark size=1pt] coordinates {{ {coords(l)} }};\n")
+        labels = []
+        if g:
+            labels.append("Gemma-2-2B")
+        if l:
+            labels.append("Llama-3.2-1B")
+        f.write("\\legend{" + ", ".join(labels) + "}\n\n")
+        f.write("\\end{axis}\n\\end{tikzpicture}\n")
     print(f"  Wrote {out_path}")
 
 
@@ -892,6 +971,9 @@ def main():
     write_action_distribution(g_ioi, g_ms, l_ioi, l_ms,
                               str(figures_dir / "action_distribution.tex"))
 
+    # --- A-matrix online convergence ---
+    write_a_convergence(g_ioi, l_ioi, str(figures_dir / "a_convergence.tex"))
+
     print("\nDone. Re-compile the paper to see updated figures.")
 
 
@@ -938,11 +1020,15 @@ def write_action_distribution(
     n_panels = len(panels)
     n_cols = min(n_panels, 2)
     n_rows = (n_panels + 1) // 2
+    # bottom-left panel index, and horizontal anchor that centres the legend
+    # under the bottom row (one column -> 0.5, two columns -> ~1.1)
+    legend_panel_idx = (n_rows - 1) * n_cols
+    legend_x = 1.1 if n_cols == 2 else 0.5
     lines = [
         "% Auto-generated by generate_figure_data.py",
         "\\begin{tikzpicture}",
         "\\begin{groupplot}[",
-        f"  group style={{group size={n_cols} by {n_rows}, horizontal sep=1.0cm, vertical sep=1.8cm}},",
+        f"  group style={{group size={n_cols} by {n_rows}, horizontal sep=1.0cm, vertical sep=2.0cm}},",
         "  width=0.48\\columnwidth, height=3.8cm,",
         "  xlabel={Step}, ylabel={Proportion},",
         "  x label style={font=\\scriptsize},",
@@ -950,7 +1036,8 @@ def write_action_distribution(
         "  tick label style={font=\\scriptsize},",
         "  title style={font=\\scriptsize\\bfseries},",
         "  ymin=0, ymax=1,",
-        "  legend style={at={(0.5,-0.35)}, anchor=north, legend columns=3, font=\\tiny},",
+        "  legend image code/.code={\\draw[#1] (0cm,-0.08cm) rectangle (0.30cm,0.12cm);},",
+        f"  legend style={{at={{({legend_x},-0.45)}}, anchor=north, legend columns=-1, draw=none, font=\\tiny}},",
         "]",
     ]
 
@@ -961,7 +1048,7 @@ def write_action_distribution(
                                     ("steering", "green!60!black")]:
             coords = " ".join(f"({s+1},{props[s][action_key]:.3f})" for s in range(n_steps))
             lines.append(f"\\addplot[fill={colour}, draw=none] coordinates {{{coords}}};")
-        if i == 0:
+        if i == legend_panel_idx:
             lines.append("\\legend{Ablation, Patching, Steering}")
 
     lines += ["\\end{groupplot}", "\\end{tikzpicture}"]
