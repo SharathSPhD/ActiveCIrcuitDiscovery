@@ -1,0 +1,264 @@
+This section formalises the \ACD{} framework, detailing the attribution
+graph backend, the POMDP-based active inference agent, and the
+intervention engine.
+
+\subsection{Architecture Overview}
+
+The \ACD{} framework is organised as a three-layer pipeline in which an
+attribution backend supplies a pruned set of candidate transcoder
+features, an Active Inference POMDP agent chooses which feature to
+probe and which intervention to apply, and an intervention engine
+executes the chosen action and returns an observation that drives the
+next belief update.  \RoneHl[R1.4 (Figure 1 clarity): arrows/lines cross and the workflow is hard to follow. Resolved: Figures 1 and 2 were re-authored as clean raster diagrams (fig1.png, fig2.png) with non-crossing routing and clearer spacing.]{Figure~\ref{fig:architecture} shows the end-to-end
+data flow between these three layers.}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\linewidth]{figures/fig1.png}
+\caption{System architecture of \ACD{}: attribution backend (left) and POMDP agent loop (right).}
+\label{fig:architecture}
+\end{figure}
+
+In more detail, the first layer is the
+\emph{attribution graph backend}, in which Anthropic's
+\texttt{circuit-tracer} library~\cite{Anthropic2025CT} generates
+attribution graphs via Edge Attribution Patching (EAP) with GemmaScope
+transcoders for Gemma-2-2B; the graph contains active transcoder
+features, an adjacency matrix encoding feature interactions, and
+activation values.  The second layer is the \emph{Active Inference
+POMDP agent}, a multi-factor POMDP implemented with
+\texttt{pymdp}~\cite{Pymdp2022} that maintains a generative model of
+the circuit structure, performs variational state inference, evaluates
+candidate interventions via Expected Free Energy, and learns its
+observation model online from real intervention data.  The third layer
+is the \emph{intervention engine}, which executes feature-level
+ablations and steering via the \texttt{feature\_intervention} API,
+intervening at the transcoder level with proper network propagation
+through the underlying
+TransformerLens~\cite{nanda2022transformerlens} model.
+
+
+\subsection{Candidate Feature Extraction}
+
+Given a prompt, the attribution graph backend produces three outputs:
+active features $\{(l_i, p_i, f_i)\}$ where $l$ is layer, $p$ is
+token position, and $f$ is feature index; an adjacency matrix
+$\mat{W} \in \mathbb{R}^{n \times n}$ encoding feature-to-feature
+attribution weights; and activation values
+$\vect{a} \in \mathbb{R}^n$.
+
+The graph is pruned to retain features with influence above a threshold
+(default 80\%).  Each retained feature $i$ receives a normalised
+importance score:
+\begin{equation}
+  \label{eq:importance}
+  \text{imp}(i) = \frac{\sum_j |W_{ij}| + \sum_j |W_{ji}|}
+                       {\max_k \left(\sum_j |W_{kj}| + \sum_j |W_{jk}|\right)}
+\end{equation}
+
+\RtwoHl[R2.M3 (Candidate extraction bias): top-k-per-layer selection biases the candidate set. Resolved: procedure stated precisely and the resulting bias acknowledged as a limitation -- efficiency is measured within an already-pruned set, not over all model components (Discussion).]{Candidates are sampled across layers (up to $k$ per layer) to ensure
+diversity.}
+
+
+\subsection{POMDP Formulation}
+
+Circuit discovery is cast as a discrete Partially Observable Markov
+Decision Process (POMDP) in which each candidate feature carries a
+small set of unobserved attributes (importance, layer role, causal
+influence) and each intervention produces noisy, discretised
+observations that refine the agent's belief over those attributes.
+The overall inference--evaluation--action--learning loop is illustrated
+in Figure~\ref{fig:scoring}, and the individual factors are formalised
+in the subsections that follow.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\linewidth]{figures/fig2.png}
+\caption{Active Inference POMDP agent pipeline: inference, EFE evaluation, and action selection.}
+\label{fig:scoring}
+\end{figure}
+
+\subsubsection{Hidden State Factors}
+
+Three hidden state factors capture distinct aspects of each candidate
+feature.  Factor~0 (\emph{feature importance},
+$s_0 \in \{\text{negligible}, \text{low}, \text{moderate},
+\text{high}\}$, 4~levels) represents the causal contribution of a
+feature to the model's output on the current prompt.  Factor~1
+(\emph{layer role},
+$s_1 \in \{\text{early}, \text{middle}, \text{late}\}$, 3~levels) is
+determined by the feature's position within the network, with layers
+divided into thirds.  Factor~2 (\emph{causal influence},
+$s_2 \in \{\text{weak}, \text{moderate}, \text{strong}\}$, 3~levels)
+reflects the feature's degree of causal control over downstream
+computation, inferred from intervention effects.
+
+\subsubsection{Observation Modalities}
+
+Three observation modalities provide complementary evidence about
+hidden states.  Modality~0 (\emph{KL divergence magnitude}) is the
+KL divergence between the clean and intervened output distributions,
+discretised into four levels: negligible ($<10^{-4}$), small
+($<10^{-3}$), medium ($<10^{-2}$), and large ($\geq 10^{-2}$).
+Modality~1 (\emph{activation magnitude}) is the absolute activation
+value of the feature, also discretised into four levels.  Modality~2
+(\emph{graph connectivity}) is the sum of in-degree and out-degree
+of the feature in the attribution graph, discretised into three
+levels (sparse, moderate, dense).
+
+\subsubsection{Actions}
+
+Three intervention types are available: \emph{ablation} (action~0),
+which sets the transcoder feature activation to zero;
+\emph{activation patching} (action~1), which replaces the feature
+activation with a mean-centred reference value; and
+\emph{feature steering} (action~2), which scales the activation
+by a multiplier.  Each action induces distinct transition dynamics
+in the B-matrix (see Section~\ref{app:bmatrix}): ablation is
+exploratory and shifts the importance belief downward, patching is
+confirmatory and surfaces real importance, and steering preserves
+the current belief.  The agent selects which action to apply to
+each candidate by minimising Expected Free Energy over the joint
+(feature, action) space.
+
+\subsubsection{Generative Model}
+
+The generative model consists of four components, following the
+standard Active Inference formulation~\cite{Friston2017,Parr2022}.
+The observation likelihood $\mat{A}$ specifies
+$P(o_m \mid s_0, s_1, s_2)$ for each modality~$m$, encoding
+domain-informed priors about how hidden feature states produce
+observable intervention effects; this matrix is learned online via
+Dirichlet concentration updates from each observation.  The
+transition model $\mat{B}$ specifies $P(s' \mid s, a)$ with
+action-conditioned dynamics: Factor~0 (importance) has distinct
+transition matrices for each of the three actions, encoding how
+ablation, patching, and steering affect the agent's belief about
+feature importance (see Appendix~\ref{app:bmatrix} for the
+calibrated priors).  Factors~1 and~2 have identity transitions
+tiled across actions, reflecting intrinsic properties that do not
+change upon intervention.  The preference model $\mat{C}$
+is a log-prior over preferred observations in which higher KL
+divergence and higher activation are favoured, encoding the goal of
+finding causally important features.  Finally, the prior $\mat{D}$
+over hidden states is biased toward low importance, since most
+features are not causally critical, and uniform over layer role.
+
+
+\subsection{Intervention Selection via Expected Free Energy}
+
+In the single-step \ACD\ setting, each policy $\pi$ corresponds to a
+single candidate feature $i$ and intervention type $a$; substituting
+$\pi = (i, a)$ into Equation~\ref{eq:efe} yields the following per-step EFE.
+\begin{equation}
+  \label{eq:efe_agent}
+  \EFE(i, a) = \underbrace{\mathbb{E}_{q}\!\bigl[\log q(s_\tau | \pi) - \log q(s_\tau | o_\tau, \pi)\bigr]}_{\text{epistemic}} + \underbrace{\mathbb{E}_{q}\!\bigl[\log p(o_\tau) - \log q(o_\tau | \pi)\bigr]}_{\text{pragmatic}}
+\end{equation}
+
+The candidate--action pair with the lowest EFE is selected:
+\begin{equation}
+  \label{eq:efe_select}
+  (i^*, a^*) = \argmin_{(i,a)}\; \EFE(i, a)
+\end{equation}
+
+This selection criterion naturally trades off exploration (choosing
+features that maximally reduce uncertainty about hidden states) with
+exploitation (choosing features that are expected to produce preferred
+observations, namely high KL divergence).
+
+
+\subsection{Belief Updating and Learning}
+
+After executing the selected intervention and observing the resulting
+KL divergence, activation magnitude, and graph connectivity, the agent
+performs three updates.  First, it infers posterior states: the pymdp
+agent performs variational inference to update
+$q(s_0, s_1, s_2 \mid o_0, o_1, o_2)$.  Second, it updates the
+observation model by incrementing the Dirichlet concentration
+parameters:
+\begin{equation}
+  p_{A_m}(o_m, s_0, s_1, s_2) \mathrel{+}= \eta \cdot q(s_0) \cdot q(s_1) \cdot q(s_2)
+\end{equation}
+where $\eta$ is the learning rate; this enables the agent to improve
+its mapping from hidden states to observations as it accumulates
+intervention data.  Third, it advances its internal time index and
+resets the observation buffer for the next step.
+
+
+\subsection{Convergence Detection}
+
+The agent monitors the KL divergence between successive belief
+distributions over a rolling window. When the average belief change
+falls below a threshold $\theta = 0.01$, the agent signals convergence,
+indicating that further interventions are unlikely to substantially
+revise the inferred circuit structure.
+
+
+\subsection{Intervention Engine}
+\label{sec:intervention_engine}
+
+The intervention engine is the execution layer of \ACD{}: it realises
+the abstract action selected by the POMDP agent as a concrete,
+causally correct manipulation of a single transcoder feature.  At each
+step it (i)~receives the chosen (feature, action) pair from the
+agent, (ii)~dispatches it through the \texttt{feature\_intervention}
+API at the exact $(l, p, f)$ coordinate, (iii)~measures the KL
+divergence between the clean and intervened next-token distributions,
+and (iv)~returns the resulting observation tuple (KL magnitude,
+activation magnitude, graph connectivity) that drives the Dirichlet
+update of the observation model.  The full per-step flow, including
+candidate extraction, EFE evaluation, intervention dispatch, and
+belief/parameter updates, is summarised in Figure~\ref{fig:flow}.
+
+\begin{figure}[H]
+\centering
+\resizebox{!}{0.82\textheight}{%
+\input{figures/circuit_flow}%
+}
+\caption{Flow of a single intervention step in Active Circuit Discovery.}
+\label{fig:flow}
+\end{figure}
+
+The engine implements three manipulation types, each dispatched
+via the \texttt{feature\_in\-ter\-ven\-tion} API according to the
+action selected by the POMDP agent at each step:
+
+Ablation sets transcoder feature $(l, p, f)$ to zero:
+\begin{equation}
+  \label{eq:ablation}
+  \text{logits}_{\text{abl}} = \text{feature\_intervention}(\text{prompt},
+  [(l, p, f, 0)])
+\end{equation}
+
+Activation patching replaces the feature activation with a
+mean-centred reference value $r$:
+\begin{equation}
+  \label{eq:patching}
+  \text{logits}_{\text{patch}} = \text{feature\_intervention}(\text{prompt},
+  [(l, p, f, r)])
+\end{equation}
+
+Feature steering scales the activation by a multiplier $m$:
+\begin{equation}
+  \label{eq:steering}
+  \text{logits}_{\text{steer}} = \text{feature\_intervention}(\text{prompt},
+  [(l, p, f, a_i \cdot m)])
+\end{equation}
+
+where $a_i$ is the clean activation value of feature $i$.
+
+Effect is measured via KL divergence between the clean and intervened
+output distributions:
+\begin{equation}
+  \label{eq:kl_intervention}
+  \text{KL}_i = D_{\text{KL}}\!\left(
+    \text{softmax}(\text{logits}_{\text{interv}})
+    \;\|\;
+    \text{softmax}(\text{logits}_{\text{clean}})
+  \right)
+\end{equation}
+
+The \texttt{feature\_intervention} API correctly propagates the
+intervention through the replacement model's transcoder structure,
+ensuring that the measured effect reflects the true causal contribution
+of the feature rather than a residual-stream approximation.

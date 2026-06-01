@@ -1,0 +1,58 @@
+% ============================================================
+% reviewer-annotation-spec.tex
+% Cosmetic, review-only markup: highlights reviewer comments and their
+% resolutions directly on the manuscript as Word-style margin notes.
+% Reviewer 1 = orange, Reviewer 2 = blue.
+%
+% This file is \input only by paper-annotated.tex. The clean manuscript
+% (paper.tex + sections/*.tex) does not load it and is unchanged.
+%
+% To produce a clean (markup-free) build, load changes with [final]:
+%   \usepackage[final]{changes}
+% ============================================================
+
+% Float-free margin notes (Word-style side comments). marginnote is used
+% instead of todonotes so that comments next to MDPI's [H] tables/figures
+% are never dropped ("Float(s) lost").
+\usepackage{marginnote}
+\renewcommand*{\marginfont}{\scriptsize\raggedright}
+
+% Per-author change tracking with margin comments
+\usepackage[
+  markup=underlined,
+  authormarkup=superscript,
+  commentmarkup=default
+]{changes}
+
+% Reviewers as "authors" with distinct colours
+\definechangesauthor[name={Reviewer 1}, color=orange]{Rone}
+\definechangesauthor[name={Reviewer 2}, color=blue]{Rtwo}
+
+% Math/macro-safe markup: highlighted spans only recolour the text (the
+% per-author colour is applied automatically), so they may safely contain
+% inline math ($...$), \emph, \texttt, \ref, etc. without soul/ulem breakage.
+% "authorcolor" is set by changes to the current reviewer's colour before the
+% markup expands; wrapping in \textcolor keeps per-reviewer colour while being
+% safe for inline math and macros inside the span.
+\sethighlightmarkup{\textcolor{authorcolor}{#1}}
+\setaddedmarkup{\textcolor{authorcolor}{#1}}
+
+% Route reviewer comments to float-free margin notes (coloured per author).
+\setcommentmarkup{\marginnote{\textcolor{authorcolor}{[#1]}}}
+
+% ===== Convenience macros (see docs/overleaf-comments.md) =====
+% <comment> is a short "Cxx: comment -> resolution" string shown in the margin.
+
+% --- Reviewer 1 (orange) ---
+\newcommand{\RoneAdd}[2][]{\added[id=Rone, comment={#1}]{#2}}
+\newcommand{\RoneDel}[2][]{\deleted[id=Rone, comment={#1}]{#2}}
+\newcommand{\RoneRep}[3][]{\replaced[id=Rone, comment={#1}]{#3}{#2}}
+\newcommand{\RoneHl}[2][]{\highlight[id=Rone, comment={#1}]{#2}}
+\newcommand{\RoneCom}[1]{\comment[id=Rone]{#1}}
+
+% --- Reviewer 2 (blue) ---
+\newcommand{\RtwoAdd}[2][]{\added[id=Rtwo, comment={#1}]{#2}}
+\newcommand{\RtwoDel}[2][]{\deleted[id=Rtwo, comment={#1}]{#2}}
+\newcommand{\RtwoRep}[3][]{\replaced[id=Rtwo, comment={#1}]{#3}{#2}}
+\newcommand{\RtwoHl}[2][]{\highlight[id=Rtwo, comment={#1}]{#2}}
+\newcommand{\RtwoCom}[1]{\comment[id=Rtwo]{#1}}

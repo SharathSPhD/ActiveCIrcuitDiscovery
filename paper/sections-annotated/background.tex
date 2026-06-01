@@ -1,0 +1,201 @@
+% ---- background.tex ----
+
+\subsection{Mechanistic Interpretability and Circuit Analysis}
+
+Mechanistic interpretability traces causal pathways through neural networks by
+applying targeted interventions (zeroing activations, swapping activations between
+forward passes on different inputs, or replacing specific components with learned
+approximations) and measuring the resulting change in model output~\cite{Pearl2009,
+Geiger2021}. The transformer architecture~\cite{Vaswani2017} is especially amenable to
+this analysis because its residual stream structure allows the contribution of each
+component to the final logits to be decomposed additively~\cite{Elhage2021}.
+
+Olah et al.\ introduced the concept of circuits in convolutional vision
+networks~\cite{Olah2020,Cammarata2020}. Elhage et al.\ formalised the residual stream
+decomposition for transformers and demonstrated in-context learning heads, induction
+heads, and name-mover heads in small two-layer models~\cite{Elhage2021}. Wang et al.\
+applied this framework at scale in a celebrated study of the 26-head IOI circuit
+in GPT-2 Small, using path patching to confirm causal roles~\cite{Wang2022}. Subsequent
+work characterised circuits for docstring completion~\cite{Heimersheim2023},
+numerical reasoning~\cite{Hanna2023}, copy suppression in attention
+heads~\cite{McDougall2023}, and Chinchilla at 70~B
+parameters~\cite{Lieberum2023}.
+
+A recurring limitation of manual circuit analysis is labour intensity. Conmy et al.\
+addressed this with Automated Circuit Discovery (\ACDC), a greedy edge-pruning
+algorithm that recovers circuits matching manual analyses on the IOI and docstring
+tasks~\cite{Conmy2023}. Syed et al.\ proposed Edge Attribution Patching (\EAP), which
+approximates intervention effects with gradient-based attribution and achieves
+competitive results at a fraction of the runtime~\cite{Syed2023}. Geiger et al.\
+introduced causal abstraction as a formal verification criterion for circuit
+hypotheses~\cite{Geiger2021}, and Chan et al.\ developed causal scrubbing for
+the same purpose~\cite{Chan2022}.
+
+Meng et al.\ complemented circuit analysis with causal tracing applied to factual
+associations in GPT models, identifying mid-layer MLP blocks as the primary locus of
+stored world knowledge~\cite{Meng2022}. Recent efforts have extended circuit analysis
+to sparse autoencoders and transcoders: Marks et al.\ combined gradient-based pruning
+with sparse features~\cite{marks2024sparse}, while He et al.\ applied dictionary
+learning to discover interpretable circuits~\cite{He2024}. Lindsey et al.\ recently
+combined attribution graphs constructed via \texttt{circuit-tracer}~\cite{Anthropic2025CT}
+with large-scale SAE analysis to map the biology of Claude~3 Sonnet at a component
+level~\cite{Lindsey2025}.
+
+\subsection{Sparse Autoencoders and Transcoders}
+
+Polysemanticity, the tendency of individual neurons to respond to multiple unrelated
+concepts, has been identified as a core obstacle to mechanistic
+interpretability~\cite{Olah2020,Bricken2023}. Sparse Autoencoders (SAEs) address this
+by learning an overcomplete, sparse linear basis for the residual stream at each layer.
+Cunningham et al.\ demonstrated that features learned by SAEs are substantially more
+monosemantic than individual neurons~\cite{Cunningham2024}. Bricken et al.\ scaled
+this approach to a one-layer MLP with 4,096-dimensional activations, recovering over
+512 interpretable features including curve detectors and orientation-selective
+units~\cite{Bricken2023}. Gao et al.\ studied scaling and evaluation of $k$-sparse SAEs at large scale,
+including on {GPT-4} activations, and reported scaling laws for reconstruction
+and feature quality~\cite{Gao2024}.
+Rajamanoharan et al.\ proposed Gated Sparse Autoencoders, which improve feature
+monosemanticity by decoupling feature detection from magnitude
+estimation~\cite{Rajamanoharan2024}. Paulo et al.\ demonstrated large-scale automated
+interpretation of millions of SAE features using large language models as
+interpretability oracles~\cite{Paulo2024}. Makelov et al.\ provided principled evaluation criteria for
+SAE quality, showing that standard metrics can overestimate
+interpretability~\cite{Makelov2024}.
+
+Transcoders are a related architecture that decompose MLP input-to-output
+transformations directly, providing a more causally faithful representation of MLP
+computation than residual-stream SAEs. Anthropic's \texttt{circuit-tracer}
+library~\cite{Anthropic2025CT,Ameisen2025} provides an end-to-end pipeline for
+feature-level attribution: transcoders decompose MLP activations into sparse
+features, and Edge Attribution Patching constructs a directed graph of feature
+interactions.  The \texttt{feature\_intervention} API then allows causally correct
+ablation and steering of individual transcoder features with proper network
+propagation.  GemmaScope~\cite{team2024gemma,GemmaScope2024} provides pre-trained transcoders and
+SAEs for Google's Gemma-2 model family, enabling open interpretability research at scale.
+
+\subsection{Active Inference and Expected Free Energy}
+
+Active Inference is a unified computational framework derived from the Free Energy
+Principle~\cite{Friston2010}, which posits that biological agents minimise the
+surprise (negative model log-evidence) associated with their sensory states. Friston
+et al.\ formalised this as variational inference: agents approximate the true posterior
+over hidden states $\vect{s}$ given observations $\vect{o}$ by maintaining a
+recognition distribution $q(\vect{s})$ and minimising the variational free energy
+$\FE = \KL{q(\vect{s})}{p(\vect{s}\mid\vect{o})} \geq
+-\log p(\vect{o})$~\cite{Friston2017}.
+
+For planning and action selection, Da Costa et al.\ extended this to the Expected Free
+Energy, defined for a policy $\pi$ over future time steps $\tau > t$
+as~\cite{DaCosta2020}:
+\begin{equation}
+  \label{eq:efe}
+  \EFE(\pi) = \sum_{\tau > t}
+    \underbrace{\E\!\bigl[\log p(\vect{o}_\tau) - \log q(\vect{o}_\tau|\pi)\bigr]}_{\text{pragmatic}}
+    - \underbrace{\E\!\bigl[\log q(\vect{s}_\tau|\pi) - \log q(\vect{s}_\tau|\vect{o}_\tau,\pi)\bigr]}_{\text{epistemic}}
+\end{equation}
+The pragmatic value measures expected reward (preference satisfaction), while the
+epistemic value measures expected information gain (uncertainty reduction). Policies are
+selected according to a Boltzmann distribution over negative \EFE\ values. This
+decomposition reveals how Active Inference naturally trades off exploration
+(maximising the epistemic term via information gain) and exploitation (optimising the
+pragmatic term via preference satisfaction).
+
+As Parr et al.\ describe~\cite{Parr2022}, Active Inference provides a unified model
+of cognition in which perception, learning, and action selection emerge from the same
+variational objective. Tschantz et al.\ demonstrated that \EFE\ minimisation recovers
+reinforcement learning in the limit of pure pragmatic value~\cite{Tschantz2020}.
+
+The connection to Bayesian experimental design is particularly relevant for circuit
+discovery. MacKay~\cite{MacKay2003} defined optimal experimental design as selecting
+experiments that maximise information gain about unknown parameters. The epistemic term
+in equation~\ref{eq:efe} is precisely this information gain (entropy reduction in the
+posterior belief). Thus, for problems where pragmatic preferences are absent or
+secondary, EFE minimisation reduces to maximising information gain—a principled,
+information-theoretic approach to adaptive experiment selection.
+
+Heins et al.\ released \texttt{pymdp}, an open-source library that implements discrete
+POMDP agents with the full Active Inference formalism~\cite{Pymdp2022}. The
+implementation includes: (i) variational state inference using Bayesian belief
+updating, (ii) flexible observation and transition models specified as categorical and
+Dirichlet distributions, (iii) policy evaluation via EFE computation over a planning
+horizon, (iv) Dirichlet prior learning via parameter updates after each observation,
+and (v) action precision (inverse temperature) tuning for Boltzmann policy selection.
+The \texttt{pymdp} agent maintains a categorical posterior over discrete hidden state
+factors and updates it via Bayes rule after each observation. Critically, the
+observation model $p(\vect{o}|\vect{s})$ can be learned online: priors are stored as
+Dirichlet parameters, which are incremented after each observation to reflect new
+empirical counts. This allows the agent to refine its causal estimates iteratively.
+The present work uses \texttt{pymdp} to implement the circuit discovery agent with
+online learning of transcoder-level intervention effects.
+
+Precision-weighted prediction-error dynamics are central to discrete-state active
+inference formulations~\cite{Friston2017,DaCosta2020}. The present work operationalises
+this connection by embedding a pymdp POMDP agent within an automated circuit discovery
+procedure, leveraging EFE-guided action selection to adaptively discover circuits
+with minimal interventions.
+
+\subsection{Active Learning and Bayesian Experimental Design}
+
+The principle of selecting informative queries to resolve uncertainty is well-
+established in statistics and machine learning. MacKay~\cite{MacKay2003} introduced
+information-theoretic criteria for Bayesian active learning, showing that agents
+should select experiments that maximise expected information gain (entropy reduction)
+about unknown parameters. This framework unifies optimal experimental design across
+domains: in Bayesian neural networks, active learning, and adaptive sampling.
+
+Expected Free Energy minimisation generalises MacKay's information-theoretic principle
+to the full POMDP setting. The epistemic term in EFE (equation~\ref{eq:efe}) is
+precisely the expected information gain about hidden states~\cite{Friston2015,DaCosta2020}.
+When the pragmatic term is zeroed, EFE minimisation reduces to maximising information
+gain, that is, selecting the action that most reduces posterior uncertainty. This
+connection grounds Active Inference in the principled statistical tradition of Bayesian
+optimal design. The present work leverages this alignment: circuit discovery is cast as
+a Bayesian experimental design problem in which the ``experiment'' is a causal
+intervention (ablation, patching, or steering) and the ``unknown parameters'' are
+feature importances and roles. By minimising EFE, the discovery agent automatically
+balances exploration (resolving circuit uncertainty) with exploitation (confirming
+already-identified important features).
+
+\subsection{Gap Analysis}
+
+Table~\ref{tab:method_comparison} synthesises the properties of existing automated
+circuit discovery methods and the proposed \ACD\ framework. Current approaches fall
+into three categories: (1) \emph{Exhaustive} methods (ACDC) test all possible
+interventions but lack any guidance from uncertainty estimates, scaling as $O(E)$ in
+graph size. (2) \emph{Gradient-based} methods (EAP, Causal Tracing, Sparse Feature
+Circuits, Dictionary Learning) approximate intervention effects via attribution and
+rank candidates statically, with no online adaptation or uncertainty modeling. (3)
+\emph{POMDP-based} methods (ACD) maintain a posterior belief over circuit components
+and adaptively select interventions to maximally reduce this uncertainty, grounded in
+information-theoretic principles. The novelty of ACD is threefold: it explicitly
+models uncertainty via a belief state distribution, uses that uncertainty to guide
+adaptive intervention selection via EFE, and learns the observation model online via
+Dirichlet parameter updates, enabling the agent to refine its causal estimates after
+each intervention. These categories are not mutually exclusive: ACD is
+complementary to ACDC and EAP rather than a competing graph-construction
+method. It consumes an attribution graph (here built with \texttt{circuit-tracer}'s
+EAP) and decides which of its features to test next under a budget. Accordingly, the
+fair point of comparison is not whole-circuit discovery but selection efficiency
+on a shared candidate set, measured against a direct EAP attribution ranking
+(Sections~\ref{sec:setup} to~\ref{sec:results}).
+
+\begin{table}[H]
+  \centering
+  \caption{Comparison of automated circuit discovery methods.}
+  \label{tab:method_comparison}
+  \small
+  \resizebox{\textwidth}{!}{%
+  \begin{tabular}{l l l c c c c l}
+    \toprule
+    \textbf{Method} & \textbf{Strategy} & \textbf{Uncert.} & \textbf{Adaptive} & \textbf{Gen.\ Mod.} & \textbf{Multi-act.} & \textbf{Online Learn.} & \textbf{Scale} \\
+    \midrule
+    ACDC~\cite{Conmy2023}       & Exhaustive & No  & Threshold & No  & No & No & GPT-2 Small \\
+    EAP~\cite{Syed2023}         & Gradient   & No  & No      & No  & No & No & GPT-2 Small \\
+    Causal Tracing~\cite{Meng2022} & Gradient & No  & No      & No  & No & No & GPT (various) \\
+    Sparse Features~\cite{marks2024sparse} & Gradient+Prune & No & No & No & No & No & GPT-2 \\
+    Dict.\ Learning~\cite{He2024} & Gradient & No & No & No & No & No & Med.\ LMs \\
+    \textbf{\ACD{} (this work)}      & POMDP-EFE & Yes & Yes     & Yes & Yes & Yes & 2B+ params \\
+    \bottomrule
+  \end{tabular}%
+  }
+\end{table}

@@ -102,5 +102,18 @@ reviewer-response/*.out
 # Vendored CTAN package used only to build the latexdiff PDF locally
 paper/ulem.sty
 
+# Vendored CTAN packages used only to build the annotated PDF locally
+# (available natively on Overleaf / full TeX Live)
+paper/changes.sty
+paper/todonotes.sty
+paper/truncate.sty
+paper/xifthen.sty
+paper/xstring.sty
+paper/xstring.tex
+
+# changes-package list/summary-of-changes auxiliaries
+paper/*.loc
+paper/*.soc
+
 # Local latexdiff build intermediates (canonical copies live in reviewer-response/)
 paper/paper-diff.*
