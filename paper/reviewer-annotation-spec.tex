@@ -1,8 +1,15 @@
 % ============================================================
 % reviewer-annotation-spec.tex
-% Cosmetic, review-only markup: highlights reviewer comments and their
-% resolutions directly on the manuscript as Word-style margin notes.
-% Reviewer 1 = orange, Reviewer 2 = blue.
+% Cosmetic, review-only markup: highlights each reviewer comment's resolving
+% passage in the manuscript (Reviewer 1 = orange, Reviewer 2 = blue) and prints
+% the comment + resolution as a colour-coded footnote anchored at that passage.
+%
+% Why footnotes (not margin notes): MDPI's narrow margins and dense [H] floats
+% make margin notes either overlap (marginnote, which does not float) or get
+% dropped ("Float(s) lost", todonotes/marginpar). Footnotes never overlap, are
+% fully legible, split across pages when long, sit on the same page as the
+% highlighted text, and use a separate insert mechanism that does not strand
+% the manuscript's figures and tables.
 %
 % This file is \input only by paper-annotated.tex. The clean manuscript
 % (paper.tex + sections/*.tex) does not load it and is unchanged.
@@ -11,37 +18,29 @@
 %   \usepackage[final]{changes}
 % ============================================================
 
-% Float-free margin notes (Word-style side comments). marginnote is used
-% instead of todonotes so that comments next to MDPI's [H] tables/figures
-% are never dropped ("Float(s) lost").
-\usepackage{marginnote}
-\renewcommand*{\marginfont}{\scriptsize\raggedright}
-
-% Per-author change tracking with margin comments
+% Per-author change tracking; comments are rendered as footnotes below.
 \usepackage[
   markup=underlined,
-  authormarkup=superscript,
-  commentmarkup=default
+  authormarkup=none,
+  commentmarkup=footnote
 ]{changes}
 
 % Reviewers as "authors" with distinct colours
 \definechangesauthor[name={Reviewer 1}, color=orange]{Rone}
 \definechangesauthor[name={Reviewer 2}, color=blue]{Rtwo}
 
-% Math/macro-safe markup: highlighted spans only recolour the text (the
-% per-author colour is applied automatically), so they may safely contain
-% inline math ($...$), \emph, \texttt, \ref, etc. without soul/ulem breakage.
-% "authorcolor" is set by changes to the current reviewer's colour before the
-% markup expands; wrapping in \textcolor keeps per-reviewer colour while being
-% safe for inline math and macros inside the span.
+% Math/macro-safe in-text highlight: only recolour the span in the reviewer's
+% colour (the per-author "authorcolor" is set by changes before the markup
+% expands), so spans may safely contain inline math ($...$), \emph, \texttt,
+% \ref, etc. without soul/ulem breakage.
 \sethighlightmarkup{\textcolor{authorcolor}{#1}}
 \setaddedmarkup{\textcolor{authorcolor}{#1}}
 
-% Route reviewer comments to float-free margin notes (coloured per author).
-\setcommentmarkup{\marginnote{\textcolor{authorcolor}{[#1]}}}
+% Render the reviewer comment as a colour-coded footnote at the highlight.
+\setcommentmarkup{\footnote{\textcolor{authorcolor}{\textbf{[Review note]}~#1}}}
 
 % ===== Convenience macros (see docs/overleaf-comments.md) =====
-% <comment> is a short "Cxx: comment -> resolution" string shown in the margin.
+% <comment> is a "Cxx: comment -> resolution" string shown in the footnote.
 
 % --- Reviewer 1 (orange) ---
 \newcommand{\RoneAdd}[2][]{\added[id=Rone, comment={#1}]{#2}}

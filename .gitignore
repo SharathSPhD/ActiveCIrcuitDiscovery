@@ -117,3 +117,7 @@ paper/*.soc
 
 # Local latexdiff build intermediates (canonical copies live in reviewer-response/)
 paper/paper-diff.*
+
+# macOS
+.DS_Store
+._.DS_Store
