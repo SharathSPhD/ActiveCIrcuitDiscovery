@@ -1,0 +1,217 @@
+% paper-annotated.tex -- REVIEW-ONLY annotated build of the MDPI paper
+% Identical content to paper.tex; adds cosmetic per-reviewer highlights and
+% Word-style margin comments (Reviewer 1 = orange, Reviewer 2 = blue) that map
+% each review comment to the passage resolving it.
+%
+% The clean manuscript (paper.tex + sections/*.tex) is unchanged. This build
+% inputs annotated copies from sections-annotated/.
+% For a markup-free build, edit reviewer-annotation-spec.tex to load
+% \usepackage[final]{changes}.
+%
+% Compiled with: pdflatex -> bibtex -> pdflatex -> pdflatex
+
+\documentclass[symmetry,article,submit,pdftex,moreauthors]{Definitions/mdpi}
+
+% =================================================================
+% MDPI internal commands
+\firstpage{1}
+\makeatletter
+\setcounter{page}{\@firstpage}
+\makeatother
+\pubvolume{1}
+\issuenum{1}
+\articlenumber{0}
+\pubyear{2026}
+\copyrightyear{2026}
+
+% =================================================================
+% Additional packages not in mdpi.cls
+\usepackage{pgfplots}
+\usetikzlibrary{shapes.geometric, shapes.misc, arrows.meta, positioning, fit,
+                decorations.pathreplacing, calc, backgrounds,
+                matrix, chains, scopes}
+\usepgfplotslibrary{groupplots}
+\pgfplotsset{compat=1.18}
+\usepackage{adjustbox}
+
+% Code listings
+\lstset{
+  basicstyle=\small\ttfamily,
+  keywordstyle=\bfseries,
+  commentstyle=\itshape,
+  frame=single,
+  breaklines=true,
+  captionpos=b,
+  numbers=left,
+  numberstyle=\tiny,
+  language=Python
+}
+
+% Theorem environments (defined in mdpi.cls, but custom ones needed)
+\newtheorem{definition}{Definition}
+\newtheorem{proposition}{Proposition}
+\newtheorem{theorem}{Theorem}
+
+% =================================================================
+% Custom commands
+\newcommand{\EFE}{\ensuremath{\mathcal{G}}}
+\newcommand{\FE}{\ensuremath{\mathcal{F}}}
+\newcommand{\KL}[2]{\ensuremath{D_{\mathrm{KL}}\!\left(#1 \,\|\, #2\right)}}
+\newcommand{\E}[1]{\ensuremath{\mathbb{E}\!\left[#1\right]}}
+\newcommand{\softmax}{\ensuremath{\operatorname{softmax}}}
+\newcommand{\Attn}{\ensuremath{\operatorname{Attn}}}
+\newcommand{\MLP}{\ensuremath{\operatorname{MLP}}}
+\newcommand{\argmin}{\ensuremath{\operatorname*{arg\,min}}}
+\newcommand{\abs}[1]{\ensuremath{\left|#1\right|}}
+\newcommand{\norm}[1]{\ensuremath{\left\|#1\right\|}}
+\newcommand{\vect}[1]{\ensuremath{\bm{#1}}}
+\newcommand{\mat}[1]{\ensuremath{\mathbf{#1}}}
+\newcommand{\ACDC}{ACDC}
+\newcommand{\EAP}{EAP}
+\newcommand{\ACD}{ACD}
+\newcommand{\pymdp}{\texttt{pymdp}}
+
+% =================================================================
+% Reviewer annotation markup (review-only; see docs/overleaf-comments.md)
+\input{reviewer-annotation-spec}
+
+% =================================================================
+% MDPI metadata (before \begin{document})
+
+\Title{Active Circuit Discovery: A Multi-Action POMDP Agent
+       for Causal Feature Identification\\in Transformer Attribution Graphs}
+
+\newcommand{\orcidauthorA}{0000-0000-0000-000X}
+
+\Author{Sharath Sathish $^{1}$\orcidA{}, Mominul Ahsan $^{2}$\orcidA{} and Majid Latifi $^{2,}$*\orcidA{}}
+
+\AuthorNames{Sharath Sathish, Mominul Ahsan and Majid Latifi}
+
+\address{%
+$^{1}$ \quad BP International Limited, London TW16 7BP, UK; sharath.sathish@gmail.com \\
+$^{2}$ \quad Department of Computer Science, University of York, York YO10 5GH, UK; mominul.ahsan2@gmail.com; majid.latifi@york.ac.uk}
+
+\corres{majid.latifi@york.ac.uk}
+
+\abstract{\input{sections-annotated/abstract}}
+
+\keyword{mechanistic interpretability; active inference; circuit discovery; transcoders; Expected Free Energy; POMDP}
+
+% =================================================================
+\begin{document}
+
+\maketitle
+
+% =================================================================
+\section{Introduction}
+\label{sec:intro}
+\input{sections-annotated/introduction}
+
+% =================================================================
+\section{Background and Related Work}
+\label{sec:background}
+\input{sections-annotated/background}
+
+% =================================================================
+\section{The Active Circuit Discovery Framework}
+\label{sec:method}
+\input{sections-annotated/methodology}
+
+% =================================================================
+\section{Experimental Setup}
+\label{sec:setup}
+\input{sections-annotated/experimental_setup}
+
+% =================================================================
+\section{Results}
+\label{sec:results}
+\input{sections-annotated/results}
+
+% =================================================================
+\section{Discussion}
+\label{sec:discussion}
+\input{sections-annotated/discussion}
+
+% =================================================================
+\section{Conclusions and Future Work}
+\label{sec:conclusion}
+\input{sections-annotated/conclusion}
+
+% =================================================================
+% MDPI mandatory end sections
+\vspace{6pt}
+
+\authorcontributions{Conceptualization, S.S.; methodology, S.S.; software, S.S.;
+validation, S.S., M.A.\ and M.L.; formal analysis, S.S.; investigation, S.S.;
+resources, S.S.; data curation, S.S.; writing---original draft preparation, S.S.;
+writing---review and editing, S.S., M.A.\ and M.L.; visualization, S.S.;
+supervision, M.A.\ and M.L.; project administration, S.S.
+All authors have read and agreed to the published version of the manuscript.}
+
+\funding{This research received no external funding.}
+
+\institutionalreview{Not applicable.}
+
+\informedconsent{Not applicable.}
+
+\dataavailability{Code, experiment notebooks, and raw JSON results are
+publicly available at \url{https://github.com/SharathSPhD/ActiveCIrcuitDiscovery}.
+The Gemma-2-2B model is available under the Gemma licence from
+\url{https://huggingface.co/google/gemma-2-2b}.
+Llama-3.2-1B is available under the Meta Llama licence from HuggingFace Hub
+(\url{https://huggingface.co/meta-llama/Llama-3.2-1B}).}
+
+\acknowledgments{The authors thank the Anthropic interpretability team
+for releasing the \texttt{circuit-tracer} library and GemmaScope
+transcoder weights that made this work possible. The authors also
+gratefully acknowledge the University of York and BP for providing the
+academic and institutional environment that enabled them to undertake
+this research.
+
+The authors used various AI tools to enhance the language and
+readability of the paper during the writing process. After utilizing
+these tools, the authors evaluated and performed any necessary editing
+of the text. The authors are solely responsible for the fundamental
+study, results, and research findings.}
+
+\conflictsofinterest{The authors declare no conflicts of interest.}
+
+% =================================================================
+\abbreviations{Abbreviations}{
+The following abbreviations are used in this manuscript:\\
+\noindent
+\begin{tabular}{@{}ll}
+ACD   & Active Circuit Discovery \\
+ACDC  & Automated Circuit Discovery \\
+EAP   & Edge Attribution Patching \\
+EFE   & Expected Free Energy \\
+FEP   & Free Energy Principle \\
+IOI   & Indirect Object Identification \\
+KL    & Kullback--Leibler (divergence) \\
+LLM   & Large Language Model \\
+MLP   & Multilayer Perceptron \\
+POMDP & Partially Observable Markov Decision Process \\
+SAE   & Sparse Autoencoder \\
+\end{tabular}
+}
+
+% =================================================================
+% Appendices
+\appendixtitles{yes}
+\appendixstart
+\appendix
+\input{sections-annotated/appendix}
+
+% =================================================================
+\reftitle{References}
+
+\begin{adjustwidth}{0cm}{0cm}
+
+\bibliographystyle{mdpi}
+\bibliography{references}
+
+\end{adjustwidth}
+
+\PublishersNote{}
+
+\end{document}

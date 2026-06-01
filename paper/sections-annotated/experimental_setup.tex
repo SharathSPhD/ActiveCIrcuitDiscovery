@@ -1,0 +1,364 @@
+\subsection{Models and Hardware}
+
+The framework is evaluated on two transformer architectures.
+Gemma-2-2B~\cite{team2024gemma} has 26 layers, a 2304-dimensional
+hidden size, and 8 attention heads; its transcoders are drawn from
+GemmaScope (\texttt{mwhanna/gemma-scope-transcoders}).
+Llama-3.2-1B~\cite{Dubey2024llama} has 16 layers, a 2048-dimensional
+hidden size, and 32 heads with grouped-query attention; its
+transcoders are from \texttt{mntss/transcoder-Llama-3.2-1B}.
+Both models use the \texttt{circuit-tracer} library~\cite{Anthropic2025CT}
+with the TransformerLens backend for attribution graph construction
+and transcoder-level interventions.
+
+Experiments run on an NVIDIA DGX Spark with GB10 GPU (128\,GB unified
+memory, CUDA 12.8, aarch64).  Colab notebooks reproduce results on a
+free T4 GPU.
+
+\subsection{Benchmarks}
+
+\subsubsection{IOI Circuit Recovery}
+
+The Indirect Object Identification task, introduced by
+Wang et al.~\cite{Wang2022}, tests whether the agent can identify
+features causally responsible for predicting the indirect object.
+Five prompts of the form
+``When [A] and [B] went to the store, [A] gave the bag to \_\_''
+are used, where the correct prediction is [B].  For each prompt,
+the KL divergence caused by ablating each candidate feature via the
+\texttt{feature\_intervention} API is measured.
+
+\subsubsection{Multi-step Reasoning}
+\label{sec:multistep_benchmark}
+
+The multi-step reasoning benchmark probes whether the discovery agent
+can localise features that mediate compositional inference rather than
+the single-hop associations that dominate IOI.  Three prompts are
+used, each requiring the model to chain two or more intermediate facts
+before producing the target token: a transitive ordering prompt
+(``If Alice is taller than Bob, and Bob is taller than Carol, then
+the tallest person is''), a factual-chain prompt
+(``The capital of France is Paris.  Paris is in Europe.  The continent
+containing Paris is''), and a syllogistic prompt
+(``All dogs are animals.  Fido is a dog.  Therefore Fido is'').
+Unlike IOI, where causally critical features are concentrated in a
+small set of late-layer name-mover heads, compositional reasoning is
+expected to recruit earlier and middle layers that bind entities and
+propagate intermediate results through the residual stream.  This
+shifts the effective search distribution away from the tail of the
+attribution graph and stresses the agent's ability to allocate its
+budget across layers rather than exploit a known late-layer prior.
+For each prompt the KL divergence between the clean and intervened
+next-token distributions is measured, using the same $B=20$ budget
+and the same bandit, UCB, greedy, EAP, random, and oracle baselines as the
+IOI benchmark so that bounded oracle efficiency is directly comparable
+across tasks. This is also the benchmark used to evaluate the
+finer-layer-bin variant (Section~\ref{sec:stats_protocol}).
+
+\subsubsection{Feature Steering}
+
+Five concept prompts (Golden Gate Bridge, Eiffel Tower, Mount Everest,
+Great Wall of China, Statue of Liberty).
+For each, the top 10 features by graph importance are identified and
+their activations scaled across a multiplier sweep
+$m \in \{0, 1.5, 2, 3, 5, 10\}$. Because large multipliers can push
+activations out of distribution, the protocol (a) includes smaller factors
+(1.5, 2, 3) to characterise the dose-response curve, and (b) adds a
+random-feature control: a matched set of randomly chosen
+lower-importance features steered at the same multipliers. Causal
+control is evidenced only to the extent that circuit-selected features shift
+predictions more than this control. For every steered feature the top-five
+next-token probabilities are recorded at each multiplier, so that
+concept amplification at large factors can be distinguished from generic
+distributional collapse. The KL divergence and whether the
+model's top-1 prediction changes are measured for both sets.
+
+\subsubsection{Multi-Domain Benchmark}
+
+The framework is also evaluated
+across five cognitive domains with two prompts each:
+geography (e.g.\ ``The capital of France is''),
+mathematics (e.g.\ ``The square root of 64 is''),
+science (e.g.\ ``Water is made of hydrogen and''),
+logic (syllogistic reasoning), and
+history (e.g.\ ``The year World War II ended was'').
+This allows cross-domain comparison of circuit structure and layer
+distribution.
+
+\subsection{Experimental Prompts}
+
+All prompts used in the experiments are listed below.  These are
+defined in the experiment runner script (\texttt{run\_real\_experiments.py}) and
+correspond exactly to the prompts whose results appear in the JSON
+outputs under \texttt{results/}.
+
+The five IOI prompts are:
+\begin{quote}
+``When John and Mary went to the store, John gave the bag to''
+``After Alice and Bob finished lunch, Alice handed the receipt to''
+``While Sarah and Tom were at the park, Sarah threw the ball to''
+``When Emma and David arrived at the office, Emma passed the keys to''
+``As Lisa and Mike left the restaurant, Lisa returned the coat to''
+\end{quote}
+
+The three multi-step reasoning prompts are:
+\begin{quote}
+``If Alice is taller than Bob, and Bob is taller than Carol, then the tallest person is''
+``The capital of France is Paris. Paris is in Europe. The continent containing Paris is''
+``All dogs are animals. Fido is a dog. Therefore Fido is''
+\end{quote}
+
+The five feature-steering concept prompts are:
+\begin{quote}
+``The Golden Gate Bridge is''
+``The Eiffel Tower is located in''
+``Mount Everest is the tallest''
+``The Great Wall of China was built''
+``The Statue of Liberty stands in''
+\end{quote}
+
+The ten multi-domain prompts, two per domain, are grouped by domain below.
+Geography prompts:
+\begin{quote}
+``The capital of France is''
+``The Golden Gate Bridge connects San Francisco to''
+\end{quote}
+
+Mathematics prompts:
+\begin{quote}
+``The square root of 64 is''
+``If 2 + 3 = 5 then 3 + 4 =''
+\end{quote}
+
+Science prompts:
+\begin{quote}
+``Water is made of hydrogen and''
+``The speed of light is approximately''
+\end{quote}
+
+Logic prompts:
+\begin{quote}
+``All mammals are warm-blooded. A whale is a mammal. Therefore a whale is''
+``All birds have wings. A penguin is a bird. Therefore a penguin has''
+\end{quote}
+
+History prompts:
+\begin{quote}
+``The year World War II ended was''
+``The first person to walk on the moon was''
+\end{quote}
+
+\subsection{Baselines}
+
+Baselines are grouped into ablation-only selectors (which, like POMDP-abl,
+only ablate and are therefore directly comparable to the ablation oracle) and
+action-matched selectors (which, like the full POMDP, may also steer, and
+are used only for the secondary RCK analysis of Section~\ref{sec:results}).
+
+Among the ablation-only baselines, \emph{Random} selection draws features uniformly at random
+(Equation~\ref{eq:random}; $N=10$ trials, averaged):
+\begin{equation}
+  \label{eq:random}
+  a_t \sim \text{Uniform}(\mathcal{F})
+\end{equation}
+\emph{Greedy} selection ranks features in descending order of graph
+node influence (sum of absolute adjacency weights), per
+Equation~\ref{eq:greedy}:
+\begin{equation}
+  \label{eq:greedy}
+  i^* = \arg\max_i \text{imp}(i)
+\end{equation}
+where $\text{imp}(i)$ is the sum of absolute adjacency weights for node
+$i$ (defined in Equation~\ref{eq:importance}).
+\emph{EAP} ranking is a direct Edge-Attribution-Patching baseline: candidates are
+ordered by the magnitude of their \emph{direct attribution to the logit nodes} of
+the \texttt{circuit-tracer} graph, i.e.\ the feature's column summed over the logit
+rows of the adjacency matrix, $\mathrm{eap}(i)=\sum_{t\in\mathcal{L}}|W_{t,i}|$
+(normalised to $[0,1]$). This isolates the classic EAP ``direct effect on the
+output'' signal, distinct from the total bidirectional connectivity used by Greedy,
+and provides an established-method point of comparison.
+The \emph{bandit}
+selector combines graph importance with a decaying uncertainty bonus
+and learned per-layer priors, providing a comparison point that
+separates the contribution of Active Inference from simpler
+uncertainty heuristics:
+\begin{equation}
+  \label{eq:bandit}
+  S(i) = \text{imp}(i)\cdot\lambda_\ell + \omega_e \cdot u(i)
+\end{equation}
+where $u(i)$ is the uncertainty bonus (initialised to 1, decayed on
+visit) and $\lambda_\ell$ is the per-layer prior updated from
+observations. \RtwoHl[R2.M6 (Baselines and comparative methodology): no simpler UCB baseline; POMDP-abl vs bandit nuances undiscussed. Resolved: a plain UCB1 baseline removes the bandit's engineered priors, and POMDP-abl vs bandit is compared across all tasks (Table 9).]{A \emph{plain UCB} baseline removes these engineered
+priors and instead applies the textbook UCB1 rule over layers, using the
+observed KL as reward; it isolates how much of the heuristic bandit's
+performance comes from its hand-built importance and locality priors
+rather than from upper-confidence exploration alone.}
+The \emph{oracle} selects features in descending order
+of true KL divergence, an upper bound that requires all ablations in
+advance:
+\begin{equation}
+  \label{eq:oracle}
+  i^* = \arg\max_i \text{KL}_i^{\text{abl}}
+\end{equation}
+
+The action-matched baselines separate the contribution of the agent's selection
+policy from that of the steering action. \RoneHl[R1.7 (Action-matched baselines): random/greedy/bandit lacked steering variants; does the POMDP gain come from EFE selection or from steering producing higher KL? Resolved: Greedy+steer, Bandit+steer and Random+steer added on the common RCK scale, isolating selection from the steering action.]{Steering-enabled counterparts of the
+heuristics are evaluated that use the identical selection order but apply the
+feature-steering intervention: \emph{Greedy+steer}, \emph{Bandit+steer}, and
+\emph{Random+steer}.} \RtwoHl[R2.W6 (Action-space ablation): add a random-action ablation that replaces the EFE objective. Resolved: a Random-action baseline (uniform feature and uniform intervention type) is reported on the RCK scale (Table 3), isolating EFE-guided action selection.]{A \emph{Random-action} baseline that selects a feature uniformly
+at random and chooses its intervention type uniformly at random is also included,
+isolating the value of learned action selection.} (Activation patching to the zero reference
+coincides with ablation in this setup, so this control effectively samples between
+ablation and steering.) The
+corresponding \emph{multi-action oracle} ranks features by
+$\max(\text{KL}^{\text{abl}}_i,\text{KL}^{\text{steer}}_i)$.
+
+All methods use the same \texttt{feature\_intervention} API and
+KL divergence metric.  Budgets are fixed at $B=20$ interventions
+per prompt.
+
+\subsection{Metrics}
+
+Metrics of two kinds are reported, and they are kept
+strictly separate because they live on different scales: a bounded efficiency for
+ablation-only selectors and a relative amplification factor for steering-enabled
+selectors.
+
+\emph{Mean KL per intervention} is the average KL divergence across selected
+features; higher values indicate that the method finds more causally important
+features. \emph{Cumulative KL} (CumKL) is the total information gained over the
+budget.
+
+\emph{(i) Bounded oracle efficiency.} For \emph{ablation-only} methods (POMDP-abl,
+Random, Greedy, EAP, Bandit, UCB), \RoneHl[R1.2 (Oracle efficiency >100\%): values such as 1255\% are confusing for an upper bound; explain mathematically or rename. Resolved: ablation-only efficiency is bounded in [0,100]\% against the ablation oracle; the unbounded quantity is renamed RCK below.]{every selector and the oracle draw from the same
+quantity, ablation KL, so their ratio to the ablation oracle is bounded in
+$[0,100]\%$ and is interpretable as an efficiency:}
+\begin{equation}
+  \label{eq:oracle_eff}
+  \eta = \frac{\text{CumKL}^{\text{abl}}_{\text{agent}}}
+              {\text{CumKL}^{\text{abl}}_{\text{oracle}}} \times 100\%,
+  \qquad \eta \in [0,100]\%.
+\end{equation}
+This is the primary discovery-quality metric.
+
+\emph{(ii) Relative Cumulative KL (RCK).} The full multi-action agent may steer,
+and steering can produce larger KL shifts than ablation; comparing its cumulative
+KL to the \emph{ablation} oracle is therefore a ratio of two different quantities,
+not a bounded efficiency, and can exceed $100\%$. \RtwoHl[R2.W3 (Misleading >100\% metric): rename to relative cumulative KL and use ablation-only POMDP vs the ablation oracle as the primary comparison. Resolved: renamed RCK and reported only as a relative amplification factor; bounded efficiency is the headline discovery-quality metric.]{This quantity is named the
+Relative Cumulative KL,}
+\begin{equation}
+  \label{eq:rck}
+  \text{RCK} = \frac{\text{CumKL}_{\text{agent}}}
+                    {\text{CumKL}^{\text{abl}}_{\text{oracle}}} \times 100\%,
+\end{equation}
+and report it only for the action-matched analysis, explicitly labelled as a
+relative amplification factor rather than an efficiency. All action-matched
+baselines (Greedy+steer, Bandit+steer, Random+steer, Random-action) are reported on
+the same RCK scale so the comparison is fair.
+The KL divergence per intervention is computed as in Equation~\ref{eq:kl_def}:
+\begin{equation}
+  \label{eq:kl_def}
+  D_\mathrm{KL}(p \,\|\, q) = \sum_t p(t)\log\frac{p(t)}{q(t)}
+\end{equation}
+The \emph{prediction change rate} is the fraction of steering experiments
+in which the model's top-1 prediction changes.
+
+In summary, the primary discovery-quality claim uses the bounded oracle
+efficiency of Equation~\ref{eq:oracle_eff} applied to the ablation-only agent
+(POMDP-abl) against the ablation oracle, so that all quantities are on the same
+scale and the metric cannot exceed $100\%$. The RCK of Equation~\ref{eq:rck} is
+reported separately as a relative amplification factor for the full
+multi-action agent and its action-matched baselines, never as an efficiency.
+The Correspondence Metric is formally defined in Appendix~\ref{app:correspondence}.
+
+\subsection{Statistical Analysis and Sensitivity}
+\label{sec:stats_protocol}
+
+Given the modest prompt counts and the
+high coefficient of variation of per-prompt KL, every reported mean,
+bounded efficiency, and RCK is accompanied by a percentile bootstrap 95\% confidence
+interval obtained by resampling prompts with replacement ($10^4$ resamples).
+Hypothesis H1 is assessed by both a one-sided paired $t$-test and an exact
+paired-permutation test of agent-versus-random per-prompt mean KL; a result is
+reported as significant only when $p<0.05$ under the permutation test. \RtwoHl[R2.W2 (Statistical weakness): increase prompt sets to at least 30 or use bootstrapped CIs; accept that H1 is unsupported on Llama IOI. Resolved: bootstrap 95\% CIs (10,000 resamples) on every reported number; H1 assessed by paired t-test and an exact permutation test and explicitly not accepted on Llama IOI.]{H1 is not
+accepted where it is not significant (for example, Llama IOI).}
+
+\RtwoHl[R2.M1 (Discretisation and state-space design): importance/layer-role binning is unjustified with no sensitivity analysis. Resolved: a +/-20\% threshold sweep (Table 7) leaves the qualitative ordering intact, and a finer 6-bin layer-role variant is run for Llama multi-step.]{The discretisation sensitivity of the agent is assessed at $\pm 20\%$.} The agent discretises
+continuous observations (KL, activation, connectivity) at fixed thresholds, and \RtwoHl[R2.M3 (0.01 prior-observation scaling): unexplained. Resolved: the 0.01 factor maps graph importance into the KL-prior range; explained here and in the appendix.]{maps
+graph importance into the KL-prior range through a $0.01$ scaling factor
+(Appendix~\ref{app:generative_model}).} To show that conclusions are not artefacts of
+these choices, the Gemma IOI benchmark is re-run with the KL and activation
+thresholds independently scaled by $0.8$ and $1.2$, and the resulting change in
+bounded efficiency is reported. The scaling is exposed through the experiment runner
+flags \texttt{-{}-kl-threshold-scale}, \texttt{-{}-act-threshold-scale}, and
+\texttt{-{}-imp-scale}.
+
+To characterise robustness to the agent's
+core hyperparameters, the Gemma and Llama IOI benchmarks are additionally re-run
+\RtwoHl[R2.M4 (EFE selection sensitivity): horizon-1 planning may miss synergies; sensitivity to the exploration weight and action precision unexplored. Resolved: hyperparameter sweep over action precision, learning rate, and pragmatic weight (Table 8) leaves bounded efficiency essentially unchanged; tree-search planning noted as future work.]{while independently varying the action precision ($\gamma \in \{4, 16, 64\}$), the
+Dirichlet likelihood learning rate ($\eta \in \{0.5, 1.0, 2.0\}$), and the pragmatic
+preference weight ($\{0.5, 1.0, 2.0\}$), one factor at a time about the default.}
+These factors are exposed through \texttt{-{}-gamma}, \texttt{-{}-lr-pa}, and
+\texttt{-{}-pragmatic-weight}, and the resulting bounded efficiencies are reported in
+Section~\ref{sec:results}.
+
+To probe the Llama multi-step result, a
+variant is additionally run in which the agent's single layer-role factor is
+refined from 3 bins (early/middle/late) to 6, via \texttt{-{}-n-layer-role 6}, so
+that deeper layer structure can be represented in the belief state. The outcome is
+reported in Section~\ref{sec:results} regardless of whether it improves the result.
+
+\subsection{POMDP Agent Configuration}
+
+The Active Inference POMDP agent uses 4 importance levels $\times$
+3 layer roles $\times$ 3 causal influence levels for a total of 36
+joint hidden states.  Observations comprise 4 KL levels, 4 activation
+levels, and 3 connectivity levels.  The agent selects among 3 actions
+(ablation, patching, steering) using a single-step lookahead policy
+with stochastic selection via softmax over negative EFE
+($\gamma = 16.0$).  The observation model is learned online through
+Dirichlet updates on all modalities ($\eta = 1.0$), and inference
+uses the vanilla variational scheme implemented in pymdp.
+
+\subsection{Reproducibility}
+
+All code is available at
+\url{https://github.com/SharathSPhD/ActiveCIrcuitDiscovery}.
+Colab notebooks reproduce the main experiments on a free T4 GPU.
+The experiment runner supports model selection via
+\texttt{-{}-model gemma|llama|both} and benchmark selection via
+\texttt{-{}-experiment ioi|steering|multistep|domain|all}.
+Raw experiment outputs are stored in \texttt{results/} as JSON.
+
+The \ACD{} framework ships with two Docker targets so that results are not
+tied to a single architecture.  \texttt{Dockerfile.dgx-spark} (with
+\texttt{docker-compose.yml}) targets the NVIDIA DGX Spark platform on which
+the headline numbers were produced (GB10 GPU, 128~GB unified memory,
+CUDA~12.8, aarch64).  \RtwoHl[R2.W5 (Reproducibility/hardware): the container targets aarch64; provide an x86\_64 image for a consumer GPU and report T4-vs-DGX variance. Resolved: a standard amd64/x86\_64 Docker image and a free-T4 run are provided with pinned requirements; relative orderings are hardware-independent.]{\texttt{Dockerfile.amd64} (with
+\texttt{docker-compose.amd64.yml}) provides a standard \texttt{x86\_64}
+image built on the upstream \texttt{pytorch/pytorch:2.4.0-cuda12.1} base; it
+runs on any NVIDIA GPU of compute capability $\geq 7.5$, including the
+16~GB T4 offered for free on Google Colab.}  Because the model loads in
+float32 and uses only $\sim$5~GB of VRAM, the full pipeline fits on a single
+T4, and the accompanying Colab notebooks reproduce the IOI, steering,
+multi-step, and domain experiments end-to-end on that hardware.  Both images
+install \texttt{circuit-tracer} from source and pin all remaining
+dependencies via \texttt{requirements.txt}; absolute KL values can shift
+marginally across GPU generations and driver/cuDNN versions, but the
+relative orderings and statistical conclusions reported here are
+hardware-independent.
+
+Gemma-2-2B is available from HuggingFace Hub under the Gemma license
+(\texttt{google/\allowbreak gemma-2-2b}),
+and GemmaScope transcoders are fetched automatically by the \texttt{circuit-tracer} library.
+Experiments require a single NVIDIA GPU with at least 8~GB VRAM (tested on T4 with 16~GB in Colab
+and GB10 with 128~GB on DGX Spark). The model loads in float32 and requires approximately 5~GB VRAM.
+All dependencies are pinned in \texttt{requirements.txt}, with key packages including \texttt{circuit-tracer}
+(from git), \texttt{transformer-lens}, and \texttt{torch>=2.0}.
+
+\RtwoHl[R2.M7 (Implementation gaps): number of runs, seeds, Dirichlet initialisation and exact B matrices were missing. Resolved: seeds, trial counts, Dirichlet init (pA=10A), eta, gamma and the full B matrices are specified (appendix), and the runner exposes every swept parameter.]{Random baselines use \texttt{numpy.random.seed(42)}, while the Active Inference Selector is
+deterministic given the same candidates and exploration weight.}
+Approximate runtime is 40--60 seconds per prompt on a single GPU (attribution graph generation: $\sim$18s;
+40 ablations at $\sim$30ms each: $\sim$1.2s; overhead: $\sim$20s for model setup on first prompt).
+All experiment outputs are saved as JSON in the \texttt{results/} directory, including per-prompt KL values
+for all methods, feature IDs, layer distributions, and steering outcomes.

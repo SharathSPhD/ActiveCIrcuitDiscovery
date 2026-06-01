@@ -1,0 +1,40 @@
+Mechanistic interpretability seeks to reverse-engineer the computational
+circuits within large language models, but current methods rely on exhaustive
+or heuristic search over exponentially many feature interactions. This paper
+introduces \emph{Active Circuit Discovery} (\ACD{}), a framework that combines
+attribution-graph analysis with active inference to select interventions
+efficiently. \ACD{} uses Anthropic's \texttt{circuit-tracer} library as its
+attribution-graph backend, applying Edge Attribution Patching with transcoders
+to identify the active transcoder features for each prompt. A partially
+observable Markov decision process (POMDP) agent, implemented with
+\texttt{pymdp}, maintains a multi-factor generative model of feature
+importance, layer role, and causal influence. At each step the agent selects
+both a target feature and an intervention type (ablation, activation patching,
+or feature steering) by minimising Expected Free Energy over the joint
+feature--action space, and it learns its observation model online through
+Dirichlet parameter updates. \RtwoHl[R2 minor (Terminology and language): standardise circuit-discovery wording and tighten the prose. Resolved: terminology unified (circuit discovery; bounded efficiency vs RCK) and the manuscript copy-edited for concision throughout.]{\ACD{} is an intervention-selection layer over
+existing attribution-graph tools; it is not a whole-circuit discovery method,
+and no claim of state-of-the-art circuit discovery is made.} The framework is
+evaluated on Gemma-2-2B (26 layers) and Llama-3.2-1B (16 layers) across four
+settings: Indirect Object Identification (IOI), multi-step reasoning, feature
+steering, and a multi-domain benchmark spanning geography, mathematics,
+science, logic, and history. With a budget of 20 interventions per prompt, an
+ablation-only agent scored by bounded oracle efficiency against the ablation
+oracle reaches 82.0\% efficiency on Gemma IOI and 73.0\% on Gemma multi-step.
+It exceeds random selection by 43.5 percentage points on Gemma IOI (paired
+permutation $p=0.031$) and is competitive with greedy ranking, a heuristic UCB
+bandit, and a plain UCB baseline. A direct Edge-Attribution-Patching ranking is
+itself a strong baseline that the agent does not consistently surpass, and on
+Llama multi-step the agent reaches 9.3\% efficiency (37.8\% with finer
+layer-role bins). All comparisons report bootstrap 95\% confidence intervals.
+The full multi-action agent is characterised separately by a \emph{Relative
+Cumulative KL}, a steering-driven amplification factor reported apart from the
+bounded efficiency. Feature steering changes the top-1 prediction in a
+dose-dependent manner, but a matched random-feature control shows that
+circuit-selected features are only marginally, and not significantly, more
+steerable than random active features at large multipliers, indicating that
+part of the effect is generic activation scaling. Multi-domain analysis shows
+task-dependent circuit structure, with IOI circuits concentrated in late layers
+and reasoning and scientific knowledge recruiting early and middle layers. Code,
+notebooks (free T4), amd64/aarch64 Docker images, and raw results are publicly
+available.

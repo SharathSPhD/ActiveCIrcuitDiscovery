@@ -181,18 +181,6 @@ ActiveCIrcuitDiscovery/
 | RAM | 16 GB | 64 GB |
 | Storage | 20 GB | 50 GB |
 
-## Citation
-
-```bibtex
-@article{activecircuitdiscovery2026,
-  title={Active Circuit Discovery: Uncertainty-Weighted Feature Selection
-         for Mechanistic Interpretability in Large Language Models},
-  author={Sharath Sathish},
-  journal={arXiv preprint},
-  year={2026}
-}
-```
-
 ## License
 
 MIT License
