@@ -1,0 +1,60 @@
+---
+interface Props {
+  code: string; // e.g. "H2a"
+  claim: string;
+  verdict: 'accepted' | 'rejected' | 'partial';
+  stat: string; // e.g. "p = 2.6 × 10⁻¹²"
+  detail?: string;
+}
+const { code, claim, verdict, stat, detail } = Astro.props;
+const badge = verdict === 'accepted' ? 'Accepted' : verdict === 'rejected' ? 'Not supported' : 'Partial';
+---
+
+<div class={`hyp hyp-${verdict} reveal`} data-testid={`hyp-${code}`}>
+  <div class="hyp-top">
+    <span class="hyp-code">{code}</span>
+    <span class="hyp-badge">{badge}</span>
+  </div>
+  <p class="hyp-claim">{claim}</p>
+  <p class="hyp-stat mono">{stat}</p>
+  {detail && <p class="hyp-detail">{detail}</p>}
+</div>
+
+<style>
+  .hyp {
+    border: 1px solid var(--hairline);
+    border-radius: var(--radius);
+    padding: 1.1rem 1.2rem;
+    background: var(--bg-panel);
+    border-left-width: 3px;
+  }
+  .hyp-accepted { border-left-color: var(--accept); }
+  .hyp-rejected { border-left-color: var(--reject); }
+  .hyp-partial { border-left-color: var(--amber); }
+  .hyp-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.6rem;
+  }
+  .hyp-code {
+    font-family: var(--font-mono);
+    font-weight: 600;
+    color: var(--ink);
+    font-size: 0.95rem;
+  }
+  .hyp-badge {
+    font-size: 0.72rem;
+    font-weight: 650;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    padding: 0.2rem 0.6rem;
+    border-radius: 999px;
+  }
+  .hyp-accepted .hyp-badge { background: rgba(52, 211, 153, 0.15); color: var(--accept); }
+  .hyp-rejected .hyp-badge { background: rgba(251, 113, 133, 0.15); color: var(--reject); }
+  .hyp-partial .hyp-badge { background: rgba(245, 158, 11, 0.15); color: var(--amber); }
+  .hyp-claim { margin: 0 0 0.5rem; color: var(--ink); font-size: 0.98rem; line-height: 1.5; }
+  .hyp-stat { margin: 0; color: var(--ink-soft); font-size: 0.85rem; }
+  .hyp-detail { margin: 0.55rem 0 0; color: var(--ink-faint); font-size: 0.88rem; }
+</style>

@@ -1,0 +1,63 @@
+---
+interface Props {
+  title: string;
+}
+const { title } = Astro.props;
+---
+
+<details class="deep-dive reveal">
+  <summary>
+    <span class="chev" aria-hidden="true"></span>
+    <span class="dd-label">Go deeper</span>
+    <span class="dd-title">{title}</span>
+  </summary>
+  <div class="dd-body">
+    <slot />
+  </div>
+</details>
+
+<style>
+  .deep-dive {
+    margin: 1.5rem 0;
+    border: 1px solid var(--hairline);
+    border-radius: var(--radius);
+    background: linear-gradient(180deg, rgba(168, 85, 247, 0.05), transparent);
+    overflow: hidden;
+  }
+  summary {
+    list-style: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    padding: 0.9rem 1.1rem;
+    font-size: 0.95rem;
+  }
+  summary::-webkit-details-marker { display: none; }
+  .dd-label {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--violet);
+  }
+  .dd-title { color: var(--ink-soft); }
+  .chev {
+    width: 0;
+    height: 0;
+    border-left: 6px solid var(--violet);
+    border-top: 4px solid transparent;
+    border-bottom: 4px solid transparent;
+    transition: transform 0.2s ease;
+    flex: none;
+  }
+  details[open] .chev { transform: rotate(90deg); }
+  .dd-body {
+    padding: 0.2rem 1.1rem 1.2rem;
+    border-top: 1px solid var(--hairline);
+    color: var(--ink-soft);
+    font-size: 0.99rem;
+  }
+  .dd-body :global(p:first-child) { margin-top: 0.9rem; }
+  .dd-body :global(.katex-display) { margin: 0.9rem 0; overflow-x: auto; overflow-y: hidden; }
+</style>

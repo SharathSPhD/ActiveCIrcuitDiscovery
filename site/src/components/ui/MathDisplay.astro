@@ -1,0 +1,30 @@
+---
+import 'katex/dist/katex.min.css';
+import katex from 'katex';
+
+interface Props {
+  tex: string;
+  display?: boolean;
+}
+const { tex, display = true } = Astro.props;
+
+// Render to HTML at build time — no client JS needed.
+const html = katex.renderToString(tex, {
+  displayMode: display,
+  throwOnError: false,
+  trust: false,
+});
+---
+
+<span class:list={['math', { 'math-block': display }]} set:html={html} />
+
+<style>
+  .math-block {
+    display: block;
+    margin: 1.1rem 0;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 0.2rem 0;
+  }
+  .math :global(.katex) { color: var(--ink); }
+</style>

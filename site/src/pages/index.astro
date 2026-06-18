@@ -1,0 +1,396 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import ScrollScene from '../components/ui/ScrollScene.astro';
+import DeepDive from '../components/ui/DeepDive.astro';
+import Callout from '../components/ui/Callout.astro';
+import MathDisplay from '../components/ui/MathDisplay.astro';
+import HypothesisCard from '../components/ui/HypothesisCard.astro';
+import CitationList from '../components/ui/CitationList.astro';
+import ParticleBrain from '../components/charts/ParticleBrain.tsx';
+import NeuralGraph from '../components/charts/NeuralGraph.tsx';
+import AgentTimeline from '../components/charts/AgentTimeline.tsx';
+import EfficiencyExplorer from '../components/charts/EfficiencyExplorer.tsx';
+import RckPanel from '../components/charts/RckPanel.tsx';
+import SteeringPanel from '../components/charts/SteeringPanel.tsx';
+import DomainPanel from '../components/charts/DomainPanel.tsx';
+import { HEADLINE } from '../data';
+import { REFS, READING_ORDER } from '../data/refs';
+import { fmtPct } from '../utils/math';
+
+const repo = 'https://github.com/SharathSPhD/ActiveCIrcuitDiscovery';
+const reading = READING_ORDER.map((k) => REFS[k]);
+const E = (x: number) => fmtPct(x);
+
+const efeTex = String.raw`\mathcal{G}(\pi)=\underbrace{-\,\mathbb{E}_{q}\big[\,D_{\mathrm{KL}}[\,q(s\mid o,\pi)\,\|\,q(s\mid\pi)\,]\,\big]}_{\text{epistemic: resolve uncertainty}}\;\;\underbrace{-\,\mathbb{E}_{q}\big[\log p(o)\big]}_{\text{pragmatic: seek preferred outcomes}}`;
+---
+
+<BaseLayout>
+  {/* ============ SCENE 1 — HOOK ============ */}
+  <section id="hook" class="hero" data-scene="hook">
+    <div class="hero-canvas">
+      <ParticleBrain client:visible height={520} />
+    </div>
+    <div class="hero-copy reading">
+      <p class="kicker">An interactive walkthrough · Active Circuit Discovery</p>
+      <h1>A Neuroscientist's Tool<br />to Pick AI's Brain</h1>
+      <p class="lead">
+        We trust large language models to write, reason, and decide — yet we can barely see how they
+        do it. This is the story of an agent that borrows a theory from <em>neuroscience</em> to hunt,
+        experiment by experiment, for the circuits hidden inside an AI's mind.
+      </p>
+      <p class="scroll-hint" aria-hidden="true">scroll to begin ↓</p>
+    </div>
+  </section>
+
+  {/* ============ SCENE 2 — THE PROBLEM ============ */}
+  <ScrollScene id="problem" num={2} eyebrow="The haystack" title="Why finding a circuit is hard" wide>
+    <p class="lead">
+      Inside a transformer, a single prediction lights up <strong>thousands</strong> of features wired
+      by <strong>hundreds of thousands</strong> of connections. A "circuit" is the small subgraph that
+      actually <em>causes</em> a behaviour. Finding it is a needle-in-a-haystack search.
+    </p>
+    <p>
+      The picture below is real: the attribution graph for a classic task — predicting the indirect
+      object in <span class="mono">"When John and Mary went to the store, John gave the bag to ___"</span>.
+      We've kept only the most influential features so it's legible; the full graph had hundreds of
+      thousands of edges.
+    </p>
+
+    <NeuralGraph client:visible height={520} />
+
+    <p>
+      Two families of methods try to tame this. <strong>Exhaustive search</strong> (like ACDC) tests
+      every edge — rigorous but it scales with the number of edges, so it gets slow fast.
+      <strong>Gradient rankings</strong> (attribution patching / EAP) are cheap, but they're
+      <em>static</em>: they score everything once and never adapt as evidence comes in. Neither one
+      asks the question a good scientist asks: <em>given what I've learned so far, what's the most
+      informative experiment to run next?</em>
+    </p>
+
+    <DeepDive title="Circuits, ACDC, and attribution patching">
+      <p>
+        <strong>Circuits</strong> are human-interpretable subgraphs of computation — the idea that
+        networks are built from reusable, inspectable parts ({REFS.Olah2020.authors}, {REFS.Olah2020.year};
+        {' '}{REFS.Elhage2021.authors}, {REFS.Elhage2021.year}). The <strong>IOI circuit</strong>
+        ({REFS.Wang2022.authors}, {REFS.Wang2022.year}) is the field's fruit-fly benchmark.
+        <strong> ACDC</strong> ({REFS.Conmy2023.authors}, {REFS.Conmy2023.year}) automates discovery by
+        iteratively pruning edges, but its cost grows with the edge count. <strong>Edge Attribution
+        Patching</strong> ({REFS.Syed2023.authors}, {REFS.Syed2023.year}) approximates each edge's
+        importance with a single gradient — fast, but it commits to one static ranking.
+      </p>
+    </DeepDive>
+  </ScrollScene>
+
+  {/* ============ SCENE 3 — THE INSIGHT ============ */}
+  <ScrollScene id="insight" num={3} eyebrow="A clue from the brain" title="What a brain does when it's unsure">
+    <p class="lead">
+      Neuroscience has a candidate theory for how brains act under uncertainty: the
+      <strong> Free Energy Principle</strong>. A brain, it says, is a prediction machine that acts to
+      reduce its own surprise — sometimes by updating beliefs, sometimes by running an experiment on
+      the world.
+    </p>
+    <p>
+      Its decision rule, <strong>Active Inference</strong>, scores every possible action by a single
+      quantity — <em>Expected Free Energy</em> — that blends two drives: <span class="accent-cyan">curiosity</span>
+      (pick the action that will teach you the most) and <span class="accent-violet">purpose</span>
+      (pick the action that moves you toward your goal). Explore, then exploit — from one equation.
+    </p>
+
+    <Callout kind="key" label="The leap">
+      <p>
+        Circuit discovery <em>is</em> this problem. The "world" is the language model. The "hidden
+        state" is which features matter. An "action" is an experiment — poking a feature and watching
+        the output move. So: let an Active-Inference agent do the hunting.
+      </p>
+    </Callout>
+
+    <DeepDive title="Expected Free Energy, precisely">
+      <p>An agent picks the policy that minimises Expected Free Energy, which decomposes into an epistemic (information-gain) term and a pragmatic (preference) term:</p>
+      <MathDisplay tex={efeTex} />
+      <p>
+        Minimising the first term means choosing experiments whose outcomes you can't yet predict —
+        exactly the experiments that teach you the most. See {REFS.Friston2017.authors}
+        ({REFS.Friston2017.year}) and {REFS.DaCosta2020.authors} ({REFS.DaCosta2020.year}); the agent
+        here is built on the <span class="mono">pymdp</span> library ({REFS.Pymdp2022.authors},
+        {' '}{REFS.Pymdp2022.year}).
+      </p>
+    </DeepDive>
+  </ScrollScene>
+
+  {/* ============ SCENE 4 — THE METHOD ============ */}
+  <ScrollScene id="method" num={4} eyebrow="The agent" title="Turning discovery into a decision">
+    <p class="lead">
+      The agent keeps a <strong>belief</strong> about every candidate feature along three axes, and
+      updates it after each experiment.
+    </p>
+
+    <div class="factor-grid">
+      <div class="factor"><span class="fnum">1</span><h4>How important?</h4><p>negligible · low · moderate · high</p></div>
+      <div class="factor"><span class="fnum">2</span><h4>Which depth?</h4><p>early · middle · late layer</p></div>
+      <div class="factor"><span class="fnum">3</span><h4>How influential?</h4><p>weak · moderate · strong</p></div>
+    </div>
+
+    <p>
+      It has <strong>three ways to experiment</strong>, and — this is the clever part — they differ in
+      how much they <em>teach</em>:
+    </p>
+    <ul class="actions-list">
+      <li><span class="adot" style="background:var(--action-ablation)"></span><strong>Ablation</strong> — switch a feature off entirely. Maximally disruptive, maximally informative: the agent reaches for it when it's <em>unsure</em>.</li>
+      <li><span class="adot" style="background:var(--action-patching)"></span><strong>Patching</strong> — swap in a reference value. A middle-ground, confirmatory probe.</li>
+      <li><span class="adot" style="background:var(--action-steering)"></span><strong>Steering</strong> — amplify a feature. Gentle; the agent uses it to <em>confirm</em> once it's confident.</li>
+    </ul>
+
+    <p>
+      Because each action carries a different amount of information, the explore-then-exploit pattern
+      isn't hand-coded — it <em>emerges</em> from the same Expected-Free-Energy rule. After every
+      probe, the agent measures the change in the model's output (a KL divergence), updates its
+      beliefs, and even refines its own sense of what each measurement means.
+    </p>
+
+    <DeepDive title="The generative model and online learning">
+      <p>
+        Formally this is a discrete POMDP with three hidden state factors and three observation
+        modalities (output shift, activation magnitude, graph connectivity). The agent's
+        action-conditioned transition model gives ablation the widest belief updates (highest entropy →
+        highest epistemic value) and steering the narrowest. It learns its observation model online by
+        incrementing Dirichlet counts after each real intervention — conjugate-prior updating, the
+        Bayesian workhorse ({REFS.MacKay2003.authors}, {REFS.MacKay2003.year}). The feature space comes
+        from sparse transcoders / SAEs ({REFS.Cunningham2024.authors}, {REFS.Cunningham2024.year};
+        {' '}Gemma Scope, {REFS.GemmaScope2024.year}) over attribution graphs built by circuit-tracer
+        ({REFS.Ameisen2025.authors}, {REFS.Ameisen2025.year}).
+      </p>
+    </DeepDive>
+  </ScrollScene>
+
+  {/* ============ SCENE 5 — WATCH IT EXPLORE ============ */}
+  <ScrollScene id="explore" num={5} eyebrow="Watch it think" title="Watch the agent explore" wide>
+    <p class="lead">
+      Here is a <strong>real run</strong>, twenty experiments deep. Each bar is one intervention,
+      coloured by the action the agent chose. Below it, the agent's belief
+      <span class="accent-cyan"> entropy</span> (its uncertainty) and
+      <span class="accent-violet"> expected free energy</span>. Scrub through the steps.
+    </p>
+
+    <AgentTimeline client:visible />
+
+    <Callout kind="key" label="The signature">
+      <p>
+        Watch the very first move: on Gemma, <strong>every</strong> prompt opens with an
+        <span class="accent-amber"> ablation</span> — the high-information probe — and the entropy
+        curve drops. Then the agent switches to <span class="accent-violet">steering</span> to exploit
+        what it has learned. Explore, then exploit, with no schedule telling it to. Across all 100
+        steps the split is 5 ablations / 94 steerings / 1 patch — every run begins by exploring.
+      </p>
+    </Callout>
+  </ScrollScene>
+
+  {/* ============ SCENE 6 — RESULTS ============ */}
+  <ScrollScene id="results" num={6} eyebrow="Does it work?" title="Does it actually find the circuit?" wide>
+    <p class="lead">
+      To grade discovery we use <strong>bounded oracle efficiency</strong>: how close the agent's
+      chosen features come to a perfect oracle that already knows each feature's true effect. 100% =
+      oracle-level. Compare methods, tasks, and both models.
+    </p>
+
+    <EfficiencyExplorer client:visible />
+
+    <p>
+      On <strong>Gemma-2-2B</strong>'s IOI task the agent reaches <strong>{E(HEADLINE.gemmaIoiEff)}</strong>,
+      decisively beating random selection. The gradient baseline (EAP) is the one to beat — it's a
+      genuinely strong, cheap ranking — and the agent trades blows with the bandit. On
+      <strong> Llama-3.2-1B</strong> the agent only reaches <strong>{E(HEADLINE.llamaIoiEff)}</strong>,
+      about level with random. We don't hide that.
+    </p>
+
+    <DeepDive title="Why is EAP so hard to beat?">
+      <p>
+        Attribution patching uses gradient information about the true output, so it's a strong static
+        prior. The agent's advantage is <em>adaptivity</em> under uncertainty — most valuable when the
+        signal is noisy or the budget is tiny, less decisive when a single gradient ranking is already
+        near-perfect. The honest read: the POMDP reliably beats uninformed search and is competitive
+        with the best heuristics, rather than dominating them.
+      </p>
+    </DeepDive>
+  </ScrollScene>
+
+  {/* ============ SCENE 7 — THE HONEST CATCH ============ */}
+  <ScrollScene id="honesty" num={7} eyebrow="The honest catch" title="The 1255% that isn't what it looks like" wide>
+    <p class="lead">
+      One number looks spectacular: with steering switched on, the agent's cumulative effect reaches
+      <strong> {Math.round(HEADLINE.gemmaIoiRck)}%</strong> of the ablation oracle on Gemma IOI. Super-oracle
+      discovery? <strong>No.</strong> And the data says why.
+    </p>
+
+    <RckPanel client:visible />
+
+    <Callout kind="honest">
+      <p>
+        Every steering-enabled method clears 100% — including <strong>random + steering</strong>.
+        That tells you the amplification comes from steering's raw mechanical power, not from smarter
+        feature selection. So we report it as an <em>amplification factor</em>, never as an efficiency.
+      </p>
+    </Callout>
+
+    <p>
+      We can pin this down directly. Take circuit-selected features and matched <em>random</em>
+      controls, scale each by ×1.5 up to ×10, and count how often the model's prediction flips:
+    </p>
+
+    <SteeringPanel client:visible />
+
+    <div class="hyp-row">
+      <HypothesisCard code="H2a" verdict="accepted"
+        claim="Amplifying features does change the model's predictions — steering is real."
+        stat="binomial p ≈ 2.6 × 10⁻¹² (Gemma, ×10)" />
+      <HypothesisCard code="H2b" verdict="rejected"
+        claim="Circuit-selected features are only marginally more steerable than random active ones — selectivity is not significant."
+        stat="selected vs control p ≈ 0.31 (Gemma, ×10); pooled p ≈ 0.10"
+        detail="Much of the steering effect is generic activation scaling, not specific causal control." />
+    </div>
+  </ScrollScene>
+
+  {/* ============ SCENE 8 — LIMITS ============ */}
+  <ScrollScene id="limits" num={8} eyebrow="Where it breaks" title="Where the method breaks">
+    <p class="lead">
+      The sharpest failure is also the most instructive. On Llama's <strong>multi-step reasoning</strong>
+      task, efficiency collapses to <strong>{E(HEADLINE.llamaMultistepEff)}</strong> — well below random.
+    </p>
+    <div class="bigstat-row">
+      <div class="bigstat"><span class="bs-num">{E(HEADLINE.gemmaMultistepEff)}</span><span class="bs-lab">Gemma · multi-step</span></div>
+      <div class="bigstat warn"><span class="bs-num">{E(HEADLINE.llamaMultistepEff)}</span><span class="bs-lab">Llama · multi-step (3 bins)</span></div>
+      <div class="bigstat fix"><span class="bs-num">{E(HEADLINE.llamaMultistepFinebins)}</span><span class="bs-lab">Llama · after the fix (6 bins)</span></div>
+    </div>
+    <p>
+      The cause isn't the theory — it's a <strong>resolution</strong> mismatch. The agent bins layers
+      into three coarse thirds (early / middle / late). Gemma has 26 layers; Llama has only 16, so
+      three bins smear together functionally distinct early layers where reasoning lives. Refine to six
+      bins and efficiency more than triples, to <strong>{E(HEADLINE.llamaMultistepFinebins)}</strong> —
+      confirming the diagnosis.
+    </p>
+    <Callout kind="honest">
+      <p>
+        This is a limitation worth stating plainly: the default discretisation doesn't transfer to
+        shallow architectures without adaptation. The fix is known; the out-of-the-box behaviour still
+        fails. Both facts belong in the story.
+      </p>
+    </Callout>
+  </ScrollScene>
+
+  {/* ============ SCENE 9 — DOMAINS ============ */}
+  <ScrollScene id="domains" num={9} eyebrow="Different tasks" title="Different thoughts live in different layers" wide>
+    <p class="lead">
+      Run the agent across five kinds of knowledge and it stays robust everywhere — but where the
+      important features <em>sit</em> depends on both the task and the model.
+    </p>
+
+    <DomainPanel client:visible />
+
+    <p>
+      On <strong>Gemma</strong> the most influential features cluster in
+      <span class="accent-cyan">early</span> layers across <em>every</em> domain (70–80%). On
+      <strong>Llama</strong> the balance tips <span class="accent-amber">later</span> for some
+      domains (geography, maths) while staying early for others (logic, history). There's no single
+      universal "facts-live-here" rule — and that's the useful part: rather than assuming a layout,
+      the agent <em>surfaces</em> each task's layer fingerprint for inspection. Toggle the models
+      above to see the contrast.
+    </p>
+  </ScrollScene>
+
+  {/* ============ SCENE 10 — IMPLICATIONS ============ */}
+  <ScrollScene id="implications" num={10} eyebrow="Why it matters" title="Why this matters">
+    <p class="lead">
+      The headline isn't a leaderboard win. It's a <strong>reframing</strong>: interpretability under a
+      budget is an experimental-design problem, and a 1990s theory of the brain gives us a principled
+      way to run those experiments.
+    </p>
+    <ul class="why-list">
+      <li><strong>Auditing under budget.</strong> When you can't test everything, spend each probe where it teaches the most.</li>
+      <li><strong>Uncertainty as a first-class citizen.</strong> The agent knows what it doesn't know, and acts on it.</li>
+      <li><strong>Honest metrics.</strong> Separating discovery (bounded ≤100%) from amplification (unbounded) keeps the claims clean — a discipline the whole field benefits from.</li>
+      <li><strong>A bridge.</strong> Sparse features, attribution graphs, and active inference can compose into one loop ({REFS.Lindsey2025.authors}, {REFS.Lindsey2025.year}).</li>
+    </ul>
+    <Callout kind="key" label="In one line">
+      <p>Give an AI a neuroscientist's instinct for the next good experiment, and it can start to map its own mind — as long as we read the results honestly.</p>
+    </Callout>
+  </ScrollScene>
+
+  {/* ============ SCENE 11 — FURTHER READING ============ */}
+  <ScrollScene id="reading" num={11} eyebrow="Go deeper" title="Read more">
+    <p>
+      This walkthrough is driven entirely by the paper's <strong>real</strong> experiment outputs — every
+      number traces back to the released results. Explore the code, reproduce the runs, or read the
+      sources behind the ideas.
+    </p>
+    <p class="links-row">
+      <a href={repo} target="_blank" rel="noopener noreferrer">Code &amp; data on GitHub →</a>
+    </p>
+    <CitationList refs={reading} title="References" />
+    <p class="foot">
+      Built with Astro · visualisations in D3 &amp; Three.js · all data precomputed from the
+      repository's <span class="mono">results/</span>.
+    </p>
+  </ScrollScene>
+
+  <style>
+    .hero {
+      position: relative;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      overflow: hidden;
+      border-bottom: 1px solid var(--hairline);
+    }
+    .hero-canvas { position: absolute; inset: 0; z-index: 0; opacity: 0.9; }
+    /* radial scrim guarantees text contrast over the moving particles / fallback */
+    .hero::after {
+      content: '';
+      position: absolute; inset: 0; z-index: 0; pointer-events: none;
+      background: radial-gradient(120% 90% at 30% 45%, rgba(10,14,20,0.82) 0%, rgba(10,14,20,0.5) 45%, transparent 75%);
+    }
+    .hero-copy { position: relative; z-index: 1; padding-block: 4rem; }
+    .kicker {
+      font-family: var(--font-mono); font-size: 0.78rem; letter-spacing: 0.16em;
+      text-transform: uppercase; color: var(--cyan); margin: 0 0 1rem;
+    }
+    .hero h1 {
+      font-size: clamp(2.4rem, 7vw, 4.4rem); margin: 0 0 1.3rem; line-height: 1.05;
+      text-shadow: 0 2px 40px rgba(10,14,20,0.8);
+    }
+    .hero .lead { max-width: 38ch; font-size: clamp(1.05rem, 2.4vw, 1.3rem); color: var(--ink); }
+    .scroll-hint {
+      margin-top: 2.5rem; font-family: var(--font-mono); font-size: 0.8rem;
+      color: var(--ink-faint); letter-spacing: 0.1em;
+    }
+
+    .factor-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.9rem; margin: 1.4rem 0; }
+    .factor { border: 1px solid var(--hairline); border-radius: var(--radius); padding: 1rem; background: var(--bg-panel); }
+    .factor .fnum { font-family: var(--font-mono); color: var(--cyan); font-size: 0.85rem; }
+    .factor h4 { margin: 0.4rem 0 0.3rem; color: var(--ink); font-size: 1rem; }
+    .factor p { margin: 0; font-size: 0.82rem; color: var(--ink-faint); }
+
+    .actions-list { list-style: none; padding: 0; margin: 1rem 0; display: flex; flex-direction: column; gap: 0.7rem; }
+    .actions-list li { color: var(--ink-soft); padding-left: 0.2rem; }
+    .adot { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 0.55rem; vertical-align: middle; }
+
+    .hyp-row, .why-list { margin-top: 1.2rem; }
+    .hyp-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    .why-list { color: var(--ink-soft); display: flex; flex-direction: column; gap: 0.7rem; padding-left: 1.1rem; }
+
+    .bigstat-row { display: flex; gap: 1rem; flex-wrap: wrap; margin: 1.4rem 0; }
+    .bigstat { flex: 1; min-width: 150px; border: 1px solid var(--hairline); border-radius: var(--radius);
+               padding: 1.1rem; background: var(--bg-panel); text-align: center; }
+    .bigstat .bs-num { display: block; font-size: 2.1rem; font-weight: 700; color: var(--cyan); font-family: var(--font-mono); }
+    .bigstat .bs-lab { font-size: 0.78rem; color: var(--ink-faint); }
+    .bigstat.warn .bs-num { color: var(--reject); }
+    .bigstat.fix .bs-num { color: var(--accept); }
+
+    .links-row a { font-size: 1.05rem; }
+    .foot { margin-top: 2rem; font-size: 0.84rem; color: var(--ink-faint); }
+    .accent-amber { color: var(--amber); }
+
+    @media (max-width: 640px) {
+      .factor-grid { grid-template-columns: 1fr; }
+      .hyp-row { grid-template-columns: 1fr; }
+    }
+  </style>
+</BaseLayout>

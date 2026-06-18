@@ -1,0 +1,141 @@
+---
+import '../styles/global.css';
+import { SCENES } from '../utils/scenes';
+
+interface Props {
+  title?: string;
+  description?: string;
+}
+const {
+  title = 'A Neuroscientist’s Tool to Pick AI’s Brain',
+  description = 'How a theory from neuroscience — Active Inference — teaches an AI agent to hunt for the circuits inside large language models. An interactive walkthrough of the Active Circuit Discovery paper.',
+} = Astro.props;
+
+const base = import.meta.env.BASE_URL;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content={description} />
+    <meta name="theme-color" content="#0a0e14" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content="article" />
+    <title>{title}</title>
+    <link rel="icon" href={`${base}favicon.svg`} type="image/svg+xml" />
+  </head>
+  <body>
+    <a href="#main" class="skip-link">Skip to content</a>
+
+    <nav class="scene-nav" aria-label="Section navigation">
+      <ol>
+        {
+          SCENES.map((s) => (
+            <li>
+              <a href={`#${s.id}`} data-scene-link={s.id}>
+                <span class="dot" aria-hidden="true" />
+                <span class="nav-label">{s.nav}</span>
+              </a>
+            </li>
+          ))
+        }
+      </ol>
+    </nav>
+
+    <main id="main">
+      <slot />
+    </main>
+
+    <style>
+      .skip-link {
+        position: absolute;
+        left: -999px;
+        top: 0;
+        z-index: 100;
+        background: var(--cyan);
+        color: #04121a;
+        padding: 0.6rem 1rem;
+        border-radius: 0 0 8px 0;
+        font-weight: 600;
+      }
+      .skip-link:focus { left: 0; }
+
+      .scene-nav {
+        position: fixed;
+        right: 1.1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        z-index: 40;
+      }
+      .scene-nav ol {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 0.35rem;
+      }
+      .scene-nav a {
+        display: flex;
+        align-items: center;
+        gap: 0.55rem;
+        border-bottom: none;
+        color: var(--ink-faint);
+        font-size: 0.72rem;
+        flex-direction: row-reverse;
+      }
+      .scene-nav .dot {
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+        background: var(--hairline);
+        border: 1px solid var(--ink-faint);
+        transition: background 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+        flex: none;
+      }
+      .scene-nav .nav-label {
+        opacity: 0;
+        transform: translateX(6px);
+        transition: opacity 0.18s ease, transform 0.18s ease;
+        white-space: nowrap;
+      }
+      .scene-nav a:hover .nav-label,
+      .scene-nav a:focus-visible .nav-label { opacity: 1; transform: none; }
+      .scene-nav a[aria-current='true'] .dot,
+      .scene-nav a:hover .dot {
+        background: var(--cyan);
+        box-shadow: var(--glow-cyan);
+        transform: scale(1.15);
+      }
+      .scene-nav a[aria-current='true'] { color: var(--ink); }
+
+      @media (max-width: 760px) {
+        .scene-nav { display: none; }
+      }
+    </style>
+
+    <script>
+      // Scroll-spy: highlight the nav dot for the section in view.
+      const links = new Map<string, HTMLAnchorElement>();
+      document.querySelectorAll<HTMLAnchorElement>('[data-scene-link]').forEach((a) => {
+        links.set(a.dataset.sceneLink!, a);
+      });
+      const obs = new IntersectionObserver(
+        (entries) => {
+          for (const e of entries) {
+            if (e.isIntersecting) {
+              links.forEach((a) => a.removeAttribute('aria-current'));
+              const a = links.get(e.target.id);
+              a?.setAttribute('aria-current', 'true');
+            }
+          }
+        },
+        { rootMargin: '-45% 0px -45% 0px' }
+      );
+      document.querySelectorAll('main section[id]').forEach((s) => obs.observe(s));
+    </script>
+  </body>
+</html>

@@ -1,0 +1,39 @@
+---
+interface Props {
+  kind?: 'note' | 'honest' | 'key';
+  label?: string;
+}
+const { kind = 'note', label } = Astro.props;
+const defaultLabel = kind === 'honest' ? 'The honest catch' : kind === 'key' ? 'Key idea' : 'Note';
+---
+
+<aside class={`callout callout-${kind} reveal`}>
+  <p class="callout-label">{label ?? defaultLabel}</p>
+  <div class="callout-body"><slot /></div>
+</aside>
+
+<style>
+  .callout {
+    margin: 1.6rem 0;
+    padding: 1.1rem 1.3rem;
+    border-radius: var(--radius);
+    border: 1px solid var(--hairline);
+    border-left-width: 3px;
+    background: var(--bg-panel);
+  }
+  .callout-honest { border-left-color: var(--amber); background: linear-gradient(180deg, rgba(245, 158, 11, 0.06), transparent); }
+  .callout-key { border-left-color: var(--cyan); background: linear-gradient(180deg, rgba(34, 211, 238, 0.06), transparent); }
+  .callout-note { border-left-color: var(--violet); }
+  .callout-label {
+    margin: 0 0 0.45rem;
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+  }
+  .callout-honest .callout-label { color: var(--amber); }
+  .callout-key .callout-label { color: var(--cyan); }
+  .callout-body :global(p) { margin: 0.4rem 0 0; color: var(--ink); }
+  .callout-body :global(p:first-child) { margin-top: 0; }
+</style>
