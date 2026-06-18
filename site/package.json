@@ -27,13 +27,17 @@
     "three": "^0.169.0"
   },
   "devDependencies": {
+    "@astrojs/check": "^0.9.9",
+    "@axe-core/playwright": "^4.11.3",
     "@playwright/test": "^1.48.0",
     "@preact/preset-vite": "^2.9.0",
-    "@testing-library/preact": "^3.2.4",
     "@testing-library/jest-dom": "^6.5.0",
+    "@testing-library/preact": "^3.2.4",
     "@types/d3": "^7.4.3",
+    "@types/node": "^25.9.3",
     "@types/three": "^0.169.0",
     "jsdom": "^25.0.0",
+    "typescript": "^5.9.3",
     "vitest": "^2.1.0"
   }
 }

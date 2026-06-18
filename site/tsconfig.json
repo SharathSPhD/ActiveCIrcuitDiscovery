@@ -13,5 +13,5 @@
     }
   },
   "include": ["src", "scripts", "tests"],
-  "exclude": ["dist", "node_modules"]
+  "exclude": ["dist", "node_modules", "tests/e2e"]
 }

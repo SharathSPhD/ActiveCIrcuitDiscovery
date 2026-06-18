@@ -226,7 +226,7 @@ export default function NeuralGraph({ height = 520 }: NeuralGraphProps) {
       .style('border-radius', '4px')
       .style('font-size', '12px')
       .style('pointer-events', 'none')
-      .style('border', '1px solid #6b7a90')
+      .style('border', '1px solid #aebacb')
       .style('opacity', 0)
       .style('z-index', '10000')
       .style('transition', 'opacity 0.2s');
@@ -380,7 +380,7 @@ export default function NeuralGraph({ height = 520 }: NeuralGraphProps) {
           style={{
             padding: '12px 16px',
             fontSize: '13px',
-            color: '#6b7a90',
+            color: '#aebacb',
             backgroundColor: '#0d1420',
             borderTop: '1px solid #1a202c',
             fontStyle: 'italic',

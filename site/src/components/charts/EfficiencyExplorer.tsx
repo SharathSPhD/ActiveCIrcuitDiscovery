@@ -57,14 +57,14 @@ export default function EfficiencyExplorer() {
         100% = matches the ablation oracle. Bars sorted best→worst; whiskers are 95% CIs.
       </p>
 
-      <div ref={ref} class="svg-wrap">
+      <div ref={ref} class="svg-wrap" tabIndex={0} role="group" aria-label="Scrollable chart — scroll horizontally to see all of it">
         <svg width={width} height={h} role="img" data-testid="efficiency-chart"
              aria-label={`Oracle efficiency by method for ${MODEL_LABELS[model]} on ${TASK_LABELS[task]}`}>
           {/* gridlines */}
           {[0, 25, 50, 75, 100].map((t) => (
             <g>
               <line x1={x(t)} x2={x(t)} y1={padT} y2={h} stroke="var(--hairline)" stroke-width="1" />
-              <text x={x(t)} y={h - 2} fill="var(--ink-faint)" font-size="10" text-anchor="middle">{t}</text>
+              <text x={x(t)} y={h - 2} fill="var(--ink-soft)" font-size="10" text-anchor="middle">{t}</text>
             </g>
           ))}
           {bars.map((b, i) => {
@@ -104,7 +104,7 @@ export default function EfficiencyExplorer() {
       <style>{`
         .eff { margin: 1.5rem 0; }
         .controls { display: flex; gap: 0.6rem; flex-wrap: wrap; margin-bottom: 0.9rem; }
-        .cap { font-size: 0.9rem; color: var(--ink-faint); margin: 0 0 0.8rem; }
+        .cap { font-size: 0.9rem; color: var(--ink-soft); margin: 0 0 0.8rem; }
         .cap strong { color: var(--ink-soft); }
         .svg-wrap { width: 100%; }
         .h1 { font-size: 0.92rem; color: var(--ink-soft); margin-top: 0.9rem;

@@ -38,7 +38,7 @@ export default function RckPanel() {
         100% (the oracle). Notice: even <strong>random + steering</strong> clears it.
       </p>
 
-      <div ref={ref} class="svg-wrap">
+      <div ref={ref} class="svg-wrap" tabIndex={0} role="group" aria-label="Scrollable chart — scroll horizontally to see all of it">
         <svg width={width} height={h} role="img" data-testid="rck-chart"
              aria-label={`Relative cumulative KL by method for ${MODEL_LABELS[model]}`}>
           {/* 100% reference */}
@@ -60,7 +60,7 @@ export default function RckPanel() {
       <style>{`
         .rck { margin: 1.4rem 0; }
         .controls { display:flex; gap:0.6rem; flex-wrap:wrap; margin-bottom:0.8rem; }
-        .cap { font-size:0.9rem; color:var(--ink-faint); margin:0 0 0.7rem; }
+        .cap { font-size:0.9rem; color:var(--ink-soft); margin:0 0 0.7rem; }
         .cap strong { color: var(--amber); }
         .svg-wrap { width:100%; }
       `}</style>

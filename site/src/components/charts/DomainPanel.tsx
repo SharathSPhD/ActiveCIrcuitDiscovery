@@ -38,7 +38,9 @@ export default function DomainPanel() {
                 <div class="fill" style={`width:${d.efficiency}%`} data-testid={`dom-eff-${d.name}`} data-eff={d.efficiency.toFixed(1)} />
                 <span class="efflabel">{fmtPct(d.efficiency)}</span>
               </div>
-              <div class="layers" title={`early ${d.layers.early} · mid ${d.layers.mid} · late ${d.layers.late}`}>
+              <div class="layers" role="img"
+                   aria-label={`${d.name} top features by depth: ${d.layers.early} early, ${d.layers.mid} middle, ${d.layers.late} late`}
+                   title={`early ${d.layers.early} · mid ${d.layers.mid} · late ${d.layers.late}`}>
                 {(['early', 'mid', 'late'] as const).map((seg) => (
                   d.layers[seg] > 0 && (
                     <span class="seg" style={`width:${(d.layers[seg] / tot) * 100}%;background:${LAYER_COLORS[seg]}`} />
@@ -54,9 +56,9 @@ export default function DomainPanel() {
         .dom { margin: 1.4rem 0; }
         .controls { display:flex; gap:1rem; align-items:center; flex-wrap:wrap; margin-bottom:0.7rem; }
         .legend { display:flex; gap:0.9rem; }
-        .leg { display:flex; align-items:center; gap:0.35rem; font-size:0.78rem; color:var(--ink-faint); text-transform:capitalize; }
+        .leg { display:flex; align-items:center; gap:0.35rem; font-size:0.78rem; color:var(--ink-soft); text-transform:capitalize; }
         .sw { width:10px; height:10px; border-radius:3px; }
-        .cap { font-size:0.9rem; color:var(--ink-faint); margin:0 0 0.8rem; }
+        .cap { font-size:0.9rem; color:var(--ink-soft); margin:0 0 0.8rem; }
         .rows { display:flex; flex-direction:column; gap:0.6rem; }
         .row { display:grid; grid-template-columns: 90px 1fr 120px; gap:0.8rem; align-items:center; }
         .name { text-transform:capitalize; color:var(--ink-soft); font-size:0.9rem; }

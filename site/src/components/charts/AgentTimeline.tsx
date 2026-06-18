@@ -58,7 +58,7 @@ export default function AgentTimeline() {
           onChange={(v) => { setModel(v as ModelKey); setStep(0); setPidx(0); }}
           options={[{ value: 'gemma', label: MODEL_LABELS.gemma }, { value: 'llama', label: MODEL_LABELS.llama }]} />
         <label class="prompt-pick">
-          <span class="sr-only">Prompt</span>
+          <span class="pick-label">Prompt</span>
           <select data-testid="tl-prompt" value={String(pidx)}
             onChange={(e) => { setPidx(Number((e.target as HTMLSelectElement).value)); setStep(0); }}>
             {tl.per_prompt.map((p: any, i: number) => (
@@ -74,10 +74,10 @@ export default function AgentTimeline() {
         ))}
       </div>
 
-      <div ref={ref} class="svg-wrap">
+      <div ref={ref} class="svg-wrap" tabIndex={0} role="group" aria-label="Scrollable chart — scroll horizontally to see all of it">
         <svg width={W} height={totalH} role="img" data-testid="timeline-svg"
              aria-label={`Agent 20-step trajectory for ${MODEL_LABELS[model]}, prompt ${pidx + 1}`}>
-          <text x={padL} y={10} fill="var(--ink-faint)" font-size="10">KL divergence per intervention</text>
+          <text x={padL} y={10} fill="var(--ink-soft)" font-size="10">KL divergence per intervention</text>
           {kls.map((k, i) => {
             const bh = Math.max(yBar(k), 1.5);
             const selected = i === step;
@@ -94,7 +94,7 @@ export default function AgentTimeline() {
           })}
 
           {/* entropy + EFE curves */}
-          <text x={padL} y={barTop + barH + gap - 2} fill="var(--ink-faint)" font-size="10">
+          <text x={padL} y={barTop + barH + gap - 2} fill="var(--ink-soft)" font-size="10">
             belief entropy (cyan) &amp; expected free energy (violet)
           </text>
           <path d={entropyPath} fill="none" stroke="var(--cyan)" stroke-width="2" />
@@ -114,11 +114,12 @@ export default function AgentTimeline() {
         </svg>
       </div>
 
-      <div class="scrub">
+      <label class="scrub">
+        <span class="scrub-label">Scrub the 20 interventions — or click a bar / use ← →</span>
         <input type="range" min="0" max={n - 1} value={step} data-testid="tl-scrubber"
                aria-label="Intervention step"
                onInput={(e) => setStep(Number((e.target as HTMLInputElement).value))} />
-      </div>
+      </label>
 
       <div class="readout" data-testid="tl-readout">
         <div class="ro"><span class="k">Step</span><span class="v" data-testid="ro-step">{step + 1}<span class="dim"> / {n}</span></span></div>
@@ -136,17 +137,20 @@ export default function AgentTimeline() {
           border-radius: 8px; padding: 0.4rem 0.6rem; font: inherit; font-size: 0.85rem; max-width: 320px;
         }
         .legend { display:flex; gap:1rem; flex-wrap:wrap; margin-bottom:0.4rem; }
-        .leg { display:flex; align-items:center; gap:0.4rem; font-size:0.8rem; color:var(--ink-faint); }
+        .leg { display:flex; align-items:center; gap:0.4rem; font-size:0.8rem; color:var(--ink-soft); }
         .sw { width:11px; height:11px; border-radius:3px; display:inline-block; }
-        .svg-wrap { width:100%; }
+        .svg-wrap { width:100%; overflow-x:auto; }
+        .pick-label { font-size:0.78rem; color:var(--ink-soft); margin-right:0.4rem; }
+        .scrub { display:block; }
+        .scrub-label { display:block; font-size:0.78rem; color:var(--ink-soft); margin-bottom:0.3rem; }
         .scrub input { width:100%; accent-color: var(--cyan); }
         .readout { display:flex; gap:1.4rem; flex-wrap:wrap; margin-top:0.6rem;
                    border-top:1px solid var(--hairline); padding-top:0.8rem; }
         .ro { display:flex; flex-direction:column; gap:0.15rem; }
-        .ro .k { font-size:0.7rem; text-transform:uppercase; letter-spacing:0.08em; color:var(--ink-faint); }
+        .ro .k { font-size:0.7rem; text-transform:uppercase; letter-spacing:0.08em; color:var(--ink-soft); }
         .ro .v { font-size:1.05rem; color:var(--ink); font-weight:600; }
         .ro .v.mono { font-family:var(--font-mono); font-weight:500; }
-        .ro .dim { color:var(--ink-faint); font-weight:400; }
+        .ro .dim { color:var(--ink-soft); font-weight:400; }
       `}</style>
     </div>
   );

@@ -20,6 +20,12 @@ export default function Toggle<T extends string>({
   ariaLabel,
   testid,
 }: ToggleProps<T>): JSX.Element {
+  const move = (dir: number) => {
+    const i = options.findIndex((o) => o.value === value);
+    const next = options[(i + dir + options.length) % options.length];
+    if (next) onChange(next.value);
+  };
+
   return (
     <div class="toggle" role="radiogroup" aria-label={ariaLabel} data-testid={testid}>
       {options.map((o) => {
@@ -29,10 +35,15 @@ export default function Toggle<T extends string>({
             type="button"
             role="radio"
             aria-checked={active}
+            tabIndex={active ? 0 : -1}
             class={active ? 'toggle-btn active' : 'toggle-btn'}
             data-testid={testid ? `${testid}-${o.value}` : undefined}
             data-value={o.value}
             onClick={() => onChange(o.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'ArrowRight' || e.key === 'ArrowDown') { e.preventDefault(); move(1); }
+              else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') { e.preventDefault(); move(-1); }
+            }}
           >
             {o.label}
           </button>

@@ -279,17 +279,20 @@ const efeTex = String.raw`\mathcal{G}(\pi)=\underbrace{-\,\mathbb{E}_{q}\big[\,D
   {/* ============ SCENE 9 — DOMAINS ============ */}
   <ScrollScene id="domains" num={9} eyebrow="Different tasks" title="Different thoughts live in different layers" wide>
     <p class="lead">
-      Run the agent across five kinds of knowledge and a pattern appears: the location of the
-      important features depends on what the model is doing.
+      Run the agent across five kinds of knowledge and it stays robust everywhere — but where the
+      important features <em>sit</em> depends on both the task and the model.
     </p>
 
     <DomainPanel client:visible />
 
     <p>
-      Factual recall leans <span class="accent-amber">late</span> (the model fetching a stored answer);
-      compositional reasoning recruits <span class="accent-cyan">earlier</span> layers. The agent stays
-      robust across domains — and the layer fingerprint it surfaces is itself a finding about how these
-      models organise computation.
+      On <strong>Gemma</strong> the most influential features cluster in
+      <span class="accent-cyan">early</span> layers across <em>every</em> domain (70–80%). On
+      <strong>Llama</strong> the balance tips <span class="accent-amber">later</span> for some
+      domains (geography, maths) while staying early for others (logic, history). There's no single
+      universal "facts-live-here" rule — and that's the useful part: rather than assuming a layout,
+      the agent <em>surfaces</em> each task's layer fingerprint for inspection. Toggle the models
+      above to see the contrast.
     </p>
   </ScrollScene>
 
@@ -338,6 +341,12 @@ const efeTex = String.raw`\mathcal{G}(\pi)=\underbrace{-\,\mathbb{E}_{q}\big[\,D
       border-bottom: 1px solid var(--hairline);
     }
     .hero-canvas { position: absolute; inset: 0; z-index: 0; opacity: 0.9; }
+    /* radial scrim guarantees text contrast over the moving particles / fallback */
+    .hero::after {
+      content: '';
+      position: absolute; inset: 0; z-index: 0; pointer-events: none;
+      background: radial-gradient(120% 90% at 30% 45%, rgba(10,14,20,0.82) 0%, rgba(10,14,20,0.5) 45%, transparent 75%);
+    }
     .hero-copy { position: relative; z-index: 1; padding-block: 4rem; }
     .kicker {
       font-family: var(--font-mono); font-size: 0.78rem; letter-spacing: 0.16em;

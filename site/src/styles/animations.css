@@ -1,13 +1,13 @@
 /* Scroll-reveal + ambient animation, all gated behind prefers-reduced-motion. */
 
+/* Transform-only reveal: opacity stays 1 so text never has a low-contrast
+   frame mid-animation (keeps WCAG contrast valid throughout the transition). */
 .reveal {
-  opacity: 0;
-  transform: translateY(24px);
-  transition: opacity 0.7s cubic-bezier(0.2, 0.7, 0.2, 1), transform 0.7s cubic-bezier(0.2, 0.7, 0.2, 1);
-  will-change: opacity, transform;
+  transform: translateY(22px);
+  transition: transform 0.7s cubic-bezier(0.2, 0.7, 0.2, 1);
+  will-change: transform;
 }
 .reveal.is-visible {
-  opacity: 1;
   transform: none;
 }
 
