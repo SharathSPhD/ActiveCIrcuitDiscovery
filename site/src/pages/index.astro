@@ -1,0 +1,38 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { SCENES } from '../utils/scenes';
+---
+
+<BaseLayout>
+  {
+    SCENES.map((s) => (
+      <section id={s.id} class="scene-placeholder">
+        <div class="reading">
+          <p class="eyebrow">
+            {String(s.num).padStart(2, '0')} — {s.nav}
+          </p>
+          <h2>{s.title}</h2>
+          <p class="muted">Scene content arrives in milestone M3.</p>
+        </div>
+      </section>
+    ))
+  }
+
+  <style>
+    .scene-placeholder {
+      min-height: 80vh;
+      display: flex;
+      align-items: center;
+      border-bottom: 1px solid var(--hairline);
+    }
+    .eyebrow {
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--cyan);
+      margin: 0 0 0.5rem;
+    }
+    .muted { color: var(--ink-faint); }
+  </style>
+</BaseLayout>
