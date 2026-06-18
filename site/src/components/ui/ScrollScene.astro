@@ -1,0 +1,95 @@
+---
+import '../../styles/animations.css';
+
+interface Props {
+  id: string;
+  num: number;
+  eyebrow: string;
+  title: string;
+  wide?: boolean;
+}
+const { id, num, eyebrow, title, wide = false } = Astro.props;
+---
+
+<section id={id} class="scene" data-scene={id}>
+  <div class={wide ? 'scene-inner wide' : 'scene-inner'}>
+    <header class="scene-head reveal">
+      <p class="eyebrow">
+        <span class="num">{String(num).padStart(2, '0')}</span>
+        <span class="rule" aria-hidden="true"></span>
+        {eyebrow}
+      </p>
+      <h2>{title}</h2>
+    </header>
+    <div class="scene-body">
+      <slot />
+    </div>
+  </div>
+</section>
+
+<style>
+  .scene {
+    padding: clamp(3.5rem, 9vw, 7rem) 0;
+    border-bottom: 1px solid var(--hairline);
+    position: relative;
+  }
+  .scene-inner {
+    max-width: var(--maxw);
+    margin-inline: auto;
+    padding-inline: 1.25rem;
+  }
+  .scene-inner.wide {
+    max-width: var(--maxw-wide);
+  }
+  .scene-head {
+    margin-bottom: 1.6rem;
+  }
+  .eyebrow {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    font-family: var(--font-mono);
+    font-size: 0.74rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--cyan);
+    margin: 0 0 0.7rem;
+  }
+  .eyebrow .num { opacity: 0.7; }
+  .eyebrow .rule {
+    width: 34px;
+    height: 1px;
+    background: linear-gradient(90deg, var(--cyan), transparent);
+  }
+  h2 {
+    font-size: clamp(1.7rem, 4.4vw, 2.7rem);
+    margin: 0;
+    max-width: 16ch;
+  }
+  .scene-body :global(p) {
+    color: var(--ink-soft);
+    font-size: 1.075rem;
+  }
+  .scene-body :global(.lead) {
+    font-size: 1.22rem;
+    color: var(--ink);
+    line-height: 1.6;
+  }
+  .scene-body :global(strong) { color: var(--ink); font-weight: 650; }
+</style>
+
+<script>
+  // Reveal-on-scroll for elements with .reveal (no-op under reduced motion via CSS).
+  const io = new IntersectionObserver(
+    (entries) => {
+      for (const e of entries) {
+        if (e.isIntersecting) {
+          e.target.classList.add('is-visible');
+          io.unobserve(e.target);
+        }
+      }
+    },
+    { threshold: 0.15 }
+  );
+  document.querySelectorAll('.reveal').forEach((el) => io.observe(el));
+</script>

@@ -1,0 +1,52 @@
+---
+export interface Reference {
+  authors: string;
+  year: string;
+  title: string;
+  venue?: string;
+  url?: string;
+}
+interface Props {
+  refs: Reference[];
+  title?: string;
+}
+const { refs, title } = Astro.props;
+---
+
+<div class="citations">
+  {title && <h3>{title}</h3>}
+  <ol>
+    {
+      refs.map((r) => (
+        <li>
+          <span class="auth">{r.authors}</span> ({r.year}).{' '}
+          {r.url ? (
+            <a href={r.url} target="_blank" rel="noopener noreferrer">
+              {r.title}
+            </a>
+          ) : (
+            <span class="ctitle">{r.title}</span>
+          )}
+          {r.venue && <span class="venue"> — {r.venue}</span>}.
+        </li>
+      ))
+    }
+  </ol>
+</div>
+
+<style>
+  .citations ol {
+    margin: 0;
+    padding-left: 1.4rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.7rem;
+  }
+  .citations li {
+    color: var(--ink-soft);
+    font-size: 0.92rem;
+    line-height: 1.5;
+  }
+  .auth { color: var(--ink); }
+  .venue { color: var(--ink-faint); font-style: italic; }
+</style>

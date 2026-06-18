@@ -10,7 +10,7 @@ export default defineConfig({
   retries: process.env.CI ? 1 : 0,
   reporter: process.env.CI ? 'github' : 'list',
   use: {
-    baseURL: `http://localhost:${PORT}${BASE}`,
+    baseURL: `http://localhost:${PORT}${BASE}/`,
     trace: 'on-first-retry',
   },
   projects: [
