@@ -17,7 +17,7 @@ export const SCENES: SceneMeta[] = [
   { id: 'method', num: 8, nav: 'The Agent', title: 'The meeting point: an agent that experiments' },
   { id: 'explore', num: 9, nav: 'Watch It Think', title: 'Watch the agent explore' },
   { id: 'results', num: 10, nav: 'Does It Work?', title: 'Does it find the circuit?' },
-  { id: 'honesty', num: 11, nav: 'The Honest Catch', title: 'The 1255% that isn’t what it looks like' },
+  { id: 'honesty', num: 11, nav: 'The Big Number', title: 'The 1255% that isn’t what it looks like' },
   { id: 'limits', num: 12, nav: 'Where It Breaks', title: 'Where the method breaks' },
   { id: 'domains', num: 13, nav: 'Layers', title: 'Different thoughts, different layers' },
   { id: 'implications', num: 14, nav: 'Why It Matters', title: 'Why this matters' },

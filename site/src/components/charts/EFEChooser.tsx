@@ -83,10 +83,10 @@ export default function EFEChooser() {
         .c-blurb { font-size:0.78rem; color:var(--ink-faint); margin:0.4rem 0 0.7rem; min-height:2.4em; }
         .bars { display:flex; flex-direction:column; gap:0.35rem; }
         .mono { font-family:var(--font-mono); }
-        .bars :global(.b) { display:flex; align-items:center; gap:0.4rem; font-size:0.7rem; color:var(--ink-soft); }
-        .bars :global(.b .bt) { flex:1; height:6px; background:var(--bg-inset); border-radius:3px; overflow:hidden; }
-        .bars :global(.b .bf) { height:100%; border-radius:3px; transition:width 0.25s ease; }
-        .bars :global(.b .bl) { width:4.5rem; }
+        .bars .b { display:flex; align-items:center; gap:0.4rem; font-size:0.7rem; color:var(--ink-soft); }
+        .bars .b .bt { display:block; flex:1; height:6px; background:var(--bg-inset); border-radius:3px; overflow:hidden; }
+        .bars .b .bf { display:block; height:6px; border-radius:3px; transition:width 0.25s ease; }
+        .bars .b .bl { display:block; width:4.5rem; flex:none; }
         .score { margin-top:0.7rem; font-size:0.7rem; color:var(--ink-soft); }
         .score .track { height:7px; background:var(--bg-inset); border-radius:4px; overflow:hidden; margin-top:3px; }
         .score .fill { height:100%; transition:width 0.25s ease; }

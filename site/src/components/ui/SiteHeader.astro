@@ -1,7 +1,6 @@
 ---
 import { AUTHOR, activeLinks } from '../../data/links';
 const primary = activeLinks('primary');
-const social = activeLinks('social');
 ---
 
 <header class="site-header">
@@ -15,10 +14,7 @@ const social = activeLinks('social');
       {primary.map((l) => (
         <a class="sh-primary" href={l.href} target="_blank" rel="noopener noreferrer">{l.label}</a>
       ))}
-      {social.length > 0 && <span class="sh-divider" aria-hidden="true"></span>}
-      {social.map((l) => (
-        <a class="sh-social" href={l.href} target="_blank" rel="noopener noreferrer">{l.label}</a>
-      ))}
+      <a class="sh-social" href="#about-author">About the author</a>
     </nav>
   </div>
 </header>

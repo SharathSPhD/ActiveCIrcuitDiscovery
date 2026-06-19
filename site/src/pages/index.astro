@@ -23,7 +23,7 @@ import { REFS, READING_ORDER } from '../data/refs';
 import { AUTHOR, activeLinks } from '../data/links';
 import { fmtPct } from '../utils/math';
 
-const allResources = [...activeLinks('primary'), ...activeLinks('social')];
+const authorLinks = activeLinks('social');
 
 const reading = READING_ORDER.map((k) => REFS[k]);
 const E = (x: number) => fmtPct(x);
@@ -341,7 +341,7 @@ const efeTex = String.raw`\mathcal{G}(\pi)=\underbrace{-\,\mathbb{E}_{q}\big[\,D
   </ScrollScene>
 
   {/* ============================== ACT V ============================== */}
-  <ActInterstitial act="Act V" title="The Verdict" subtitle="Does borrowing a brain's instincts actually find circuits? Sometimes — and we'll be honest about when." />
+  <ActInterstitial act="Act V" title="The Verdict" subtitle="Does borrowing a brain's instincts actually find circuits? Sometimes — and the data shows exactly when." />
 
   <ScrollScene id="results" num={10} eyebrow="Does it work?" title="Does it find the circuit?" wide>
     <p class="lead">
@@ -356,20 +356,20 @@ const efeTex = String.raw`\mathcal{G}(\pi)=\underbrace{-\,\mathbb{E}_{q}\big[\,D
       On <strong>Gemma-2-2B</strong>'s IOI task the agent reaches <strong>{E(HEADLINE.gemmaIoiEff)}</strong>,
       decisively beating random selection. The gradient baseline (EAP) is the one to beat — a genuinely
       strong, cheap ranking — and the agent trades blows with the bandit. On <strong>Llama-3.2-1B</strong>
-      it only reaches <strong>{E(HEADLINE.llamaIoiEff)}</strong>, about level with random. We don't hide that.
+      it only reaches <strong>{E(HEADLINE.llamaIoiEff)}</strong> — about level with random.
     </p>
     <DeepDive title="Why is EAP so hard to beat?">
       <p>
         Attribution patching uses gradient information about the true output, so it's a strong static
         prior. The agent's edge is <em>adaptivity under uncertainty</em> — most valuable when signal is
-        noisy or the budget tiny, less decisive when one gradient ranking is already near-perfect. Honest
-        read: the POMDP reliably beats uninformed search and is competitive with the best heuristics,
+        noisy or the budget tiny, less decisive when one gradient ranking is already near-perfect. The
+        takeaway: the POMDP reliably beats uninformed search and is competitive with the best heuristics,
         rather than dominating them.
       </p>
     </DeepDive>
   </ScrollScene>
 
-  <ScrollScene id="honesty" num={11} eyebrow="The honest catch" title="The 1255% that isn't what it looks like" wide>
+  <ScrollScene id="honesty" num={11} eyebrow="reading the big number" title="The 1255% that isn't what it looks like" wide>
     <p class="lead">
       One number looks spectacular: with steering on, the agent's cumulative effect reaches
       <strong> {Math.round(HEADLINE.gemmaIoiRck)}%</strong> of the ablation oracle on Gemma IOI.
@@ -378,11 +378,11 @@ const efeTex = String.raw`\mathcal{G}(\pi)=\underbrace{-\,\mathbb{E}_{q}\big[\,D
 
     <RckPanel client:visible />
 
-    <Callout kind="honest">
+    <Callout kind="honest" label="What this number means">
       <p>
-        Every steering-enabled method clears 100% — including <strong>random + steering</strong>. That
-        tells you the amplification comes from steering's raw mechanical power, not smarter selection. So
-        we report it as an <em>amplification factor</em>, never as an efficiency.
+        Every steering-enabled method clears 100% — including <strong>random + steering</strong>. The
+        amplification comes from steering's raw mechanical power, not from smarter selection. That's why
+        it belongs in a separate column: an <em>amplification factor</em>, not an efficiency.
       </p>
     </Callout>
 
@@ -420,10 +420,11 @@ const efeTex = String.raw`\mathcal{G}(\pi)=\underbrace{-\,\mathbb{E}_{q}\big[\,D
       where reasoning lives. Refine to six bins and efficiency more than triples, to
       <strong> {E(HEADLINE.llamaMultistepFinebins)}</strong> — confirming the diagnosis.
     </p>
-    <Callout kind="honest">
+    <Callout kind="honest" label="A real limitation">
       <p>
-        Stated plainly: the default discretisation doesn't transfer to shallow architectures without
-        adaptation. The fix is known; the out-of-the-box behaviour still fails. Both belong in the story.
+        The default discretisation doesn't transfer to shallow architectures without adaptation. The fix
+        is straightforward — more layer bins — but the out-of-the-box behaviour fails first, and that's
+        a genuine constraint to design around.
       </p>
     </Callout>
   </ScrollScene>
@@ -455,11 +456,11 @@ const efeTex = String.raw`\mathcal{G}(\pi)=\underbrace{-\,\mathbb{E}_{q}\big[\,D
     <ul class="why-list">
       <li><strong>Auditing under budget.</strong> When you can't test everything, spend each probe where it teaches the most.</li>
       <li><strong>Uncertainty as a first-class citizen.</strong> The agent knows what it doesn't know, and acts on it.</li>
-      <li><strong>Honest metrics.</strong> Separating discovery (bounded ≤100%) from amplification (unbounded) keeps the claims clean.</li>
+      <li><strong>Well-separated metrics.</strong> Keeping discovery (bounded ≤100%) apart from amplification (unbounded) keeps the claims precise.</li>
       <li><strong>A bridge.</strong> Sparse features, attribution graphs, and active inference can compose into one loop.</li>
     </ul>
     <Callout kind="key" label="In one line">
-      <p>Give an AI a neuroscientist's instinct for the next good experiment, and it can start to map its own mind — as long as we read the results honestly.</p>
+      <p>Give an AI a neuroscientist's instinct for the next good experiment, and it can start to map its own mind — provided we read the results with care.</p>
     </Callout>
   </ScrollScene>
 
@@ -469,19 +470,32 @@ const efeTex = String.raw`\mathcal{G}(\pi)=\underbrace{-\,\mathbb{E}_{q}\big[\,D
       figures were redrawn by hand or invented. Explore the code, reproduce the runs, or read the sources
       behind the ideas.
     </p>
-    <div class="resources">
-      <h3>The paper &amp; the author</h3>
-      <p class="res-row">
-        {allResources.map((l) => (
-          <a class="res-link" href={l.href} target="_blank" rel="noopener noreferrer">{l.label}</a>
-        ))}
-      </p>
-    </div>
-
     <CitationList refs={reading} title="References" />
+
+    <section id="about-author" class="about-author">
+      <h3>About the author</h3>
+      <div class="aa-body">
+        <span class="aa-mark" aria-hidden="true"></span>
+        <div>
+          <p class="aa-name">{AUTHOR.name}</p>
+          <p>
+            {AUTHOR.name} researches and writes about how to understand the inner workings of modern AI —
+            bridging mechanistic interpretability with ideas from neuroscience such as active inference and
+            the Free Energy Principle. <em>Active Circuit Discovery</em> is part of that work. More writing,
+            talks, and projects are linked below.
+          </p>
+          <p class="aa-links">
+            {authorLinks.map((l) => (
+              <a class="res-link" href={l.href} target="_blank" rel="noopener noreferrer">{l.label}</a>
+            ))}
+          </p>
+        </div>
+      </div>
+    </section>
+
     <p class="foot">
-      Written by {AUTHOR.name}. Built with Astro · visuals in D3 &amp; Three.js · all data precomputed from
-      the repository's <span class="mono">results/</span>.
+      Written by {AUTHOR.name}. Built with Astro · visuals in D3 &amp; Three.js · all figures computed from
+      the repository's released <span class="mono">results/</span>.
     </p>
   </ScrollScene>
 
@@ -522,9 +536,14 @@ const efeTex = String.raw`\mathcal{G}(\pi)=\underbrace{-\,\mathbb{E}_{q}\big[\,D
     .bigstat.fix .bs-num { color: var(--accept); }
 
     .accent-amber { color: var(--amber); }
-    .resources { margin: 1.6rem 0; }
-    .resources h3 { font-size: 1.05rem; margin: 0 0 0.7rem; }
-    .res-row { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 0; }
+    .about-author { margin: 2.4rem 0 0; border-top: 1px solid var(--hairline); padding-top: 1.6rem; scroll-margin-top: 90px; }
+    .about-author h3 { font-size: 1.05rem; margin: 0 0 1rem; }
+    .aa-body { display: flex; gap: 1.1rem; align-items: flex-start; }
+    .aa-mark { width: 44px; height: 44px; border-radius: 12px; flex: none; margin-top: 0.2rem;
+      background: radial-gradient(circle at 30% 30%, var(--cyan), var(--violet)); box-shadow: var(--glow-violet); }
+    .aa-name { font-weight: 650; color: var(--ink); margin: 0 0 0.4rem; }
+    .aa-body p { color: var(--ink-soft); margin: 0 0 0.7rem; }
+    .aa-links { display: flex; flex-wrap: wrap; gap: 0.5rem; }
     .res-link { font-size: 0.85rem; padding: 0.3rem 0.75rem; border-radius: 999px;
       border: 1px solid var(--hairline); color: var(--ink-soft); text-decoration: none; }
     .res-link:hover { border-color: var(--cyan); color: var(--ink); }

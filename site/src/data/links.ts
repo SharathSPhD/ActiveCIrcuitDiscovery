@@ -17,7 +17,8 @@ export const LINKS: LinkDef[] = [
   // Primary resources
   { key: 'paper', label: 'Paper', href: 'https://www.mdpi.com/2073-8994/18/6/1043', kind: 'primary' },
   { key: 'github', label: 'Code & data', href: 'https://github.com/SharathSPhD/ActiveCIrcuitDiscovery', kind: 'primary' },
-  { key: 'portfolio', label: 'TechNektar', href: 'https://www.technektar.dev/', kind: 'primary' },
+  // Everything below appears only in the "About the author" section, not the header.
+  { key: 'portfolio', label: 'TechNektar', href: 'https://www.technektar.dev/', kind: 'social' },
   // Social / scholarly
   { key: 'linkedin', label: 'LinkedIn', href: 'https://www.linkedin.com/in/sharath-s', kind: 'social' },
   { key: 'scholar', label: 'Google Scholar', href: 'https://scholar.google.com/citations?hl=en&user=dcyu5ucAAAAJ', kind: 'social' },

@@ -4,7 +4,7 @@ interface Props {
   label?: string;
 }
 const { kind = 'note', label } = Astro.props;
-const defaultLabel = kind === 'honest' ? 'The honest catch' : kind === 'key' ? 'Key idea' : 'Note';
+const defaultLabel = kind === 'honest' ? 'What this means' : kind === 'key' ? 'Key idea' : 'Note';
 ---
 
 <aside class={`callout callout-${kind} reveal`}>

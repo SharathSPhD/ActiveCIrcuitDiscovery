@@ -137,19 +137,20 @@ export default function NeuralGraph({ height = 520 }: NeuralGraphProps) {
         d3
           .forceLink<SimNode, SimLink>(linksCopy)
           .id((d) => d.id)
-          .distance(40)
-          .strength(0.1)
+          .distance(52)
+          .strength(0.08)
       )
-      .force('charge', d3.forceManyBody().strength(-50))
+      .force('charge', d3.forceManyBody().strength(-85))
+      .force('collide', d3.forceCollide<SimNode>().radius((d) => radiusScale(d.influence) + 4))
       .force('center', d3.forceCenter(width / 2, height / 2))
       .force(
         'y',
         d3
           .forceY<SimNode>()
           .y((d) => layerPositions.get(d.layer) ?? height / 2)
-          .strength(0.2)
+          .strength(0.16)
       )
-      .force('x', d3.forceX(width / 2).strength(0.05));
+      .force('x', d3.forceX(width / 2).strength(0.04));
 
     const svg = d3.select(svgRef.current);
 
@@ -176,16 +177,29 @@ export default function NeuralGraph({ height = 520 }: NeuralGraphProps) {
       .join('feMergeNode')
       .attr('in', (d) => (d ? 'SourceGraphic' : 'coloredBlur'));
 
-    // Render links
+    // Curved, organic edge path (quadratic bezier bowed perpendicular to the chord)
+    const curvePath = (s: SimNode, t: SimNode, i: number): string => {
+      const x1 = s.x ?? 0, y1 = s.y ?? 0, x2 = t.x ?? 0, y2 = t.y ?? 0;
+      const mx = (x1 + x2) / 2, my = (y1 + y2) / 2;
+      const dx = x2 - x1, dy = y2 - y1;
+      const len = Math.hypot(dx, dy) || 1;
+      const off = (i % 2 ? 1 : -1) * Math.min(len * 0.22, 46);
+      const cx = mx + (-dy / len) * off;
+      const cy = my + (dx / len) * off;
+      return `M${x1},${y1} Q${cx},${cy} ${x2},${y2}`;
+    };
+
+    // Render links as flowing curved paths
     const linkSelection = svg
       .selectAll('.link')
       .data(linksCopy)
-      .join('line')
-      .attr('class', 'link')
+      .join('path')
+      .attr('class', prefersReducedMotion ? 'link' : 'link flow')
+      .attr('fill', 'none')
       .attr('stroke', (d) => (d.w > 0 ? '#22d3ee' : '#a855f7'))
       .attr('stroke-opacity', (d) => opacityScale(Math.abs(d.w)))
-      .attr('stroke-width', 1)
-      .attr('filter', 'url(#glow)');
+      .attr('stroke-width', (d) => 0.8 + opacityScale(Math.abs(d.w)) * 1.6)
+      .attr('stroke-linecap', 'round');
 
     // Render nodes
     const nodeSelection = svg
@@ -315,20 +329,12 @@ export default function NeuralGraph({ height = 520 }: NeuralGraphProps) {
       simulation.stop();
 
       nodeSelection.attr('transform', (d) => `translate(${d.x},${d.y})`);
-      linkSelection
-        .attr('x1', (d) => (d.source as SimNode).x ?? 0)
-        .attr('y1', (d) => (d.source as SimNode).y ?? 0)
-        .attr('x2', (d) => (d.target as SimNode).x ?? 0)
-        .attr('y2', (d) => (d.target as SimNode).y ?? 0);
+      linkSelection.attr('d', (d, i) => curvePath(d.source as SimNode, d.target as SimNode, i));
     } else {
       // Animate on tick
       simulation.on('tick', () => {
         nodeSelection.attr('transform', (d) => `translate(${d.x},${d.y})`);
-        linkSelection
-          .attr('x1', (d) => (d.source as SimNode).x ?? 0)
-          .attr('y1', (d) => (d.source as SimNode).y ?? 0)
-          .attr('x2', (d) => (d.target as SimNode).x ?? 0)
-          .attr('y2', (d) => (d.target as SimNode).y ?? 0);
+        linkSelection.attr('d', (d, i) => curvePath(d.source as SimNode, d.target as SimNode, i));
       });
     }
 
@@ -401,6 +407,14 @@ export default function NeuralGraph({ height = 520 }: NeuralGraphProps) {
         }
         .link {
           pointer-events: none;
+        }
+        .link.flow {
+          stroke-dasharray: 3 7;
+          animation: ng-flow 1.7s linear infinite;
+        }
+        @keyframes ng-flow { to { stroke-dashoffset: -40; } }
+        @media (prefers-reduced-motion: reduce) {
+          .link.flow { animation: none; stroke-dasharray: none; }
         }
       `}</style>
     </Fragment>
