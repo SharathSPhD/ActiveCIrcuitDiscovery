@@ -20,8 +20,10 @@ import FlowDiagram from '../components/charts/FlowDiagram.tsx';
 import { architecture, aiLoop, stepFlow } from '../components/charts/paperDiagrams';
 import { HEADLINE } from '../data';
 import { REFS, READING_ORDER } from '../data/refs';
-import { AUTHOR } from '../data/links';
+import { AUTHOR, activeLinks } from '../data/links';
 import { fmtPct } from '../utils/math';
+
+const allResources = [...activeLinks('primary'), ...activeLinks('social')];
 
 const reading = READING_ORDER.map((k) => REFS[k]);
 const E = (x: number) => fmtPct(x);
@@ -467,6 +469,15 @@ const efeTex = String.raw`\mathcal{G}(\pi)=\underbrace{-\,\mathbb{E}_{q}\big[\,D
       figures were redrawn by hand or invented. Explore the code, reproduce the runs, or read the sources
       behind the ideas.
     </p>
+    <div class="resources">
+      <h3>The paper &amp; the author</h3>
+      <p class="res-row">
+        {allResources.map((l) => (
+          <a class="res-link" href={l.href} target="_blank" rel="noopener noreferrer">{l.label}</a>
+        ))}
+      </p>
+    </div>
+
     <CitationList refs={reading} title="References" />
     <p class="foot">
       Written by {AUTHOR.name}. Built with Astro · visuals in D3 &amp; Three.js · all data precomputed from
@@ -511,6 +522,12 @@ const efeTex = String.raw`\mathcal{G}(\pi)=\underbrace{-\,\mathbb{E}_{q}\big[\,D
     .bigstat.fix .bs-num { color: var(--accept); }
 
     .accent-amber { color: var(--amber); }
+    .resources { margin: 1.6rem 0; }
+    .resources h3 { font-size: 1.05rem; margin: 0 0 0.7rem; }
+    .res-row { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 0; }
+    .res-link { font-size: 0.85rem; padding: 0.3rem 0.75rem; border-radius: 999px;
+      border: 1px solid var(--hairline); color: var(--ink-soft); text-decoration: none; }
+    .res-link:hover { border-color: var(--cyan); color: var(--ink); }
     .foot { margin-top: 2rem; font-size: 0.84rem; color: var(--ink-faint); }
 
     @media (max-width: 640px) {
