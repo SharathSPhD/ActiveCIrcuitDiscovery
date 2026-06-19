@@ -4,8 +4,7 @@ on:
   push:
     branches: [main]
     paths:
-      - 'site/**'
-      - 'results/**'
+      - 'web/**'
       - '.github/workflows/pages.yml'
   workflow_dispatch:
 
@@ -18,32 +17,19 @@ concurrency:
   group: pages
   cancel-in-progress: true
 
+# The site is the self-contained claude.ai/design build in web/
+# (index.html + support.js + acd-data.js, React/Babel from unpkg CDN at runtime).
+# No build step required — the folder is uploaded verbatim.
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: site
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: npm
-          cache-dependency-path: site/package-lock.json
-      - run: npm ci
-      - name: Build (slims data via prebuild, then astro build)
-        run: npm run build
-      - uses: actions/upload-pages-artifact@v3
-        with:
-          path: site/dist
-
   deploy:
-    needs: build
     runs-on: ubuntu-latest
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
+      - uses: actions/checkout@v4
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: web
       - id: deployment
         uses: actions/deploy-pages@v4
