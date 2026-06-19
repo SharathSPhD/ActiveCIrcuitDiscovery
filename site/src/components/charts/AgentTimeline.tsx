@@ -68,6 +68,15 @@ export default function AgentTimeline() {
         </label>
       </div>
 
+      <div class="prompt-card" data-testid="tl-prompt-text">
+        <span class="pc-label">Prompt</span>
+        <span class="pc-tokens">
+          {prompt.prompt.split(' ').map((w: string) => <span class="tok">{w}</span>)}
+          <span class="tok blank">▮</span>
+        </span>
+        <span class="pc-note">{prompt.n_candidates} candidate features · {n}-step budget</span>
+      </div>
+
       <div class="legend">
         {Object.keys(ACTION_LABELS).map((a) => (
           <span class="leg"><span class="sw" style={`background:${ACTION_COLORS[a]}`} />{ACTION_LABELS[a]}</span>
@@ -136,6 +145,17 @@ export default function AgentTimeline() {
           background: var(--bg-inset); color: var(--ink-soft); border: 1px solid var(--hairline);
           border-radius: 8px; padding: 0.4rem 0.6rem; font: inherit; font-size: 0.85rem; max-width: 320px;
         }
+        .prompt-card { border:1px solid var(--hairline); border-left:3px solid var(--cyan);
+          border-radius:var(--radius); background:var(--bg-inset); padding:0.7rem 0.9rem; margin:0.2rem 0 0.8rem;
+          display:flex; flex-direction:column; gap:0.4rem; }
+        .pc-label { font-family:var(--font-mono); font-size:0.66rem; letter-spacing:0.12em; text-transform:uppercase; color:var(--cyan); }
+        .pc-tokens { display:flex; flex-wrap:wrap; gap:4px; }
+        .tok { background:var(--bg-panel); border:1px solid var(--hairline); border-radius:4px;
+          padding:1px 6px; font-family:var(--font-mono); font-size:0.85rem; color:var(--ink); }
+        .tok.blank { color:var(--cyan); border-color:var(--cyan); animation: pulse-blank 1.4s ease-in-out infinite; }
+        @keyframes pulse-blank { 0%,100%{opacity:0.4} 50%{opacity:1} }
+        @media (prefers-reduced-motion: reduce){ .tok.blank{ animation:none; } }
+        .pc-note { font-size:0.75rem; color:var(--ink-faint); }
         .legend { display:flex; gap:1rem; flex-wrap:wrap; margin-bottom:0.4rem; }
         .leg { display:flex; align-items:center; gap:0.4rem; font-size:0.8rem; color:var(--ink-soft); }
         .sw { width:11px; height:11px; border-radius:3px; display:inline-block; }

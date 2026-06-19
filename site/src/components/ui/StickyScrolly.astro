@@ -1,0 +1,56 @@
+---
+// Two-column scrollytelling: a graphic that sticks while prose steps scroll past.
+// Slots: "graphic" (sticky visual/island) and default (the scrolling prose steps).
+interface Props {
+  flip?: boolean; // put graphic on the right
+  id?: string;
+}
+const { flip = false, id } = Astro.props;
+---
+
+<div class={flip ? 'scrolly flip' : 'scrolly'} id={id}>
+  <div class="scrolly-graphic">
+    <div class="scrolly-sticky">
+      <slot name="graphic" />
+    </div>
+  </div>
+  <div class="scrolly-steps">
+    <slot />
+  </div>
+</div>
+
+<style>
+  .scrolly {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2.5rem;
+    max-width: var(--maxw-wide);
+    margin: 0 auto;
+    padding: 2rem 1.25rem;
+    align-items: start;
+  }
+  .scrolly.flip .scrolly-graphic { order: 2; }
+  .scrolly-sticky {
+    position: sticky;
+    top: 84px;
+    border: 1px solid var(--hairline);
+    border-radius: var(--radius);
+    background: var(--bg-panel);
+    padding: 1rem;
+  }
+  .scrolly-steps :global(.step) {
+    min-height: 42vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 1rem 0;
+  }
+  .scrolly-steps :global(.step h3) { margin: 0 0 0.6rem; font-size: 1.3rem; }
+  .scrolly-steps :global(.step p) { color: var(--ink-soft); margin: 0.4rem 0; }
+  @media (max-width: 820px) {
+    .scrolly { grid-template-columns: 1fr; gap: 1rem; }
+    .scrolly.flip .scrolly-graphic { order: 0; }
+    .scrolly-sticky { position: relative; top: 0; }
+    .scrolly-steps :global(.step) { min-height: auto; padding: 0.6rem 0; }
+  }
+</style>

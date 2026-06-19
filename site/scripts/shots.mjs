@@ -10,7 +10,7 @@ const page = await browser.newPage({ viewport: { width: 1280, height: 900 }, dev
 await page.goto(BASE, { waitUntil: 'networkidle' });
 await page.waitForTimeout(1500);
 
-const scenes = ['hook', 'problem', 'explore', 'results', 'honesty', 'domains'];
+const scenes = ['hook', 'blackbox', 'microscope', 'efe', 'method', 'explore', 'honesty', 'domains'];
 for (const s of scenes) {
   await page.goto(BASE + '#' + s, { waitUntil: 'networkidle' });
   await page.waitForTimeout(1200);
