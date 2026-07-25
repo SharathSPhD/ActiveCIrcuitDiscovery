@@ -47,16 +47,27 @@ Other modes:
 ./dgx-server/golive.sh --tunnel-only   # backend already warm; just re-tunnel + redeploy
 ```
 
-**Why a redeploy is needed each time:** the quick tunnel gets a new random
-`*.trycloudflare.com` hostname on every start, and Vercel binds env vars at
-deploy time. `golive.sh` handles both halves; budget ~1 min for the deploy.
-The API key is generated once into `~/.acd-demo.env` and reused, so only the
-URL actually churns.
+**No redeploy needed when the tunnel restarts.** Vercel points at a permanent
+Cloudflare Worker (`acd-demo.sharath-sathish.workers.dev`) which reads the
+current tunnel URL out of KV — the same pattern as the Prabhāsa gateway. So a
+tunnel restart is a KV write, not a deploy: `golive.sh` completes in ~15 s and
+the public URL never changes. Vercel env vars only need touching if the Worker
+URL itself changes, which it won't.
 
-*Stable-hostname upgrade (optional, do it before travel day):* run
-`cloudflared tunnel login` once interactively, then create a named tunnel on a
-domain you own (recipe in `dgx-server/README.md` §2). With a fixed hostname the
-Vercel env vars stop changing and a tunnel restart needs no redeploy at all.
+```
+browser -> acd-talk.vercel.app/api/dgx/*          (permanent, server-side env)
+        -> acd-demo.sharath-sathish.workers.dev   (Worker + KV: acd_gateway)
+        -> https://<random>.trycloudflare.com     (quick tunnel, new name each run)
+        -> DGX Spark :8787                        (FastAPI + Gemma-2-2B, GB10)
+```
+
+Cloudflare side, if you ever need it directly:
+
+```bash
+./dgx-server/cf.sh status        # worker + what it points at + health
+./dgx-server/cf.sh set <url>     # repoint the gateway by hand
+./dgx-server/cf.sh deploy        # redeploy worker.js after editing it
+```
 
 **Fallback is automatic and tested**: with the DGX unreachable the badge reads
 `OFFLINE · REPLAY MODE`, the button relabels to "Replay recorded run", and the
@@ -107,11 +118,13 @@ Vercel dashboard for automatic builds — Settings → Git).
 | Piece | State |
 |---|---|
 | Vercel project | `acd-talk` (team `ss-projects-f08e52ab`), aliased to `acd-talk.vercel.app` |
-| Env vars | `DGX_TUNNEL_URL`, `DGX_API_KEY` set on **Production** |
+| Env vars | `DGX_TUNNEL_URL` = the Worker URL (permanent), `DGX_API_KEY` — both on **Production** |
 | Backend | `dgx-server/server.py --model gemma --precompute --record` on `:8787`, real GPU (NVIDIA GB10), 5 graphs cached |
-| Tunnel | cloudflared quick tunnel → recorded in `/tmp/acd/tunnel_url.txt` |
+| Gateway | Worker `acd-demo` + KV `acd_gateway` → `https://acd-demo.sharath-sathish.workers.dev` (permanent) |
+| Tunnel | cloudflared quick tunnel → recorded in `/tmp/acd/tunnel_url.txt`, pointer held in KV |
 | Logs | backend `/tmp/acd/server.log` · tunnel `/tmp/acd/tunnel.log` |
 | API key | `~/.acd-demo.env` (chmod 600), reused across restarts |
+| Cloudflare creds | `~/.cloudflare-creds.env` (chmod 600, **not** in the repo) |
 
 End-to-end checks that passed: all 6 pages 200; `/api/dgx/health` OK through
 the public URL; a 20-step episode streamed in-browser from the deployed site

@@ -1,13 +1,20 @@
 #!/usr/bin/env bash
 # One command to put the live demo on air from the DGX Spark.
 #
-#   ./dgx-server/golive.sh              # start backend (if down) + tunnel + point Vercel at it
-#   ./dgx-server/golive.sh --tunnel-only  # backend already running; just re-tunnel + redeploy
-#   ./dgx-server/golive.sh --status     # report what's up, change nothing
+#   ./dgx-server/golive.sh                # start backend (if down) + tunnel + repoint gateway
+#   ./dgx-server/golive.sh --tunnel-only  # backend already warm; just re-tunnel
+#   ./dgx-server/golive.sh --status       # report what's up, change nothing
 #
-# Why this exists: a cloudflared *quick* tunnel gets a new random hostname every
-# run, and Vercel binds env vars at deploy time — so a new tunnel always needs a
-# new production deploy. This does both, then verifies the whole chain.
+# Architecture:
+#   browser -> acd-talk.vercel.app/api/dgx/*        (holds a PERMANENT URL)
+#           -> acd-demo.sharath-sathish.workers.dev (Cloudflare Worker + KV)
+#           -> https://<random>.trycloudflare.com   (quick tunnel, new name each run)
+#           -> DGX Spark :8787                      (FastAPI + Gemma-2-2B on GB10)
+#
+# A quick tunnel gets a new random hostname on every restart, and Vercel binds
+# env vars at deploy time. The Worker absorbs that churn: Vercel always points at
+# the Worker, and switching tunnels is a single KV write. So restarting the tunnel
+# mid-talk costs seconds and needs no redeploy.
 set -uo pipefail
 
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -17,6 +24,7 @@ CFD="${CFD:-$HOME/.local/bin/cloudflared}"
 KEYFILE="${KEYFILE:-$HOME/.acd-demo.env}"
 RUN=/tmp/acd
 SITE="https://acd-talk.vercel.app"
+WORKER_URL="${WORKER_URL:-https://acd-demo.sharath-sathish.workers.dev}"
 
 mkdir -p "$RUN"
 cd "$REPO"
@@ -46,6 +54,7 @@ if [ "${1:-}" = "--status" ]; then
   else
     echo "tunnel   : DOWN ${URL:-(none recorded)}"
   fi
+  echo "gateway  : $WORKER_URL -> $("$REPO/dgx-server/cf.sh" get 2>/dev/null | sed 's/^gateway_url = //')"
   echo "public   : $(curl -s -m 25 "$SITE/api/dgx/health" | head -c 200)"
   exit 0
 fi
@@ -76,10 +85,13 @@ fi
 
 # ---------------------------------------------------------------- tunnel
 say "opening cloudflare tunnel"
-# Match the absolute binary path so this pattern can never match this script itself.
-for pid in $(pgrep -f "^${CFD} tunnel --url http://localhost:${PORT}$" 2>/dev/null); do
+# Match the absolute binary path so this pattern can never match this script's own
+# shell. The trailing ( |$) matters: the real command line ends in --no-autoupdate,
+# so anchoring with a bare $ silently matches nothing and leaks a tunnel per run.
+for pid in $(pgrep -f "^${CFD} tunnel --url http://localhost:${PORT}( |$)" 2>/dev/null); do
   kill "$pid" 2>/dev/null && echo "stopped old tunnel pid $pid"
 done
+sleep 1
 : > "$RUN/tunnel.log"
 nohup "$CFD" tunnel --url "http://localhost:${PORT}" --no-autoupdate >>"$RUN/tunnel.log" 2>&1 &
 echo "cloudflared pid $!"
@@ -94,21 +106,32 @@ done
 echo "$URL" > "$RUN/tunnel_url.txt"
 echo "tunnel: $URL"
 
-curl -sf -m 25 "$URL/health" >/dev/null || die "tunnel is up but /health did not answer through it"
+# cloudflared prints the hostname before the edge has finished registering it, so
+# poll rather than checking once -- a single check here reliably loses the race.
+TUNNEL_OK=0
+for _ in $(seq 1 20); do
+  if curl -sf -m 15 "$URL/health" >/dev/null 2>&1; then TUNNEL_OK=1; break; fi
+  sleep 3
+done
+[ "$TUNNEL_OK" = 1 ] || die "tunnel is up but /health never answered through it (60s)"
 echo "tunnel reaches the backend ✓"
 
-# ---------------------------------------------------------------- vercel
-say "pointing Vercel at the tunnel"
-cd "$REPO/talk"
-command -v vercel >/dev/null || die "vercel CLI not on PATH"
-vercel env rm DGX_TUNNEL_URL production --yes >/dev/null 2>&1 || true
-vercel env rm DGX_API_KEY   production --yes >/dev/null 2>&1 || true
-printf '%s' "$URL"           | vercel env add DGX_TUNNEL_URL production >/dev/null 2>&1 || die "could not set DGX_TUNNEL_URL"
-printf '%s' "$ACD_API_KEY"   | vercel env add DGX_API_KEY   production >/dev/null 2>&1 || die "could not set DGX_API_KEY"
-echo "env vars set"
+# ---------------------------------------------------------------- gateway
+# Vercel points at the Cloudflare Worker, which is a permanent URL. Switching
+# tunnels is therefore just a KV write -- no env var change, no redeploy, no
+# downtime. (Vercel only needs touching if the Worker URL itself ever changes.)
+say "pointing the gateway at the new tunnel"
+"$REPO/dgx-server/cf.sh" set "$URL" || die "could not update the Cloudflare KV pointer"
 
-say "deploying to production (~1 min)"
-vercel --prod --yes 2>&1 | tail -3
+for _ in $(seq 1 10); do
+  G=$(curl -s -m 30 "$WORKER_URL/health")
+  case "$G" in *'"status":"ok"'*) break;; esac
+  sleep 3
+done
+case "$G" in
+  *'"status":"ok"'*) echo "worker reaches the backend ✓";;
+  *) die "gateway did not come good: $G";;
+esac
 
 # ---------------------------------------------------------------- verify
 say "verifying the public chain"
