@@ -88,3 +88,28 @@ never reach the client, and CORS never comes up.
 | POST   | /steer    | `{prompt,feature_rank,multipliers}` → dose sweep     |
 
 All POSTs require header `x-acd-key`.
+
+## Operating it (scripts)
+
+| Script | What it does |
+|---|---|
+| `./dgx-server/golive.sh` | backend (if down) + tunnel + Vercel env + prod deploy + verify. One command to go on air. |
+| `./dgx-server/golive.sh --status` | reports backend / tunnel / public health, changes nothing |
+| `./dgx-server/golive.sh --tunnel-only` | backend already warm — just re-tunnel and redeploy |
+| `./dgx-server/verify.sh` | pre-talk smoke test of the whole chain (14 checks, no browser needed) |
+| `cd talk && node e2e/demo-live.mjs` | browser check of the deployed `/demo`: LIVE badge + a real streamed episode |
+| `cd talk && BASE=http://localhost:3100 node e2e/demo-fallback.mjs` | browser check that the OFFLINE→replay fallback works against a local `next dev -p 3100` |
+
+The two `.mjs` checks need Playwright, and must be run from `talk/` because Node
+resolves imports relative to the script's own directory:
+
+```bash
+cd talk && npm i --no-save playwright && npx playwright install chromium
+node e2e/demo-live.mjs
+```
+
+`verify.sh` has no dependencies beyond curl and is the one to run on the day.
+
+The generated API key lives in `~/.acd-demo.env` and is reused across restarts, so
+only the tunnel hostname churns. Runtime logs: `/tmp/acd/server.log`,
+`/tmp/acd/tunnel.log`; current tunnel URL in `/tmp/acd/tunnel_url.txt`.

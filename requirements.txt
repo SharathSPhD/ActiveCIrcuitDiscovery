@@ -13,7 +13,10 @@ accelerate>=0.30.0
 safetensors>=0.4.0
 
 # Active Inference
-inferactively-pymdp @ git+https://github.com/infer-actively/pymdp.git
+# Pinned: pymdp main is now the JAX rewrite (v1.x), which drops pymdp.utils.obj_array
+# and breaks src/active_inference/pomdp_agent.py. This is the legacy 0.0.7.1 commit
+# the paper's results were produced with.
+inferactively-pymdp @ git+https://github.com/infer-actively/pymdp.git@23c206fc0e089ef8e2e6c80fb0162cb10a0fcdf9
 
 # Circuit Tracer (install from git)
 # pip install git+https://github.com/safety-research/circuit-tracer.git
