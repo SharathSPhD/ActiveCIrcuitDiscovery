@@ -1,0 +1,4 @@
+# On top of the repo's requirements.txt (+ circuit-tracer install)
+fastapi>=0.111
+uvicorn>=0.30
+pydantic>=2.7

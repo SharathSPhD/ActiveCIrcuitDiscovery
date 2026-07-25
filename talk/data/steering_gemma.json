@@ -1,0 +1,198 @@
+{
+ "model": "gemma",
+ "multipliers": [
+  0,
+  1.5,
+  2,
+  3,
+  5,
+  10
+ ],
+ "top_changes": {
+  "0.0": {
+   "changed": 0,
+   "total": 50
+  },
+  "1.5": {
+   "changed": 0,
+   "total": 50
+  },
+  "2.0": {
+   "changed": 1,
+   "total": 50
+  },
+  "3.0": {
+   "changed": 2,
+   "total": 50
+  },
+  "5.0": {
+   "changed": 6,
+   "total": 50
+  },
+  "10.0": {
+   "changed": 11,
+   "total": 50
+  }
+ },
+ "control_changes": {
+  "0.0": {
+   "changed": 0,
+   "total": 50
+  },
+  "1.5": {
+   "changed": 0,
+   "total": 50
+  },
+  "2.0": {
+   "changed": 1,
+   "total": 50
+  },
+  "3.0": {
+   "changed": 1,
+   "total": 50
+  },
+  "5.0": {
+   "changed": 2,
+   "total": 50
+  },
+  "10.0": {
+   "changed": 8,
+   "total": 50
+  }
+ },
+ "top_max_kl": {
+  "mean": 0.36656905287120023,
+  "std": 1.2182991564868222,
+  "median": 0.005068229977041483,
+  "q1": 0.0008366520924028009,
+  "q3": 0.0715783704072237,
+  "cv": 3.3235188484797997,
+  "n": 50
+ },
+ "control_max_kl": {
+  "mean": 0.0859450466639828,
+  "std": 0.2262671824772171,
+  "median": 0.00283791683614254,
+  "q1": 0.0006693264876957983,
+  "q3": 0.01614824589341879,
+  "cv": 2.6326960221669116,
+  "n": 50
+ },
+ "concept_amplification": {
+  "0.0": {
+   "mean_top1_prob": 0.42875466972589493,
+   "n_distinct_top1": 5,
+   "top3_tokens": [
+    [
+     " a",
+     10
+    ],
+    [
+     " Paris",
+     10
+    ],
+    [
+     " mountain",
+     10
+    ]
+   ]
+  },
+  "1.5": {
+   "mean_top1_prob": 0.42856707066297534,
+   "n_distinct_top1": 5,
+   "top3_tokens": [
+    [
+     " a",
+     10
+    ],
+    [
+     " Paris",
+     10
+    ],
+    [
+     " mountain",
+     10
+    ]
+   ]
+  },
+  "2.0": {
+   "mean_top1_prob": 0.42795749217271806,
+   "n_distinct_top1": 6,
+   "top3_tokens": [
+    [
+     " a",
+     10
+    ],
+    [
+     " mountain",
+     10
+    ],
+    [
+     " to",
+     10
+    ]
+   ]
+  },
+  "3.0": {
+   "mean_top1_prob": 0.4290173256397247,
+   "n_distinct_top1": 7,
+   "top3_tokens": [
+    [
+     " a",
+     10
+    ],
+    [
+     " mountain",
+     10
+    ],
+    [
+     " New",
+     10
+    ]
+   ]
+  },
+  "5.0": {
+   "mean_top1_prob": 0.4244998535513878,
+   "n_distinct_top1": 9,
+   "top3_tokens": [
+    [
+     " a",
+     10
+    ],
+    [
+     " mountain",
+     10
+    ],
+    [
+     " New",
+     9
+    ]
+   ]
+  },
+  "10.0": {
+   "mean_top1_prob": 0.43192507430911065,
+   "n_distinct_top1": 11,
+   "top3_tokens": [
+    [
+     " a",
+     10
+    ],
+    [
+     " mountain",
+     10
+    ],
+    [
+     " New",
+     8
+    ]
+   ]
+  }
+ },
+ "prompts": [
+  "The Golden Gate Bridge is",
+  "The Eiffel Tower is located in",
+  "Mount Everest is the tallest",
+  "The Great Wall of China was built",
+  "The Statue of Liberty stands in"
+ ]
+}
