@@ -1031,6 +1031,21 @@ logits, _ = model.feature_intervention(   # evidence    (~30 ms)
             </div>
           </Reveal>
         </div>
+        <ul className="pts compact" style={{ marginTop: '0.6rem' }}>
+          <Reveal at={3}>
+            <li>
+              Today&rsquo;s spending: attribution methods are <strong>non-adaptive</strong> (sweep
+              all, or rank once and walk the list); LLM-agent systems <em>are</em> adaptive — but
+              heuristic
+            </li>
+          </Reveal>
+          <Reveal at={3}>
+            <li>
+              And the graph&rsquo;s ranking is <strong>flat</strong> — zero concept of its own
+              uncertainty: it cannot say <em>“confident here, guessing there”</em>
+            </li>
+          </Reveal>
+        </ul>
         <NextLead>Choosing informative experiments under uncertainty has a seventy-year-old theory…</NextLead>
       </Slide>
 
