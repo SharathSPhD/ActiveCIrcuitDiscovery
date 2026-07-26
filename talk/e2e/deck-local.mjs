@@ -5,9 +5,9 @@ import { chromium } from 'playwright';
 const BASE = process.env.BASE || 'http://localhost:3100';
 const DECKS = [
   { path: '/', slides: 5 },
-  { path: '/mech-interp', slides: 16 },
-  { path: '/active-inference', slides: 14 },
-  { path: '/results', slides: 14 },
+  { path: '/mech-interp', slides: 18 },
+  { path: '/active-inference', slides: 17 },
+  { path: '/results', slides: 16 },
 ];
 
 let failures = 0;
@@ -131,9 +131,9 @@ ok('EffBars svg renders', (await page.locator('.slide.slide-on svg').count()) > 
 console.log('\n/mech-interp lazy embed');
 await page.goto(BASE + '/mech-interp', { waitUntil: 'networkidle' });
 ok('iframe NOT mounted before visit', (await page.locator('iframe').count()) === 0);
-await page.goto(BASE + '/mech-interp#8', { waitUntil: 'networkidle' });
+await page.goto(BASE + '/mech-interp#9', { waitUntil: 'networkidle' });
 await page.waitForTimeout(600);
-ok('iframe mounted on slide 8', (await page.locator('iframe').count()) === 1);
+ok('iframe mounted on slide 9', (await page.locator('iframe').count()) === 1);
 
 // demo page: still functional, replay fallback badge appears (no DGX from here)
 console.log('\n/demo');

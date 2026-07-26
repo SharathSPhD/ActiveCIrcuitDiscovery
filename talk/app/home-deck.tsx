@@ -4,6 +4,7 @@
 import Link from 'next/link';
 import Deck, { Slide, Reveal, NextLead } from '../components/Deck';
 import { TwoFieldsSVG } from '../components/TeachCore';
+import { VisionSVG } from '../components/TeachStory';
 
 const C = { cream: '#ede8dc', soft: '#b9b4a6', teal: '#4fd8ce', amber: '#f0a24b', violet: '#b49bf0', blue: '#9fb6e8', panel: '#10151f', line: '#1e2836' };
 const GF = 'var(--grotesk)';
@@ -92,9 +93,9 @@ function RouteSVG() {
 }
 
 const PARTS = [
-  { href: '/mech-interp', num: 'I', title: 'Inside the black box', desc: 'Mechanistic interpretability from zero — features, circuits, graphs, and the experiment-selection problem', time: '16 slides' },
-  { href: '/active-inference', num: 'II', title: 'The bridge', desc: 'Circuit discovery as active inference — intuitions first, then the full shipped machinery', time: '14 slides' },
-  { href: '/results', num: 'III', title: 'The evidence', desc: 'Every result, in a protective order — including the control, the null, and the diagnosed failure', time: '14 slides' },
+  { href: '/mech-interp', num: 'I', title: 'Inside the black box', desc: 'Mechanistic interpretability from zero — features, circuits, graphs, and the experiment-selection problem', time: '18 slides' },
+  { href: '/active-inference', num: 'II', title: 'The bridge', desc: 'Circuit discovery as active inference — intuitions first, then the full shipped machinery', time: '17 slides' },
+  { href: '/results', num: 'III', title: 'The evidence', desc: 'Every result, in a protective order — including the control, the null, the diagnosed failure, and the closing vision', time: '16 slides' },
   { href: '/demo', num: 'IV', title: 'The live laboratory', desc: 'Real POMDP episodes and live feature steering on a DGX Spark — replayable when offline', time: 'interactive' },
   { href: '/qa', num: 'V', title: 'Hard questions', desc: 'The questions an expert audience will ask, each with the concession and the reply', time: '39 Q&As' },
 ];
@@ -130,7 +131,7 @@ export default function HomeDeck() {
       >
         <div className="cols">
           <div>
-            <p className="kicker">A talk for the Active Inference community · delivered by Dr Sharath Sathish</p>
+            <p className="kicker">Mechanistic interpretability meets active inference · delivered by Dr Sharath Sathish</p>
             <h1 style={{ maxWidth: '24ch' }}>
               Circuit discovery is
               <br />
@@ -181,6 +182,15 @@ export default function HomeDeck() {
             </a>
           </div>
         </div>
+        <Reveal at={2}>
+          <div className="fig-panel" style={{ maxWidth: 1020, marginTop: '0.8rem', padding: '0.6rem' }}>
+            <VisionSVG resolved={false} compact />
+            <p className="dim" style={{ fontFamily: 'var(--grotesk)', fontSize: 'clamp(.72rem,1vw,.86rem)', margin: '0.4rem 0 0.2rem', textAlign: 'center' }}>
+              somewhere in this machinery is a causal explanation — this talk is about how to
+              choose the path to it (the image returns, resolved, at the close)
+            </p>
+          </div>
+        </Reveal>
         <NextLead>Why this audience, specifically? Because two fields are asking one question.</NextLead>
       </Slide>
 
@@ -225,9 +235,11 @@ export default function HomeDeck() {
         notes={
           <>
             <p>
-              The talk is built so that no interpretability background is required — Chapter I
-              starts at “a model predicts the next word” — while the active inference machinery is
-              treated at the level of detail a pymdp author would demand. Each chapter opens with
+              The four promises track the narrative arc: the mess and the wall (Chapter I), the
+              turn and the machine (Chapter II), the result and its limits (Chapter III), and the
+              vision at the close. The talk is built so that no interpretability background is
+              required — Chapter I starts at “a model predicts the next word” — while the active
+              inference machinery is treated at the level of detail a pymdp author would demand. Each chapter opens with
               a contents map (press T anywhere), every slide has speaker notes (press N), and the
               live laboratory in Chapter IV runs real episodes when the GPU is reachable, or
               replays the paper&rsquo;s recorded runs identically when it is not.

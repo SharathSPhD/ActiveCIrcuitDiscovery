@@ -3,12 +3,13 @@
 import Link from 'next/link';
 import Deck, { Slide, Reveal, NextLead, useSlideStep } from '../../components/Deck';
 import { Eq, M, LinkCards, Callout } from '../../components/Prose';
-import { SuperpositionSVG, TranscoderSVG, PipelineSVG, BudgetSVG } from '../../components/DiagramsPart1';
+import { SuperpositionSVG, TranscoderSVG, PipelineSVG } from '../../components/DiagramsPart1';
 import {
   NextTokenSVG, StackSVG, PolysemanticSVG, DictionarySAESVG, SteeringDialSVG,
   IOICircuitSVG, LeversSVG, KLRulerSVG, CostScalesSVG, StaticVsAdaptiveSVG, LadderSVG,
 } from '../../components/TeachCore';
 import GraphPeek from '../../components/GraphPeek';
+import { EntangledSVG, HighwaySVG, ExplosionSVG } from '../../components/TeachStory';
 
 const ANTHROPIC_CARDS = [
   {
@@ -203,6 +204,11 @@ export default function MechDeck() {
           <br />
           <span className="accent">Totally opaque.</span>
         </h1>
+        <p className="big dim" style={{ maxWidth: '52ch' }}>
+          Picture a codebase of 2.6 billion lines of alien code: no comments, no variable names,
+          no documentation — <strong style={{ color: 'var(--cream)' }}>and you are responsible
+          for debugging it.</strong>
+        </p>
         <div className="fig-panel" style={{ maxWidth: 980 }}>
           <StackSVG />
         </div>
@@ -221,7 +227,43 @@ export default function MechDeck() {
             </li>
           </Reveal>
         </ul>
-        <NextLead>The obvious first guess for that vocabulary: the neuron.</NextLead>
+        <NextLead>The ideal would be simple: one concept, one pathway. Reality is not that.</NextLead>
+      </Slide>
+
+
+      {/* NEW — beat 2: the entangled mess */}
+      <Slide
+        title="The entangled mess"
+        brief="The ideal (one concept, one pathway) vs the reality (everything smeared) — the chapter's villain"
+        steps={1}
+        notes={
+          <>
+            <p>
+              The picture everyone wants is on the left: one concept, one pathway, a clear causal
+              link — a network you could read like a wiring diagram. The reality is on the right:
+              every concept is smeared across hundreds of neurons, and every neuron participates
+              in hundreds of concepts. A causal map cannot be built if the individual nodes cannot
+              be isolated. The next three slides are, in order: the evidence that units really do
+              mix (a single neuron caught in the act), the explanation for why the network
+              tangles itself on purpose (superposition), and the fix (dictionary learning).
+            </p>
+          </>
+        }
+      >
+        <p className="kicker">I.2 · The villain of the chapter</p>
+        <h1>
+          The <span className="accent">entangled mess</span>
+        </h1>
+        <div className="fig-panel" style={{ maxWidth: 1000 }}>
+          <EntangledSVG />
+        </div>
+        <Reveal at={1}>
+          <div className="take">
+            No isolated nodes → no causal map. The next three slides: the <strong>evidence</strong>,
+            the <strong>explanation</strong>, and the <strong>fix</strong>.
+          </div>
+        </Reveal>
+        <NextLead>First, the evidence — one neuron, caught in the act.</NextLead>
       </Slide>
 
       {/* 4 — neurons lie */}
@@ -248,7 +290,7 @@ export default function MechDeck() {
           </>
         }
       >
-        <p className="kicker">I.2 · The wrong unit</p>
+        <p className="kicker">I.2 · The mess, measured</p>
         <h1>Neurons lie.</h1>
         <div className="cols cols-60">
           <div className="fig-panel">
@@ -307,7 +349,7 @@ export default function MechDeck() {
           </>
         }
       >
-        <p className="kicker">I.2 · The packing trick</p>
+        <p className="kicker">I.2 · Why the network tangles itself</p>
         <h1>
           More concepts
           <br />
@@ -528,6 +570,57 @@ export default function MechDeck() {
         <NextLead>A vocabulary of features is not yet an explanation. Concepts need wiring.</NextLead>
       </Slide>
 
+
+      {/* NEW — beat 3: the residual stream highway */}
+      <Slide
+        title="The highway"
+        brief="Discard the layer-cake: one shared communication channel, with read/write ramps"
+        steps={2}
+        notes={
+          <>
+            <p>
+              Before circuits can make sense, one mental-model upgrade: discard the textbook
+              picture of a stack of layers each transforming the whole signal. The working picture
+              is a <strong>highway</strong> — the residual stream, one continuous communication
+              channel per token running the full depth of the model. Attention heads and MLPs are
+              not stages the signal passes through; they are <strong>off-ramps and on-ramps</strong>:
+              each one <em>reads</em> a little information off the stream, computes something, and{' '}
+              <em>writes</em> its contribution back. Most of the signal flows straight through,
+              untouched.
+            </p>
+            <p>
+              This picture is what makes “circuits” a natural idea: a circuit is a chain of
+              components that read what earlier components wrote — traffic on the shared highway.
+              It is also why features (directions in the stream) are the right unit: they are the
+              cargo the ramps read and write.
+            </p>
+          </>
+        }
+      >
+        <p className="kicker">I.3 · A mental-model upgrade</p>
+        <h1>
+          The <span className="accent">highway</span>
+        </h1>
+        <div className="fig-panel" style={{ maxWidth: 1020 }}>
+          <HighwaySVG />
+        </div>
+        <ul className="pts compact" style={{ marginTop: '0.6rem' }}>
+          <Reveal at={1}>
+            <li>
+              Not a stack of stages — <strong>one shared stream</strong>, with components that{' '}
+              <em>read from</em> and <em>write to</em> it
+            </li>
+          </Reveal>
+          <Reveal at={2}>
+            <li>
+              A <strong>circuit</strong> = a chain of ramps where later ones read what earlier
+              ones wrote
+            </li>
+          </Reveal>
+        </ul>
+        <NextLead>Here is one real chain, fully worked out.</NextLead>
+      </Slide>
+
       {/* 9 — IOI circuit */}
       <Slide
         title="Circuits: the IOI algorithm"
@@ -614,6 +707,12 @@ export default function MechDeck() {
         <h1>
           Three levers, <span className="accent">one ruler</span>
         </h1>
+        <p className="big dim" style={{ marginBottom: '0.5rem' }}>
+          Three different causal questions:&ensp;
+          <strong style={{ color: 'var(--amber)' }}>ablate → necessity</strong> ·{' '}
+          <strong style={{ color: '#9fb6e8' }}>patch → sufficiency</strong> ·{' '}
+          <strong style={{ color: 'var(--violet-soft)' }}>steer → capacity</strong>
+        </p>
         <Reveal at={1}>
           <div className="fig-panel" style={{ maxWidth: 980 }}>
             <LeversSVG />
@@ -889,12 +988,16 @@ logits, _ = model.feature_intervention(   # evidence    (~30 ms)
               sweeps everything, EAP ranks once and walks the list; the LLM-agent systems (MAIA,
               Shaham &amp; Schwettmann et al. 2024) <em>are</em> adaptive — hypothesise,
               experiment, revise — but heuristic: no explicit belief state, no quantitative
-              information objective, no budget-awareness.
+              information objective, no budget-awareness. And one more absence, easy to miss: the
+              attribution graph contains false positives and false negatives, yet its ranking
+              carries zero concept of its own uncertainty — nothing in it can say “highly
+              confident about this node, guessing about that one.” A belief state is exactly the
+              thing that can.
             </p>
           </>
         }
       >
-        <p className="kicker">I.6 · Where the chapter lands</p>
+        <p className="kicker">I.6 · The wall</p>
         <h1>
           Who decides which
           <br />
@@ -917,8 +1020,8 @@ logits, _ = model.feature_intervention(   # evidence    (~30 ms)
               </Reveal>
             </div>
             <Reveal at={2}>
-              <div className="fig-panel light">
-                <BudgetSVG />
+              <div className="fig-panel">
+                <ExplosionSVG />
               </div>
             </Reveal>
           </div>
@@ -976,7 +1079,8 @@ logits, _ = model.feature_intervention(   # evidence    (~30 ms)
         <Reveal at={2}>
           <div className="take teal" style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
             <span>
-              Chapter II builds the bridge: the researcher becomes the agent.
+              What if circuit discovery were treated not as a sorting algorithm — but as an{' '}
+              <strong>agent foraging for information in an environment it hasn&rsquo;t mapped?</strong>
             </span>
             <Link
               href="/active-inference"

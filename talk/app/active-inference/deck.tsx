@@ -5,11 +5,12 @@ import Deck, { Slide, Reveal, NextLead } from '../../components/Deck';
 import { Eq, M, LinkCards, Callout } from '../../components/Prose';
 import { LoopSVG, DictionarySVG } from '../../components/DiagramsPart2';
 import {
-  TwentyQSVG, PhysicianSVG, GenericLoopSVG, StateCubeSVG, BLeversSVG,
+  TwentyQSVG, PhysicianSVG, StateCubeSVG, BLeversSVG,
   ExploreExploitSVG, TimelineSVG,
 } from '../../components/TeachBridge';
 import GenModelInspector from '../../components/GenModelInspector';
 import EFEIntuition from '../../components/EFEIntuition';
+import { ShieldSVG, ForagingSVG, DualEngineSVG, ToolkitSVG } from '../../components/TeachStory';
 
 const CANON_CARDS = [
   {
@@ -61,9 +62,9 @@ export default function BridgeDeck() {
     <Deck part="Chapter II · The bridge" title="Circuit discovery as active inference">
       {/* 1 — chapter title */}
       <Slide
-        title="The one move"
-        brief="Chapter II in a sentence: the researcher is an agent — so model the researcher"
-        steps={1}
+        title="The turn"
+        brief="Friston's principle, the dark-room problem, and the one move: model the researcher"
+        steps={2}
         notes={
           <>
             <p>
@@ -75,25 +76,53 @@ export default function BridgeDeck() {
               code.
             </p>
             <p>
+              The framework supplying the objective is Karl Friston&rsquo;s free energy principle,
+              often described in thermodynamic language — organisms as shields against surprise.
+              Treat that as the poster, not the theorem: the free energy in this talk is{' '}
+              <em>variational</em> — an information-theoretic bound, not heat — and nothing in the
+              results depends on the physics analogy. What is taken from the framework is precise
+              and modest: a single objective that prices information and preference in one
+              currency.
+            </p>
+            <p>
+              The dark-room problem, spelled out: if agents merely minimised surprise, the optimal
+              policy would be to retreat somewhere dark and quiet and never move — sensory input
+              would match the prediction of nothingness forever. Biological agents do not do
+              this, and the framework&rsquo;s resolution is Expected Free Energy: the objective
+              scores <em>future</em> actions by the information they are expected to bring in,
+              not just the surprise they avoid. That epistemic drive is precisely what a
+              budget-constrained experiment chooser needs.
+            </p>
+            <p>
               The route: two everyday intuitions first (a party game and a physician), then the
-              formal loop, then the generative model piece by piece, then the objective, and
-              finally a falsifiable prediction that Chapter III will test.
+              foraging reframe, the three-engine machine, the loop in full, the generative model
+              piece by piece, the toolkit of actions, the objective, and finally where this
+              paradigm sits and a falsifiable prediction that Chapter III will test.
             </p>
           </>
         }
       >
-        <p className="kicker">Chapter II · the bridge</p>
+        <p className="kicker">Chapter II · the turn</p>
         <h1>
           Circuit discovery
           <br />
           <span className="accent">as active inference</span>
         </h1>
-        <div className="fig-panel" style={{ maxWidth: 900 }}>
-          <GenericLoopSVG />
+        <div className="fig-panel" style={{ maxWidth: 960 }}>
+          <ShieldSVG />
         </div>
         <Reveal at={1}>
+          <div className="take violet">
+            The classic objection: a surprise-minimiser should hide in a dark, quiet room forever
+            — every prediction perfectly confirmed. <strong>Why do organisms explore?</strong> The
+            answer is the crown jewel of the framework: <strong>Expected Free Energy</strong> —
+            and it is exactly the objective this problem needs.
+          </div>
+        </Reveal>
+        <Reveal at={2}>
           <div className="take teal">
-            One move only: <strong>the researcher is an agent — so model the researcher.</strong>
+            One move only: <strong>the researcher is an agent — so model the researcher</strong>,
+            with that objective.
           </div>
         </Reveal>
         <NextLead>Before any mathematics — a party game everyone already knows.</NextLead>
@@ -182,9 +211,10 @@ export default function BridgeDeck() {
         </div>
         <Reveal at={1}>
           <div className="take">
-            Two pulls in every choice: <strong style={{ color: 'var(--teal-bright)' }}>learn the
-            most</strong> + <strong style={{ color: 'var(--amber)' }}>find what matters</strong>.
-            An objective for experiments needs both.
+            This is the seesaw the whole chapter balances:{' '}
+            <strong>G = <span style={{ color: 'var(--teal-bright)' }}>epistemic</span> (explore) +{' '}
+            <span style={{ color: 'var(--amber)' }}>pragmatic</span> (exploit)</strong> — formalised
+            a few slides ahead.
           </div>
         </Reveal>
         <Reveal at={2}>
@@ -194,8 +224,8 @@ export default function BridgeDeck() {
 
       {/* 4 — the researcher is that agent */}
       <Slide
-        title="The researcher is that agent"
-        brief="Beliefs about hidden structure, chosen probes, noisy observations, a stopping rule"
+        title="Epistemic foraging"
+        brief="The researcher recast as an agent following the scent of uncertainty through the graph"
         steps={4}
         notes={
           <>
@@ -207,7 +237,11 @@ export default function BridgeDeck() {
               pattern — and update. They stop when further experiments would not change their
               beliefs. That is not <em>like</em> a perception–action loop; it <em>is</em> one,
               with the transformer as the environment and the intervention API as the motor
-              interface.
+              interface. One caution before the foraging image does any work: the network is
+              frozen and fully deterministic — nothing in the environment is random. What is dark
+              here is the <em>map</em>, not the territory; “foraging” describes the agent&rsquo;s
+              uncertainty about a fixed structure, and the mathematics treats it exactly that way
+              (the hidden states are states of knowledge, not hidden causes in the machine).
             </p>
             <p>
               The field already runs this loop — in researchers&rsquo; heads, or in greedy
@@ -221,8 +255,13 @@ export default function BridgeDeck() {
         }
       >
         <p className="kicker">II.1 · The move, made</p>
-        <h1>The circuit researcher, described honestly</h1>
-        <ul className="pts">
+        <h1>
+          Epistemic <span className="accent">foraging</span>
+        </h1>
+        <div className="fig-panel" style={{ maxWidth: 1000, marginBottom: '0.6rem' }}>
+          <ForagingSVG />
+        </div>
+        <ul className="pts compact">
           <Reveal at={1}>
             <li>
               Holds <strong>beliefs</strong> about hidden structure — “L25 F4717 might be a name
@@ -247,7 +286,43 @@ export default function BridgeDeck() {
             transformer is the environment; the intervention API is the sensorimotor interface.
           </div>
         </Reveal>
-        <NextLead>Here is the loop with every box filled in with the real system.</NextLead>
+        <NextLead>First, the machine at arm&rsquo;s length — three engines, one loop.</NextLead>
+      </Slide>
+
+
+      {/* NEW — beat 8: the dual-engine machine */}
+      <Slide
+        title="The machine: three engines, one loop"
+        brief="Attribution backend → active inference agent → intervention engine — the systems view"
+        steps={1}
+        notes={
+          <>
+            <p>
+              The systems view before the zoom-in. Three engines: the{' '}
+              <strong>attribution backend</strong> (Anthropic&rsquo;s circuit-tracer running Edge
+              Attribution Patching) builds the graph — the map; the{' '}
+              <strong>active inference agent</strong> (vanilla pymdp, minimising Expected Free
+              Energy) selects which (feature, lever) to test next; the{' '}
+              <strong>intervention engine</strong> (the feature API) executes the probe on the real
+              network and returns the observation that updates beliefs. Each engine already
+              existed. The contribution of the paper is the loop that connects them.
+            </p>
+          </>
+        }
+      >
+        <p className="kicker">II.2 · The systems view</p>
+        <h1>
+          Three engines, <span className="accent">one loop</span>
+        </h1>
+        <div className="fig-panel" style={{ maxWidth: 1020 }}>
+          <DualEngineSVG />
+        </div>
+        <Reveal at={1}>
+          <div className="take teal">
+            Each engine already existed. <strong>The contribution is the loop.</strong>
+          </div>
+        </Reveal>
+        <NextLead>Zoom into the middle engine — every box, filled in.</NextLead>
       </Slide>
 
       {/* 5 — the mapped loop */}
@@ -332,7 +407,7 @@ export default function BridgeDeck() {
           </>
         }
       >
-        <p className="kicker">II.2 · Demand the dictionary</p>
+        <p className="kicker">II.3 · Modeling the causal topology</p>
         <h1>
           Every object, <span className="accent">mapped</span>
         </h1>
@@ -394,7 +469,47 @@ export default function BridgeDeck() {
           </li>
         </ul>
         <GenModelInspector />
-        <NextLead>One matrix carries the paper&rsquo;s only hand-designed semantics: B.</NextLead>
+        <NextLead>One question before that B tab makes sense: why three levers at all?</NextLead>
+      </Slide>
+
+
+      {/* NEW — beat 10: the toolkit of epistemic actions */}
+      <Slide
+        title="The toolkit of epistemic actions"
+        brief="Redundancy means one probe type can't map a circuit: necessity / sufficiency / capacity"
+        steps={1}
+        notes={
+          <>
+            <p>
+              Why does the action space need three levers? Because circuits contain{' '}
+              <strong>redundancy</strong> — Chapter I&rsquo;s IOI circuit has <em>backup name
+              movers</em> that take over when the primaries are knocked out. A feature can be
+              sufficient but not necessary; ablating it shows nothing while it still matters.
+              Mapping true causal topology therefore needs three different questions:{' '}
+              <strong>ablation tests necessity</strong> (sever the node — does the behaviour
+              survive?), <strong>patching tests sufficiency</strong> (swap a corrupted value for a
+              clean one — does the behaviour appear?), and <strong>steering tests capacity</strong>{' '}
+              (amplify the outgoing signal — what can this feature drive?). These are the same
+              three levers from Chapter I&rsquo;s instrument slide — now with their epistemic
+              roles named.
+            </p>
+          </>
+        }
+      >
+        <p className="kicker">II.4 · Why three levers</p>
+        <h1>
+          The toolkit of <span className="accent">epistemic actions</span>
+        </h1>
+        <div className="fig-panel" style={{ maxWidth: 1000 }}>
+          <ToolkitSVG />
+        </div>
+        <Reveal at={1}>
+          <div className="take">
+            Chapter I&rsquo;s backup name movers are the proof: <strong>redundancy defeats any
+            single probe type.</strong>
+          </div>
+        </Reveal>
+        <NextLead>How does a discrete agent know these levers differ? One matrix.</NextLead>
       </Slide>
 
       {/* 8 — B matrix */}
@@ -432,7 +547,7 @@ export default function BridgeDeck() {
           </>
         }
       >
-        <p className="kicker">II.3 · The one designed piece</p>
+        <p className="kicker">II.4 · The one designed piece</p>
         <h1>Three levers, three licenses</h1>
         <Reveal at={1}>
           <div className="fig-panel" style={{ maxWidth: 1000 }}>
@@ -484,7 +599,7 @@ export default function BridgeDeck() {
           </>
         }
       >
-        <p className="kicker">II.4 · The objective</p>
+        <p className="kicker">II.5 · The objective</p>
         <h1>One score per (feature, lever)</h1>
         <Reveal at={1}>
           <p className="big">
@@ -519,7 +634,9 @@ export default function BridgeDeck() {
         <Reveal at={3}>
           <p className="big dim">
             <M tex={String.raw`P(\pi)\propto e^{-\gamma G(\pi)}`} />, γ = 16 — inverse
-            temperature, fixed at the SPM/pymdp stock value (precision learning off).
+            temperature, fixed at the SPM/pymdp stock value (precision learning off). Provenance,
+            stated plainly: the same quantity neuroscience uses to model action selection — and,
+            older and plainer, Lindley&rsquo;s 1956 information gain plus a preference term.
           </p>
         </Reveal>
         <NextLead>Equations describe; the next slide lets the trade-off be felt.</NextLead>
@@ -545,7 +662,7 @@ export default function BridgeDeck() {
           </>
         }
       >
-        <p className="kicker">II.4 · Hands on</p>
+        <p className="kicker">II.5 · Hands on</p>
         <h2>
           Two sliders describe one feature — <span className="dim">the objective picks the lever</span>
         </h2>
@@ -582,7 +699,7 @@ export default function BridgeDeck() {
           </>
         }
       >
-        <p className="kicker">II.4 · What the objective predicts</p>
+        <p className="kicker">II.5 · What the objective predicts</p>
         <h1>
           A schedule <span className="accent">nobody wrote</span>
         </h1>
@@ -655,7 +772,7 @@ export default function BridgeDeck() {
           </>
         }
       >
-        <p className="kicker">II.5 · Checkable in pomdp_agent.py</p>
+        <p className="kicker">II.6 · Checkable in pomdp_agent.py</p>
         <h1>Three facts from the engine room</h1>
         <p className="big dim" style={{ marginBottom: '0.6rem' }}>
           If none of these words land, the takeaway is one line:{' '}
@@ -682,7 +799,59 @@ export default function BridgeDeck() {
             </li>
           </Reveal>
         </ul>
-        <NextLead>None of this machinery is new. That is the strength, not the weakness.</NextLead>
+        <NextLead>So where does this sit among the field&rsquo;s methods?</NextLead>
+      </Slide>
+
+
+      {/* NEW — beat 11: a new paradigm for selection */}
+      <Slide
+        title="A new paradigm for selection"
+        brief="ACDC exhaustive · EAP static single-pass · ACD adaptive and budgeted — not a replacement, a policy"
+        steps={2}
+        notes={
+          <>
+            <p>
+              Where this sits, stated as a table. ACDC: exhaustive causal search — faithful,
+              static, 𝒪(E). EAP: gradient attribution — one pass, static, and the strongest
+              ranking available. ACD: POMDP-EFE selection — adaptive, learning online, and
+              budgeted at B = 20. The disclaimer that keeps Chapter III honest belongs here
+              in advance: <strong>ACD is not a replacement for EAP&rsquo;s graph
+              construction</strong> — it is a policy for spending the verification budget{' '}
+              <em>on the graph EAP builds</em>. So the fair fight in the next chapter is between{' '}
+              <em>selectors</em>, and EAP fights on its home turf.
+            </p>
+          </>
+        }
+      >
+        <p className="kicker">II.7 · Where this sits</p>
+        <h1>
+          A new paradigm <span className="accent">for selection</span>
+        </h1>
+        <div className="tbl-wrap">
+          <table className="tbl">
+            <thead>
+              <tr><th>Method</th><th>Approach</th><th>Adaptivity</th><th>Cost</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>ACDC</td><td>exhaustive edge pruning</td><td>static</td><td className="num">𝒪(E)</td></tr>
+              <tr><td>EAP</td><td>gradient attribution</td><td>static</td><td className="num">single pass</td></tr>
+              <tr className="hl"><td><strong>ACD</strong></td><td>POMDP–EFE selection</td><td><strong>online learning</strong></td><td className="num"><strong>budgeted · B = 20</strong></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <Reveal at={1}>
+          <div className="take">
+            <strong>Not a replacement for EAP&rsquo;s graphs</strong> — a policy for spending the
+            verification budget on the graph EAP builds.
+          </div>
+        </Reveal>
+        <Reveal at={2}>
+          <div className="take teal">
+            Which pre-arms the evidence chapter: the fair fight is between <em>selectors</em> — on
+            EAP&rsquo;s home turf.
+          </div>
+        </Reveal>
+        <NextLead>None of the machinery is new — that lineage is the strength.</NextLead>
       </Slide>
 
       {/* 13 — lineage */}
@@ -721,7 +890,7 @@ export default function BridgeDeck() {
           </>
         }
       >
-        <p className="kicker">II.6 · Lineage</p>
+        <p className="kicker">II.8 · Lineage</p>
         <h1>
           Old machinery,
           <br />
@@ -765,7 +934,7 @@ export default function BridgeDeck() {
           </>
         }
       >
-        <p className="kicker">II.6 · One symmetry</p>
+        <p className="kicker">II.9 · One symmetry</p>
         <h1>
           A generative model,
           <br />

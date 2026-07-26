@@ -8,6 +8,7 @@ import {
 } from '../../components/Charts';
 import { OracleRaceSVG, LayerBinsSVG, ResultsMapSVG } from '../../components/TeachResults';
 import { ExploreExploitSVG } from '../../components/TeachBridge';
+import { RLvsAISVG, VisionSVG } from '../../components/TeachStory';
 
 function Num({ children }: { children: React.ReactNode }) {
   return <td className="num">{children}</td>;
@@ -97,8 +98,8 @@ export default function ResultsDeck() {
 
       {/* 3 — headline */}
       <Slide
-        title="Headline: beats random, loses to EAP"
-        brief="Gemma IOI: 82% of oracle, +43.5% vs random (p = .031) — EAP's static ranking stays ahead"
+        title="High-fidelity discovery on a strict budget"
+        brief="82.0% of oracle, +43.5% vs random (p = .031) — and EAP's static ranking stays ahead"
         steps={3}
         notes={
           <>
@@ -136,7 +137,7 @@ export default function ResultsDeck() {
           </>
         }
       >
-        <p className="kicker">III.2 · Headline — IOI, Gemma-2-2B</p>
+        <p className="kicker">III.2 · High-fidelity discovery on a strict budget — IOI, Gemma-2-2B</p>
         <h1>
           Beats random where it matters.
           <br />
@@ -402,13 +403,59 @@ export default function ResultsDeck() {
             <ActionStrip />
           </div>
         </Reveal>
-        <NextLead>Next: the Golden Gate experiment from Chapter I — quantified, with a control.</NextLead>
+        <NextLead>Step back: what kind of algorithm can do this — and what kind cannot?</NextLead>
+      </Slide>
+
+
+      {/* NEW — beat 14: beyond reward maximization */}
+      <Slide
+        title="Beyond reward maximization"
+        brief="RL needs bolted-on exploration; the epistemic term prices the unknown natively"
+        steps={2}
+        notes={
+          <>
+            <p>
+              The two exhibits just shown — the emergent handoff and the Llama reversal — are the
+              receipts for a broader contrast. Standard reinforcement learning under uncertainty
+              has no native reason to explore: it dithers, or it gets hand-tuned exploration
+              heuristics bolted on. The paper&rsquo;s own bandit baseline needed all three of the
+              usual patches — uncertainty bonuses, decay rates, layer priors. Active inference
+              carries curiosity <em>in the objective</em>: the epistemic term prices the value of
+              the unknown, so exploration, its decay, and its model-sensitivity all fall out of
+              the same G. No reward-plus-bonus schedule produces a model-sensitive{' '}
+              <em>refusal</em> to steer; a belief-driven objective does.
+            </p>
+          </>
+        }
+      >
+        <p className="kicker">III.5 · The contrast</p>
+        <h1>
+          Beyond <span className="accent">reward maximization</span>
+        </h1>
+        <div className="fig-panel" style={{ maxWidth: 1020 }}>
+          <RLvsAISVG />
+        </div>
+        <ul className="pts compact" style={{ marginTop: '0.6rem' }}>
+          <Reveal at={1}>
+            <li>
+              The bandit needed <strong>bonuses + decay + priors</strong>, hand-tuned; the agent
+              needed <em>none</em> — curiosity is the epistemic term
+            </li>
+          </Reveal>
+          <Reveal at={2}>
+            <li>
+              The receipt is the reversal: <strong>no reward-plus-bonus schedule refuses to
+              steer</strong> because the observations argued against it
+            </li>
+          </Reveal>
+        </ul>
+        <NextLead>Now the limit the paper prints against itself.</NextLead>
       </Slide>
 
       {/* 9 — steering */}
       <Slide
-        title="Steering: strong dose-response, a kept null"
-        brief="Manipulability confirmed (p < 10⁻⁸); selectivity vs random features — not significant"
+        title="The limit: generic activation scaling"
+        brief="Dose-response confirmed (p < 10⁻⁸); at extreme doses, selected ≈ random — a kept null"
         steps={2}
         notes={
           <>
@@ -433,7 +480,7 @@ export default function ResultsDeck() {
           </>
         }
       >
-        <p className="kicker">III.5 · The Golden Gate test, quantified</p>
+        <p className="kicker">III.6 · The limit — the Golden Gate test, quantified</p>
         <div className="cols cols-60">
           <div className="fig-panel">
             <SteeringChart />
@@ -456,8 +503,9 @@ export default function ResultsDeck() {
             </ul>
             <Reveal at={2}>
               <div className="take">
-                The null stays on the slide: it reproduces the steering-reliability critique —
-                with the control the original demo never had.
+                At extreme multipliers, amplification stops being surgical — a big enough push
+                distorts the layer&rsquo;s computation, selected or not. The null stays on the
+                slide, with the control the original demo never had.
               </div>
             </Reveal>
           </div>
@@ -717,10 +765,64 @@ export default function ResultsDeck() {
           </div>
         </div>
         <Reveal at={3}>
+          <div className="take">
+            The value is not raw efficiency — a static ranking wins that. It is a principled,
+            adaptive, <strong>self-diagnosing policy</strong> for spending causal budget.
+          </div>
+        </Reveal>
+        <NextLead>One closing frame.</NextLead>
+      </Slide>
+
+      {/* NEW — beat 15: the vision */}
+      <Slide
+        title="The vision: structure learning at scale"
+        brief="The golden path from the opening, resolved — one budgeted, informative experiment at a time"
+        steps={2}
+        notes={
+          <>
+            <p>
+              The closing frame. Circuit discovery is fundamentally an act of inference — and what
+              this work imports is the mathematics of information-seeking developed in theoretical
+              neuroscience (with the plainer Lindley/MacKay pedigree underneath), pointed for the
+              first time at the internals of another network. No claim of sentience is being made
+              — not for the agent, and not for the transformer. The claim is narrower and
+              stronger: a formalism built to explain how agents choose informative actions is
+              exactly the right shape for choosing informative experiments.
+            </p>
+            <p>
+              The forward path is structure learning: an agent that refines its own state space —
+              the fix that a human applied post-hoc to the 9.3% failure, discovered instead by the
+              agent itself — as a principled route to auditing models under real budgets. The
+              closing image from the talk&rsquo;s spoken version: there may never be an X-ray
+              machine that diagnoses a billion-parameter network at a glance — the realistic
+              route is to build the MRI, and to learn to read it. The
+              golden pathway from the opening slide is the image to leave on: a causal explanation
+              found not by sweeping everything, but chosen — one budgeted, informative experiment
+              at a time.
+            </p>
+          </>
+        }
+      >
+        <p className="kicker">III.10 · The closing frame</p>
+        <h1>
+          Alignment through <span className="accent">structure learning</span>
+        </h1>
+        <div className="fig-panel" style={{ maxWidth: 1020 }}>
+          <VisionSVG />
+        </div>
+        <Reveal at={1}>
+          <div className="take teal">
+            There may never be an X-ray machine that reads a billion-parameter network at a
+            glance. This is the other route: <strong>build the MRI — and learn to read it</strong>,
+            one budgeted question at a time.
+          </div>
+        </Reveal>
+        <Reveal at={2}>
           <div className="take" style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
             <span>
-              The value is not raw efficiency — a static ranking wins that. It is a principled,
-              adaptive, <strong>self-diagnosing policy</strong> for spending causal budget.
+              A principled pathway toward decoding model internals — one budgeted question at a
+              time. <em>No sentience claimed, for the agent or the transformer: the claim is
+              about choosing experiments.</em>
             </span>
             <Link
               href="/demo"
