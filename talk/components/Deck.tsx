@@ -225,8 +225,12 @@ export default function Deck({
       {slides.map((sl, i) => {
         const active = i === pos.s;
         const seen = visited.has(i);
+        // Inactive slides ahead of the current one sit at step 0 (so arriving on them
+        // starts the build cleanly); slides behind sit fully revealed (so going back
+        // shows them complete). Rendering future slides fully-revealed caused figures
+        // to appear and animate away on entry.
         const state: SlideState = {
-          step: active ? pos.step : stepsOf(i),
+          step: active ? pos.step : i < pos.s ? stepsOf(i) : 0,
           active,
           visited: seen,
         };

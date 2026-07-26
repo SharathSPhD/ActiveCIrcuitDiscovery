@@ -43,6 +43,12 @@ const CANON_CARDS = [
     href: 'https://direct.mit.edu/neco/article/4/4/590/5648/Information-Based-Objective-Functions-for-Active',
   },
   {
+    src: 'Neural Comput · 2021',
+    title: 'Millidge, Tschantz & Buckley: Whence the Expected Free Energy?',
+    desc: 'EFE is not the expectation of the VFE — it is a chosen objective. The standing foundational question; the deflationary BOED reading here is agnostic on it.',
+    href: 'https://arxiv.org/abs/2004.08128',
+  },
+  {
     src: 'arXiv · 2021',
     title: 'Sajid et al.: EFE as BOED + expected utility',
     desc: 'Flat preferences reduce EFE to Lindley design; no ambiguity reduces it to expected utility. The deflationary reading — and why ACD embraces it.',
@@ -112,9 +118,14 @@ export default function BridgeDeck() {
             <p>
               The principle, stated once and used all chapter:{' '}
               <strong>a good experiment is one whose outcome you cannot predict</strong> — because
-              a predictable outcome, once observed, teaches nothing. This quantity — expected
-              information gain — was formalised by Lindley in 1956 and is precisely the epistemic
-              term of Expected Free Energy.
+              a predictable outcome, once observed, teaches nothing. One refinement keeps it
+              honest: the outcome must be unpredictable <em>to you</em>, not intrinsically random
+              — formally, expected information gain is expected surprise <em>minus</em> expected
+              ambiguity, so a noisy measurement channel legitimately suppresses it. (That
+              distinction returns in Chapter III: noisier observation statistics on Llama are
+              exactly why the agent behaves differently there.) This quantity was formalised by
+              Lindley in 1956 and is precisely the epistemic term of Expected Free Energy (EFE) —
+              the objective this chapter builds.
             </p>
           </>
         }
@@ -126,8 +137,9 @@ export default function BridgeDeck() {
         </div>
         <Reveal at={1}>
           <div className="take teal">
-            A good experiment is one <strong>whose answer you cannot predict.</strong> Predictable
-            answers teach nothing.
+            A good experiment is one <strong>whose answer you cannot predict</strong> — unpredictable{' '}
+            <em>to you</em>, not intrinsically noisy. A static-filled channel is unpredictable and
+            teaches nothing.
           </div>
         </Reveal>
         <Reveal at={2}>
@@ -250,7 +262,13 @@ export default function BridgeDeck() {
               candidate, EFE over the joint (feature, action) space, Boltzmann selection,
               Dirichlet learning of the likelihood. Right: the environment is the transformer
               itself, probed through <code>feature_intervention</code>, answering in discretised
-              KL. One full perception–action cycle costs about 30 ms of GPU time.
+              KL — the KL ruler from Chapter I, chopped into four bins so a discrete agent can
+              count outcomes. One full perception–action cycle costs about 30 ms of GPU time.
+              Vocabulary for the chapter: a <strong>POMDP</strong> (partially observable Markov
+              decision process) is the standard formal shell for an agent that acts on hidden
+              states it can only observe noisily; <strong>pymdp</strong> is the community&rsquo;s
+              reference Python implementation of discrete active inference; <strong>ACD</strong>{' '}
+              (Active Circuit Discovery) is the paper&rsquo;s system.
             </p>
             <Callout title="Three non-standard properties, flagged up front" tone="violet">
               (1) The environment is <strong>real and deterministic</strong> — a frozen network —
@@ -273,7 +291,7 @@ export default function BridgeDeck() {
           <div className="stats" style={{ marginTop: '0.8rem' }}>
             <div className="stat">
               <div className="v">pymdp</div>
-              <div className="k">the agent — vanilla, full EFE, nothing custom</div>
+              <div className="k">the community&rsquo;s standard open-source active-inference agent library — used vanilla, nothing custom</div>
             </div>
             <div className="stat">
               <div className="v">Gemma-2-2B</div>
@@ -305,9 +323,11 @@ export default function BridgeDeck() {
               probes. The scaling maps the top of the importance range onto the top of the
               empirical KL range (ablation KLs on these models live in roughly [10⁻⁴, 10⁻²]);
               without it every candidate saturates the top bin and the prior is uninformative.
-              Attribution as prior, intervention as likelihood — and a fair critique (the prior
-              and likelihood are not independent evidence sources) that the question bank
-              addresses.
+              Attribution as prior, intervention as likelihood — with two fair critiques kept
+              attached: the prior and likelihood are not independent evidence sources, and
+              strictly these are <em>pseudo-observations</em> pushed through the shared
+              likelihood rather than a prior in the D sense. The same seeding plausibly explains
+              why beliefs collapse fast on Gemma (the abrupt handoff in Chapter III).
             </p>
           </>
         }
@@ -325,6 +345,17 @@ export default function BridgeDeck() {
               <div className="fig-panel">
                 <StateCubeSVG />
               </div>
+              <ul className="pts compact" style={{ marginTop: '0.5rem' }}>
+                <li>
+                  <strong>importance</strong>: how much this feature matters for <em>this
+                  prompt&rsquo;s output</em> · <strong>causal influence</strong>: how strongly it
+                  drives <em>other features downstream</em> — related, not the same
+                </li>
+                <li>
+                  <strong>layer role</strong>: the layer <em>index</em> is known; what&rsquo;s
+                  inferred is the causal <em>role</em> its depth-band plays for this prompt
+                </li>
+              </ul>
             </Reveal>
           </div>
         </div>
@@ -354,6 +385,14 @@ export default function BridgeDeck() {
         <h2>
           The generative model, exactly as shipped — <span className="dim">click through it</span>
         </h2>
+        <ul className="pts compact" style={{ marginBottom: '0.7rem' }}>
+          <li>
+            <strong>A</strong> likelihood: hidden importance → which KL bin you&rsquo;ll see ·{' '}
+            <strong>B</strong> transitions: what each lever lets beliefs do ·{' '}
+            <strong>C</strong> preferences: which observations count as success ·{' '}
+            <strong>D</strong> prior: where beliefs start
+          </li>
+        </ul>
         <GenModelInspector />
         <NextLead>One matrix carries the paper&rsquo;s only hand-designed semantics: B.</NextLead>
       </Slide>
@@ -375,6 +414,15 @@ export default function BridgeDeck() {
               simplest round values realising the ordering; only the ordering is the commitment.
             </p>
             <p>
+              Worth pre-empting: the principled encoding of “ablation is more informative” would
+              be action-conditioned <em>likelihoods</em> A(o|s,u); belief-diffusing B(u) is the
+              tractable surrogate available in vanilla pymdp, and yes — a wider B partly{' '}
+              <em>manufactures</em> the epistemic value it then harvests. That is exactly why the
+              commitment is stated as an ordering and tested rather than assumed: the Llama
+              reversal in Chapter III is evidence the ordering does inferential work rather than
+              dictating behaviour.
+            </p>
+            <p>
               And it is falsifiable within the paper: it predicts <em>ablate while uncertain,
               steer once confident</em>. Chapter III&rsquo;s action traces show exactly that on
               Gemma — and, instructively, <em>not</em> on Llama, where observed KL statistics keep
@@ -392,7 +440,11 @@ export default function BridgeDeck() {
           </div>
         </Reveal>
         <Reveal at={2}>
-          <Eq tex={String.raw`H(\mathbf{B}_{\text{ablate}}) \;>\; H(\mathbf{B}_{\text{patch}}) \;>\; H(\mathbf{B}_{\text{steer}})`} />
+          <Eq tex={String.raw`\bar{H}[\mathbf{B}(\cdot\mid s,\text{ablate})] \;>\; \bar{H}[\mathbf{B}(\cdot\mid s,\text{patch})] \;>\; \bar{H}[\mathbf{B}(\cdot\mid s,\text{steer})]`} />
+          <p className="big dim" style={{ marginTop: '0.4rem' }}>
+            The network never changes — B describes how far each probe <em>permits beliefs to
+            move</em>. H̄ = mean row entropy: wider spread, more revision licensed.
+          </p>
         </Reveal>
         <Reveal at={3}>
           <div className="take violet">
@@ -412,10 +464,15 @@ export default function BridgeDeck() {
           <>
             <p>
               The paper&rsquo;s Equation 6, specialised from the canonical policy EFE with π = a
-              single (feature i, action u) pair. Selection is{' '}
-              <M tex={String.raw`(i^{*},u^{*}) = \arg\min_{(i,u)} G(i,u)`} /> softened through the
-              process-theory softmax <M tex={String.raw`P(\pi)\propto e^{-\gamma G(\pi)}`} />,
-              γ = 16 — used verbatim from the literature.
+              single (feature i, action u) pair, shown here in the epistemic + pragmatic carve-up:
+              G = −(state information gain) − (expected log-preference over observations). The
+              equivalent risk + ambiguity form is
+              G = D<sub>KL</sub>[Q(o|π) ‖ P(o)] + expected ambiguity; the two are related by the
+              standard entropy identity. Selection is{' '}
+              <M tex={String.raw`(i^{*},u^{*}) = \arg\min_{(i,u)} G(i,u)`} /> softened through{' '}
+              <M tex={String.raw`P(\pi)\propto e^{-\gamma G(\pi)}`} />, γ = 16, fixed (the
+              process-theory treatment updates γ itself via a precision prior; that mechanism is
+              off here).
             </p>
             <p>
               The two terms are the two intuitions of this chapter. The epistemic term is Twenty
@@ -429,12 +486,27 @@ export default function BridgeDeck() {
       >
         <p className="kicker">II.4 · The objective</p>
         <h1>One score per (feature, lever)</h1>
-        <Eq tex={String.raw`G(i,u) \;=\; \underbrace{\mathbb{E}_{Q}\!\left[\log Q(s_{\tau}\,|\,\pi)\;-\;\log Q(s_{\tau}\,|\,o_{\tau},\pi)\right]}_{-\,\text{state information gain}} \;+\; \underbrace{\mathbb{E}_{Q}\!\left[\log P(o_{\tau})\;-\;\log Q(o_{\tau}\,|\,\pi)\right]}_{-\,\text{pragmatic value}}`} />
-        <ul className="pts" style={{ marginTop: '0.8rem' }}>
-          <Reveal at={1}>
+        <Reveal at={1}>
+          <p className="big">
+            In plain words first:&ensp;
+            <strong style={{ color: 'var(--teal-bright)' }}>−G = (what the probe would teach)</strong>{' '}
+            + <strong style={{ color: 'var(--amber)' }}>(how much you&rsquo;d like what it finds)</strong>.
+            &ensp;Pick the minimum G.
+          </p>
+        </Reveal>
+        <Reveal at={2}>
+          <Eq tex={String.raw`G(i,u) \;=\; -\underbrace{\mathbb{E}_{Q}\!\left[\log Q(s_{\tau}\,|\,o_{\tau},\pi)\;-\;\log Q(s_{\tau}\,|\,\pi)\right]}_{\text{epistemic value (information gain)}} \;-\; \underbrace{\mathbb{E}_{Q}\!\left[\log P(o_{\tau})\right]}_{\text{pragmatic value (expected log-preference)}}`} />
+          <p className="dim" style={{ fontFamily: 'var(--grotesk)', fontSize: 'clamp(.8rem,1.2vw,.98rem)', maxWidth: '75ch' }}>
+            Q = the agent&rsquo;s current beliefs · P(o) ∝ exp(C), the preferences read as
+            “probabilities the agent wants to be true” · π = the single probe (i, u) under
+            consideration (planning depth 1) · τ = the moment after the probe
+          </p>
+        </Reveal>
+        <ul className="pts compact" style={{ marginTop: '0.5rem' }}>
+          <Reveal at={2}>
             <li>
               <strong>Epistemic</strong> = Twenty Questions: which probe&rsquo;s answer is hardest
-              to predict?
+              to predict (given a clean channel)?
             </li>
           </Reveal>
           <Reveal at={2}>
@@ -446,8 +518,8 @@ export default function BridgeDeck() {
         </ul>
         <Reveal at={3}>
           <p className="big dim">
-            <M tex={String.raw`P(\pi)\propto e^{-\gamma G(\pi)}`} />, γ = 16 — the process-theory
-            softmax, verbatim.
+            <M tex={String.raw`P(\pi)\propto e^{-\gamma G(\pi)}`} />, γ = 16 — inverse
+            temperature, fixed at the SPM/pymdp stock value (precision learning off).
           </p>
         </Reveal>
         <NextLead>Equations describe; the next slide lets the trade-off be felt.</NextLead>
@@ -491,11 +563,15 @@ export default function BridgeDeck() {
             <p>
               Early in an episode, beliefs are flat: every candidate is uncertain, epistemic value
               dominates, and ablation — the widest-transition, most-informative lever — wins the
-              argmin. As evidence accumulates, beliefs concentrate; there is less left to learn,
-              the epistemic term decays, and the pragmatic preference for large observed effects
-              takes over — steering wins. The crossing point is not a parameter; it is wherever
-              the posterior happens to sharpen, which depends on the environment&rsquo;s actual
-              KL statistics.
+              argmin. As evidence accumulates, beliefs concentrate and the epistemic differences
+              between levers collapse; among near-equal scores, the choice tips to the lever that
+              best preserves sharpened beliefs and carries the residual preference weight —
+              steering. The mechanism, stated carefully: only the <em>order</em> (ablate era →
+              steer era) is predicted; the timing of the handoff is not a parameter — it falls
+              wherever beliefs happen to sharpen, which depends on the environment&rsquo;s actual
+              KL statistics and on the κ-seeded prior. (On Gemma the handoff is in fact abrupt —
+              roughly one opening ablation — consistent with the informative prior collapsing
+              beliefs quickly; Chapter III shows the trace.)
             </p>
             <p>
               This is the chapter&rsquo;s falsifiable output. On a model where evidence
@@ -559,11 +635,15 @@ export default function BridgeDeck() {
             </p>
             <p>
               <strong>Third — the update loop is real variational inference.</strong> Per step:
-              fixed-point VI infers <M tex={String.raw`q(s_{0},s_{1},s_{2}\,|\,o_{0},o_{1},o_{2})`} />;
-              the Dirichlet update{' '}
-              <M tex={String.raw`p_{A_{m}} \mathrel{+}= \eta\, q(s_{0})\,q(s_{1})\,q(s_{2})`} />,
-              η = 1, sculpts the likelihood; convergence is declared when the rolling belief-KL
-              between successive posteriors drops below 0.01. Chapter III shows the learning is
+              mean-field fixed-point iteration (minimising variational free energy F) infers the
+              factorised marginals <M tex={String.raw`q(s_{0})\,q(s_{1})\,q(s_{2})`} /> given the
+              observations; the Dirichlet update deposits count mass in the row of the{' '}
+              <em>observed</em> outcome only,{' '}
+              <M tex={String.raw`p_{A_{m}}[o_{m}] \mathrel{+}= \eta\; q(s_{0})\otimes q(s_{1})\otimes q(s_{2})`} />,
+              η = 1 (pymdp&rsquo;s <code>update_obs_likelihood_dirichlet</code>); convergence is
+              declared when the rolling belief-KL between successive posteriors drops below 0.01 —
+              a threshold, note, not part of G: vanilla EFE has no principled stopping story, and
+              the paper does not claim one. Chapter III shows the learning is
               real: the per-step L1 drift of the learned likelihood halves over the budget.
             </p>
             <p>
@@ -577,6 +657,11 @@ export default function BridgeDeck() {
       >
         <p className="kicker">II.5 · Checkable in pomdp_agent.py</p>
         <h1>Three facts from the engine room</h1>
+        <p className="big dim" style={{ marginBottom: '0.6rem' }}>
+          If none of these words land, the takeaway is one line:{' '}
+          <strong style={{ color: 'var(--teal-bright)' }}>the agent is the textbook one — nothing
+          bespoke.</strong>
+        </p>
         <ul className="pts">
           <Reveal at={1}>
             <li>
@@ -616,7 +701,12 @@ export default function BridgeDeck() {
               and observations (Friston et al. 2015) — and with flat preferences, discrete EFE{' '}
               <em>is</em> Lindley design (Sajid et al. 2021). The deflationary reading, embraced:
               for this audience, “EFE = BOED + preferences” is the point of contact, not an
-              attack.
+              attack. One sharper standing question deserves naming: EFE is a <em>choice</em> of
+              objective, not a theorem derived from the variational free energy (Millidge,
+              Tschantz &amp; Buckley 2021, “Whence the Expected Free Energy?”) — and the
+              deflationary BOED reading used here is deliberately agnostic on that debate.
+              Catechism for completeness: perception minimises F (variational free energy, the
+              evidence bound); action minimises G (expected free energy, the objective above).
             </p>
             <p>
               What active inference adds is not a new estimator but an <strong>architecture</strong>:

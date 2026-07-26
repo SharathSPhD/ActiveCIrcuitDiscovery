@@ -28,6 +28,9 @@ export default function TopNav() {
         <a className="pill" href="https://www.mdpi.com/2073-8994/18/6/1043" target="_blank" rel="noopener">
           Paper
         </a>
+        <Link className="pill" href="/author">
+          Author
+        </Link>
       </div>
     </nav>
   );

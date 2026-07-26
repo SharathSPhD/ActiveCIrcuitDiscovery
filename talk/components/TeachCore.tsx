@@ -250,7 +250,7 @@ export function IOICircuitSVG() {
       {/* s-inhibition */}
       <path d={`M ${X(8) + 27} 182 C ${X(8) + 27} 240, ${X(13) + 20} 240, ${X(13) + 20} 184`} fill="none" stroke={ROSE} strokeWidth={2.4} />
       <text x={(X(8) + X(13)) / 2 + 24} y={262} fontSize={12} fontFamily={G} fontWeight={600} fill={ROSE} textAnchor="middle">
-        2 · S-inhibition heads: “…so suppress John here”
+        2 · suppression (“S-inhibition”) heads: “…so suppress John here”
       </text>
       <text x={X(13) + 20} y={218} fontSize={15} fill={ROSE} textAnchor="middle">⊘</text>
       {/* name mover */}
@@ -365,7 +365,7 @@ export function StaticVsAdaptiveSVG() {
     <svg viewBox="0 0 880 280" style={{ width: '100%', height: 'auto' }} role="img"
       aria-label="Static methods walk a fixed ranking; an adaptive agent updates beliefs and re-plans after every result">
       {/* static */}
-      <text x={210} y={36} fontSize={14} fontFamily={G} fontWeight={700} fill={SOFT} textAnchor="middle">every existing method: rank once, walk the list</text>
+      <text x={210} y={36} fontSize={14} fontFamily={G} fontWeight={700} fill={SOFT} textAnchor="middle">the standard recipe: rank once, walk the list</text>
       {[0, 1, 2, 3, 4].map((i) => (
         <g key={i}>
           <rect x={120} y={54 + i * 36} width={180} height={26} rx={7} fill={PANEL} stroke={LINE} />

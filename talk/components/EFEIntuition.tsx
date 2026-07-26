@@ -67,18 +67,29 @@ export default function EFEIntuition() {
               </span>
               <span style={{ opacity: 0.6, fontSize: '.7rem' }}>{r.note}</span>
             </div>
-            <div style={{ display: 'flex', height: 20, borderRadius: 6, overflow: 'hidden', background: 'rgba(237,232,220,.07)', outline: best.name === r.name ? `2px solid ${r.color}` : 'none' }}>
-              <div style={{ width: `${r.epistemic * 48}%`, background: '#4fd8ce', transition: 'width .2s ease' }}
-                title={`epistemic ${r.epistemic.toFixed(2)}`} />
-              <div style={{ width: `${r.pragmatic * 48}%`, background: '#f0a24b', transition: 'width .2s ease' }}
-                title={`pragmatic ${r.pragmatic.toFixed(2)}`} />
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <div style={{ flex: 1, display: 'flex', height: 20, borderRadius: 6, overflow: 'hidden', background: 'rgba(237,232,220,.07)', outline: best.name === r.name ? `2px solid ${r.color}` : 'none' }}>
+                <div style={{ width: `${r.epistemic * 48}%`, background: '#4fd8ce', transition: 'width .2s ease' }}
+                  title={`epistemic ${r.epistemic.toFixed(2)}`} />
+                <div style={{ width: `${r.pragmatic * 48}%`, background: '#f0a24b', transition: 'width .2s ease' }}
+                  title={`pragmatic ${r.pragmatic.toFixed(2)}`} />
+              </div>
+              <span style={{ fontFamily: 'var(--mono)', fontSize: '.68rem', opacity: 0.8, width: 86, whiteSpace: 'nowrap' }}>
+                {r.epistemic.toFixed(2)} + {r.pragmatic.toFixed(2)}
+              </span>
             </div>
           </div>
         ))}
-        <div style={{ display: 'flex', gap: '1.2rem', fontFamily: 'var(--grotesk)', fontSize: '.72rem', opacity: 0.85 }}>
+        <div style={{ display: 'flex', gap: '1.2rem', fontFamily: 'var(--grotesk)', fontSize: '.72rem', opacity: 0.85, flexWrap: 'wrap' }}>
           <span><span style={{ display: 'inline-block', width: 12, height: 8, background: '#4fd8ce', borderRadius: 2, marginRight: 5 }} />epistemic value — what the probe would teach</span>
           <span><span style={{ display: 'inline-block', width: 12, height: 8, background: '#f0a24b', borderRadius: 2, marginRight: 5 }} />pragmatic value — the effects it would find</span>
         </div>
+        <p style={{ fontFamily: 'var(--grotesk)', fontSize: '.68rem', opacity: 0.55, margin: '0.6rem 0 0' }}>
+          Bars show value = −G, so the tallest bar is the lowest G — the argmin from the previous
+          slide. The epistemic axis follows each lever&rsquo;s B-matrix entropy, as in the shipped
+          model; the effect axis is illustrative shorthand for the observed outcome statistics
+          (in the shipped model the levers are differentiated epistemically, through B).
+        </p>
       </div>
     </div>
   );

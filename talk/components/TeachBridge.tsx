@@ -96,7 +96,7 @@ export function PhysicianSVG() {
       {/* update */}
       <rect x={630} y={40} width={240} height={220} rx={14} fill={PANEL} stroke={VIOLET} strokeWidth={1.3} />
       <text x={750} y={68} fontSize={13} fontFamily={G} fontWeight={700} fill={VIOLET} textAnchor="middle">result → update</text>
-      <text x={750} y={104} fontSize={12} fontFamily={G} fill={CREAM} textAnchor="middle">X-ray: infiltrate present</text>
+      <text x={750} y={104} fontSize={12} fontFamily={G} fill={CREAM} textAnchor="middle">X-ray: infiltrate present · p(pneumonia) 0.45 → 0.78</text>
       {dx.map(([d], i) => {
         const p2 = [0.78, 0.12, 0.06, 0.04][i];
         return (
@@ -132,7 +132,7 @@ export function GenericLoopSVG() {
       <text x={220} y={98} fontSize={15} fontFamily={G} fontWeight={700} fill={TEAL} textAnchor="middle">agent</text>
       <text x={220} y={126} fontSize={12} fontFamily={G} fill={CREAM} textAnchor="middle">beliefs about hidden states</text>
       <text x={220} y={146} fontSize={12} fontFamily={G} fill={CREAM} textAnchor="middle">a generative model of the world</text>
-      <text x={220} y={166} fontSize={12} fontFamily={G} fill={SOFT} textAnchor="middle">acts to reduce expected surprise</text>
+      <text x={220} y={166} fontSize={12} fontFamily={G} fill={SOFT} textAnchor="middle">acts to keep future prediction error low</text>
 
       <rect x={500} y={60} width={280} height={140} rx={16} fill="rgba(240,162,75,.06)" stroke={AMBER} strokeWidth={1.5} />
       <text x={640} y={98} fontSize={15} fontFamily={G} fontWeight={700} fill={AMBER} textAnchor="middle">world</text>
@@ -257,6 +257,7 @@ export function ExploreExploitSVG() {
     <svg viewBox="0 0 880 300" style={{ width: '100%', height: 'auto' }} role="img"
       aria-label="Epistemic value dominates early steps, pragmatic value later — predicting ablate-then-steer">
       <line x1={70} y1={210} x2={790} y2={210} stroke={LINE} strokeWidth={1.5} />
+      <text x={58} y={128} fontSize={10.5} fontFamily={G} fill={SOFT} textAnchor="middle" transform="rotate(-90 58 128)">value (arbitrary units)</text>
       <path d={ep.map((v, i) => `${i ? 'L' : 'M'}${X(i)},${Y(v)}`).join(' ')} fill="none" stroke={TEAL} strokeWidth={3} />
       <path d={pr.map((v, i) => `${i ? 'L' : 'M'}${X(i)},${Y(v)}`).join(' ')} fill="none" stroke={AMBER} strokeWidth={3} />
       <text x={140} y={70} fontSize={13} fontFamily={G} fontWeight={700} fill={TEAL}>epistemic value — “I know nothing yet”</text>
@@ -270,7 +271,7 @@ export function ExploreExploitSVG() {
       <text x={(70 + X(6.5)) / 2} y={260} fontSize={10.5} fontFamily={G} fill={CREAM} textAnchor="middle">ablate era</text>
       <text x={(790 + X(6.5)) / 2} y={260} fontSize={10.5} fontFamily={G} fill={CREAM} textAnchor="middle">steer era</text>
       <text x={70} y={290} fontSize={12.5} fontFamily={G} fill={SOFT}>
-        intervention step 1 → 20 · no schedule is coded anywhere — if this pattern appears, it emerged from the objective
+        step 1 → 20 · only the ORDER is predicted — the handoff timing depends on the model and priors · no schedule is coded anywhere
       </text>
     </svg>
   );
@@ -283,7 +284,7 @@ export function TimelineSVG() {
     ['1992', 'MacKay', 'information-based objectives for learning systems', SOFT],
     ['2015', 'Friston et al.', 'EFE: epistemic term = that same information gain', TEAL],
     ['2021', 'Sajid et al.', 'flat preferences ⇒ EFE is Lindley design', TEAL],
-    ['2022', 'pymdp · BOED', 'reference tooling on both sides of the bridge', BLUE],
+    ['2022', 'pymdp · BOED', 'reference tooling on both sides (BOED = Bayesian optimal experimental design)', BLUE],
     ['2026', 'ACD', 'the machinery pointed at a transformer’s internals', AMBER],
   ];
   return (
@@ -299,9 +300,6 @@ export function TimelineSVG() {
             <line x1={x} y1={130} x2={x} y2={up ? 92 : 168} stroke={c as string} strokeWidth={1.4} />
             <text x={x} y={up ? 60 : 196} fontSize={13} fontFamily={M} fontWeight={700} fill={c as string} textAnchor="middle">{yr}</text>
             <text x={x} y={up ? 78 : 214} fontSize={12} fontFamily={G} fontWeight={600} fill={CREAM} textAnchor="middle">{who}</text>
-            <text x={x} y={up ? 92 - 62 : 232} fontSize={10} fontFamily={G} fill={SOFT} textAnchor="middle">
-              {(what as string).length > 46 ? '' : ''}
-            </text>
             {/* wrap what into two lines max */}
             {(() => {
               const wordsArr = (what as string).split(' ');

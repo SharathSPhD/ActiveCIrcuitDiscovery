@@ -90,6 +90,25 @@ for (const d of DECKS) {
   ok('TOC closed after jump', (await page.locator('.toc-panel.open').count()) === 0);
 }
 
+// transition regression: arriving on a fresh slide must start with reveals hidden
+console.log('\n/transition regression');
+await page.goto(BASE + '/mech-interp', { waitUntil: 'networkidle' });
+await page.waitForTimeout(400);
+await page.keyboard.press('ArrowRight'); // step 1 of slide 1
+await page.waitForTimeout(120);
+await page.keyboard.press('ArrowRight'); // -> slide 2 (steps=2)
+await page.waitForTimeout(450);
+const preRevealed = await page.locator('.slide.slide-on .rv.rv-on').count();
+ok('fresh slide arrives with reveals hidden', preRevealed === 0, `${preRevealed} already on`);
+
+// author page
+console.log('\n/author');
+await page.goto(BASE + '/author', { waitUntil: 'domcontentloaded' });
+await page.waitForTimeout(800);
+ok('author page renders', (await page.locator('text=Dr Sharath Sathish').count()) > 0);
+ok('publications highlighted', (await page.locator('text=Active Circuit Discovery: A Multi-Action POMDP').count()) > 0);
+ok('technektar iframes present', (await page.locator('iframe').count()) === 2);
+
 // results deck: charts render (svg inside fig panels)
 console.log('\n/results charts');
 await page.goto(BASE + '/results#4', { waitUntil: 'networkidle' });

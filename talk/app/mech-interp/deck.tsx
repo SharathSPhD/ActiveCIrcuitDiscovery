@@ -107,7 +107,7 @@ export default function MechDeck() {
           Inside the <span className="accent">black box</span>
         </h1>
         <div className="fig-panel" style={{ maxWidth: 980 }}>
-          <LadderSVG stage={5} />
+          <LadderSVG stage={1} />
         </div>
         <Reveal at={1}>
           <div className="take teal">
@@ -130,13 +130,17 @@ export default function MechDeck() {
               outputs a probability distribution over every possible next token. All of its
               apparent abilities — answering, coding, translating — are this one operation applied
               repeatedly. The sentence on the slide is deliberately chosen: it is the exact test
-              sentence used throughout the rest of the talk (the “IOI” task). The model strongly
+              sentence used throughout the rest of the talk (the “indirect-object
+              identification”, or IOI, task). Strictly, models read <em>tokens</em>, not words —
+              the distinction matters nowhere in this talk. The model strongly
               prefers “Mary”, because “John” already appeared as the giver — to get this right, it
               must have tracked who is who.
             </p>
             <p>
-              This slide also quietly sets up the measuring instrument for everything that
-              follows: since the model&rsquo;s entire output is a probability distribution, any
+              (The probability numbers on this slide and the KL slide are illustrative, chosen to
+              make the pattern legible — the qualitative story matches Gemma-2-2B&rsquo;s real
+              behaviour on this prompt.) This slide also quietly sets up the measuring instrument
+              for everything that follows: since the model&rsquo;s entire output is a probability distribution, any
               change made inside the model can be measured by how far that distribution moves.
             </p>
           </>
@@ -150,14 +154,14 @@ export default function MechDeck() {
         <ul className="pts compact" style={{ marginTop: '0.7rem' }}>
           <Reveal at={1}>
             <li>
-              Read tokens in → put a <strong>probability on every possible next token</strong>.
-              That is the whole job.
+              Read <strong>tokens</strong> in (roughly: words) → put a probability on every
+              possible next token. That is the whole job.
             </li>
           </Reveal>
           <Reveal at={2}>
             <li>
               To put 72% on <strong>Mary</strong>, something inside must have tracked{' '}
-              <em>who already gave the bag</em> — remember this sentence, it returns all talk
+              <em>who already gave the bag</em> — remember this sentence: it returns throughout the talk
             </li>
           </Reveal>
         </ul>
@@ -199,13 +203,15 @@ export default function MechDeck() {
         <ul className="pts compact" style={{ marginTop: '0.7rem' }}>
           <Reveal at={1}>
             <li>
-              Every weight can be read, every activation overwritten — <strong>perfect access,
-              zero labels</strong>
+              Two kinds of numbers: <strong>weights</strong> — 2.6B learned settings, fixed — and{' '}
+              <strong>activations</strong> — the momentary values that flow when a sentence goes
+              in. A <strong>neuron</strong> = one slot in that flow.
             </li>
           </Reveal>
           <Reveal at={2}>
             <li>
-              The missing thing is not data. It is a <em>vocabulary</em> for what the numbers mean
+              Every weight readable, every activation overwritable — <strong>perfect access, zero
+              labels</strong>. The missing thing is a <em>vocabulary</em>.
             </li>
           </Reveal>
         </ul>
@@ -320,8 +326,8 @@ export default function MechDeck() {
               </Reveal>
               <Reveal at={3}>
                 <li>
-                  So concepts live as <strong>directions</strong>, not neurons — and every neuron
-                  reads a mixture
+                  A “direction” = a fixed <strong>combination of neurons</strong> — the concept
+                  isn&rsquo;t at hook #7, it&rsquo;s “30% of hook 7 + 70% of hook 8”
                 </li>
               </Reveal>
             </ul>
@@ -330,7 +336,8 @@ export default function MechDeck() {
         <Reveal at={3}>
           <div className="take violet">
             The concepts are still there — recoverable, linear —{' '}
-            <strong>just written in the wrong basis.</strong>
+            <strong>just read out in the wrong coordinates.</strong> Reading one neuron at a time
+            is why you see gibberish.
           </div>
         </Reveal>
         <NextLead>If the basis is wrong, learn a better one.</NextLead>
@@ -348,7 +355,16 @@ export default function MechDeck() {
               <strong>sparse autoencoder</strong> — reconstruction loss plus an L1 sparsity
               penalty, with an overcomplete latent basis — on billions of activations. From a
               512-neuron MLP it recovered thousands of features that behave monosemantically:
-              dedicated features for Arabic script, DNA sequences, base64 strings, Hebrew.
+              dedicated features for Arabic script, DNA sequences, base64 strings, Hebrew — where
+              one neuron of that same (one-layer study) model responds to “a mixture of academic
+              citations, English dialogue, HTTP requests, and Korean text.”
+            </p>
+            <p>
+              Caveat the field itself carries: dictionaries are not unique. Features split and
+              merge as dictionary size changes, training seed matters, and whether SAE features
+              are the <em>right</em> decomposition remains actively contested — one reason the
+              causal probes of the next slides, not the dictionary itself, carry the evidential
+              weight in this talk.
             </p>
             <p>
               <em>Scaling Monosemanticity</em> (May 2024) ran the same recipe on a production
@@ -385,8 +401,15 @@ export default function MechDeck() {
           </Reveal>
         </div>
         <Reveal at={3}>
-          <NextLead>Named features are a nice story. How do you prove a feature is real?</NextLead>
+          <ul className="pts compact">
+            <li>
+              The names aren&rsquo;t built in: read the thousands of snippets where a feature
+              fires hardest, and <strong>the pattern names itself</strong> — you&rsquo;ll do
+              exactly this on a live feature in two slides
+            </li>
+          </ul>
         </Reveal>
+        <NextLead>Named features are a nice story. How do you prove a feature is real?</NextLead>
       </Slide>
 
       {/* 7 — Golden Gate */}
@@ -427,8 +450,9 @@ export default function MechDeck() {
           </Reveal>
           <Reveal at={2}>
             <li>
-              Chapter III runs this exact experiment, quantified, <em>with the control this demo
-              never had</em>
+              Strictly: steering shows the direction is <em>causally potent</em>, not that it is
+              the model&rsquo;s own unit — <strong>the random-direction control in Chapter III
+              exists for exactly this reason</strong>
             </li>
           </Reveal>
         </ul>
@@ -445,9 +469,10 @@ export default function MechDeck() {
             <p>
               This is a live Neuronpedia dashboard for feature 16369 of the layer-20 GemmaScope
               transcoder (16k dictionary) for <strong>Gemma-2-2B</strong> — the very dictionary the
-              ACD agent&rsquo;s candidate features come from (GemmaScope, DeepMind 2024: 400+
-              JumpReLU SAEs and per-layer transcoders across every layer of Gemma-2 2B/9B, &gt;30M
-              features). It shows top activating examples, an auto-generated explanation, and a
+              ACD agent&rsquo;s candidate features come from. (Gemma Scope, DeepMind 2024, shipped
+              400+ JumpReLU SAEs across every layer of Gemma-2 2B/9B; the per-layer{' '}
+              <em>transcoders</em> used by circuit-tracer and this demo were the follow-up
+              release, 2025.) It shows top activating examples, an auto-generated explanation, and a
               test box: type any sentence and watch the feature respond.
             </p>
             <p>
@@ -460,10 +485,23 @@ export default function MechDeck() {
           </>
         }
       >
-        <p className="kicker">I.2 · Not hypothetical</p>
+        <p className="kicker">I.2 · Not hypothetical — the Gemma experiment</p>
         <h2>
           A real Gemma-2-2B feature — <span className="dim">type a sentence into it</span>
         </h2>
+        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', margin: '0.2rem 0 0.7rem', fontFamily: 'var(--grotesk)', fontSize: 'clamp(.72rem,1vw,.85rem)' }}>
+          <span className="dim" style={{ alignSelf: 'center' }}>try:</span>
+          {[
+            'The Golden Gate Bridge was closed for repairs.',
+            'She walked across the old suspension bridge at dawn.',
+            'The committee approved the budget without debate.',
+          ].map((t) => (
+            <span key={t} style={{ border: '1px solid var(--navy-hairline)', borderRadius: 999, padding: '4px 12px', background: 'var(--navy-panel)', color: 'var(--cream)' }}>
+              “{t}”
+            </span>
+          ))}
+          <span className="dim" style={{ alignSelf: 'center' }}>— watch which ones light it up, and how hard</span>
+        </div>
         <iframe
           src="https://www.neuronpedia.org/gemma-2-2b/20-gemmascope-transcoder-16k/16369?embed=true&embedexplanation=true&embedplots=true&embedtest=true"
           title="Neuronpedia — Gemma-2-2B layer-20 transcoder feature"
@@ -475,6 +513,12 @@ export default function MechDeck() {
             background: '#fff',
           }}
         />
+        <p className="dim" style={{ fontFamily: 'var(--grotesk)', fontSize: 'clamp(.74rem,1vw,.88rem)', margin: '0.5rem 0 0' }}>
+          This is also where feature <em>names</em> come from: the dashboard&rsquo;s top
+          activating snippets are the evidence, the label is read off them. Explore the whole
+          dictionary at{' '}
+          <a href="https://www.neuronpedia.org/gemma-2-2b" target="_blank" rel="noopener">neuronpedia.org/gemma-2-2b</a>.
+        </p>
         <NextLead>A vocabulary of features is not yet an explanation. Concepts need wiring.</NextLead>
       </Slide>
 
@@ -522,8 +566,8 @@ export default function MechDeck() {
           </Reveal>
           <Reveal at={2}>
             <li>
-              Every arrow proven by a <strong>causal experiment</strong> (path patching), one path
-              at a time
+              Every arrow proven by a <strong>causal experiment</strong> — one path swapped at a
+              time (exactly what “patching” means is the next slide)
             </li>
           </Reveal>
           <Reveal at={3}>
@@ -586,18 +630,23 @@ export default function MechDeck() {
           <>
             <p>
               <strong>ACDC</strong> (Conmy et al. 2023) automated circuit-finding faithfully:
-              corrupt every edge, keep those whose corruption moves the output — but at one
-              forward pass per candidate edge, tens of thousands of passes for GPT-2-small-sized
-              graphs. <strong>Edge Attribution Patching</strong> (Syed et al. 2023) collapsed all
-              of that into a first-order Taylor approximation: scores for <em>every</em> edge from
-              two forward passes and one backward pass — and it recovers ground-truth circuits{' '}
-              <em>better</em> than the exhaustive method it approximates.
+              greedily prune edges one at a time, keeping any whose removal shifts the output —
+              but at one forward pass per candidate edge, tens of thousands of passes for
+              GPT-2-small-sized graphs. Attribution patching (Nanda 2022–23) replaced patching
+              with a first-order Taylor approximation; <strong>Edge Attribution Patching</strong>{' '}
+              (Syed et al. 2023) extended it to edges: scores for <em>every</em> edge from two
+              forward passes and one backward pass — and empirically those cheap scores recover
+              the manually-found reference circuits <em>better</em> than ACDC&rsquo;s expensive
+              greedy search. (Strictly, EAP linearises activation patching, not ACDC — the
+              surprise is that the linearisation out-performs the search.)
             </p>
             <p>
-              What EAP misses: it is a linearisation, and inherits linearisation pathologies —
-              zero-gradient saturation (addressed by integrated-gradients variants), sign-blindness
-              to suppressive components (ACDC famously drops IOI&rsquo;s <em>negative</em> name
-              movers), dependence on the corruption distribution. And the faithfulness-metric
+              What the cheap methods miss: EAP is a linearisation and inherits its pathologies —
+              zero-gradient saturation (addressed by integrated-gradients variants, EAP-IG, Hanna
+              et al. 2024) and dependence on the corruption distribution. A separate,
+              metric-shaped failure: with KL as the metric, both ACDC and EAP are blind to the{' '}
+              <em>sign</em> of suppressive components — which is how ACDC famously drops
+              IOI&rsquo;s negative name movers (a signed metric like logit-diff sees them). And the faithfulness-metric
               edifice is fragile: Miller et al. (2024) show published circuit faithfulness scores
               swing wildly under seemingly minor ablation-scheme choices. The consequence:
               attribution gives cheap, noisy, <em>correlational</em> rankings — and real causal
@@ -615,19 +664,25 @@ export default function MechDeck() {
         <ul className="pts compact">
           <Reveal at={1}>
             <li>
-              <strong>ACDC</strong>: causally prune every edge — faithful, but tens of thousands
-              of passes
+              “Edges” = the <strong>connections between components</strong> — the arrows in the
+              IOI diagram. <strong>ACDC</strong> greedily prunes them one at a time, causally —
+              faithful, but tens of thousands of passes
             </li>
           </Reveal>
           <Reveal at={2}>
             <li>
               <strong>EAP</strong>: every edge scored from <em>2 forward + 1 backward pass</em> —
-              a Taylor approximation that beats the method it approximates
+              and the cheap scores recover the manually-found circuits better than ACDC&rsquo;s
+              expensive search (Syed et al. 2023)
             </li>
           </Reveal>
         </ul>
         <Reveal at={2}>
           <Eq tex={String.raw`\Delta L \;\approx\; (e_{\text{corrupt}} - e_{\text{clean}})^{\top}\, \nabla_{e} L\big|_{\text{clean}}`} />
+          <p className="dim" style={{ fontFamily: 'var(--grotesk)', fontSize: 'clamp(.8rem,1.2vw,.98rem)' }}>
+            In words: predicted damage ≈ (how much the edge would change) × (how sensitive the
+            output is to it) — a calculus prediction, not an actual experiment.
+          </p>
         </Reveal>
         <Reveal at={3}>
           <div className="take">
@@ -647,7 +702,10 @@ export default function MechDeck() {
           <>
             <p>
               SAEs describe <em>what is represented</em> at a point; circuits need to trace
-              computation <em>through</em> the MLP nonlinearity. A <strong>transcoder</strong>{' '}
+              computation <em>through</em> the MLP nonlinearity. Why describing is not enough: an
+              SAE is a snapshot at one point — it cannot say how a feature <em>causes</em> the
+              features downstream, because the MLP&rsquo;s tangle sits between them. A transcoder
+              swaps the tangle for something traceable. A <strong>transcoder</strong>{' '}
               (Dunefsky, Chlenski &amp; Nanda 2024) learns a sparse approximation of the
               MLP&rsquo;s <em>input→output function</em> — it does not describe the MLP, it{' '}
               <em>replaces</em> it with a wide, sparse, interpretable one. The payoff is
@@ -716,8 +774,12 @@ export default function MechDeck() {
               nodes → a <strong>local replacement model</strong> that reproduces the original
               model&rsquo;s output on that prompt <em>exactly</em>, and is <em>linear</em> in
               feature activations. In that linear system, every edge of the attribution graph is
-              an exact direct effect — not an estimate. Prune to the influential subgraph (~10×
-              smaller, retaining ~80% of explained behaviour) and the result is what the slide
+              an exact direct effect — not an estimate. The exactness is conditional: attention
+              patterns and layer-norm denominators are frozen at their observed values, and error
+              nodes absorb a substantial fraction of the computation the transcoders do not
+              reconstruct — which bounds how much of the behaviour the interpretable graph can
+              explain. Prune to the influential subgraph (~10×
+              smaller, retaining ~80% of the influence mass) and the result is what the slide
               shows: a per-prompt causal hypothesis.
             </p>
             <p>
@@ -740,14 +802,16 @@ export default function MechDeck() {
         <ul className="pts compact" style={{ marginTop: '0.6rem' }}>
           <Reveal at={1}>
             <li>
-              Not a sketch — <strong>the actual pruned graph</strong> for the chapter&rsquo;s
-              sentence, on Gemma-2-2B
+              Every dot = a <strong>feature</strong> from this chapter; every line = “this
+              feature&rsquo;s activity <strong>directly feeds</strong> that one” — the actual
+              pruned graph for the chapter&rsquo;s sentence
             </li>
           </Reveal>
           <Reveal at={2}>
             <li>
-              Every edge an <strong>exact linear direct effect</strong> — and the whole thing is
-              still a <em>hypothesis</em> until probed
+              Edges are <strong>exact linear direct effects</strong> — exact <em>given</em> frozen
+              attention, frozen normalisation, and error nodes carrying the unexplained remainder.
+              The whole graph is a <em>hypothesis</em> until probed
             </li>
           </Reveal>
         </ul>
@@ -811,11 +875,15 @@ logits, _ = model.feature_intervention(   # evidence    (~30 ms)
             <p>
               The economics, side by side: a 2,200-feature candidate set × 3 intervention types is
               a 6,600-arm experiment space; a realistic verification budget is ~20 probes per
-              prompt. Every existing automated method spends that budget{' '}
-              <em>non-adaptively</em>: ACDC sweeps everything; EAP ranks once and walks the list;
-              even the impressive LLM-agent systems (MAIA, 2024) choose experiments by
-              prompt-engineered heuristics — no belief state, no information-theoretic objective,
-              no notion of what an observation is worth.
+              prompt. Why only 20, when a probe is 30 ms? Because 30 ms is the 2B-model toy price:
+              probe cost grows with model scale, audits run over many prompts × many behaviours,
+              and each result still needs interpreting — B = 20 is the paper&rsquo;s protocol,
+              standing in for every regime where causal experiments are genuinely scarce. How the
+              field spends such budgets today: the attribution methods are non-adaptive — ACDC
+              sweeps everything, EAP ranks once and walks the list; the LLM-agent systems (MAIA,
+              Shaham &amp; Schwettmann et al. 2024) <em>are</em> adaptive — hypothesise,
+              experiment, revise — but heuristic: no explicit belief state, no quantitative
+              information objective, no budget-awareness.
             </p>
           </>
         }
@@ -838,7 +906,7 @@ logits, _ = model.feature_intervention(   # evidence    (~30 ms)
               <Reveal at={1}>
                 <div className="stat">
                   <div className="v amber">20</div>
-                  <div className="k">probes the budget affords</div>
+                  <div className="k">probes the protocol affords — 30 ms is the 2B toy price; real audits are many prompts × behaviours × scale</div>
                 </div>
               </Reveal>
             </div>
@@ -885,12 +953,18 @@ logits, _ = model.feature_intervention(   # evidence    (~30 ms)
           <LadderSVG stage={5} />
         </div>
         <Reveal at={1}>
-          <div className="big" style={{ margin: '1rem 0 0.6rem' }}>
+          <p className="big" style={{ margin: '1rem 0 0.4rem' }}>
+            In plain words: <strong style={{ color: 'var(--teal-bright)' }}>pick the experiment
+            you expect to learn the most from.</strong> Formally:
+          </p>
+          <div className="big" style={{ margin: '0 0 0.6rem' }}>
             <M tex={String.raw`\mathbb{E}_{Q}\,D_{\mathrm{KL}}[Q(s\mid o,\pi)\,\|\,Q(s\mid\pi)] = I(s;o\mid\pi)`} />
           </div>
           <p className="big dim">
-            The epistemic term of Expected Free Energy <strong style={{ color: 'var(--teal-bright)' }}>is</strong>{' '}
-            expected information gain — the exact currency this problem is priced in.
+            The epistemic term of <strong>Expected Free Energy</strong> (EFE — Chapter II&rsquo;s
+            objective) <strong style={{ color: 'var(--teal-bright)' }}>is</strong> expected
+            information gain. <span className="dim">(s = hidden states, o = observations, π = the
+            chosen experiment.)</span>
           </p>
         </Reveal>
         <Reveal at={2}>

@@ -44,7 +44,7 @@ export default function HomeDeck() {
       >
         <div className="cols cols-60">
           <div>
-            <p className="kicker">A talk for the Active Inference community</p>
+            <p className="kicker">A talk for the Active Inference community · delivered by Dr Sharath Sathish</p>
             <h1 style={{ maxWidth: '24ch' }}>
               Circuit discovery is
               <br />
@@ -60,21 +60,39 @@ export default function HomeDeck() {
             </Reveal>
             <Reveal at={2}>
               <p className="dim" style={{ fontFamily: 'var(--grotesk)', fontSize: 'clamp(.8rem,1.1vw,.95rem)' }}>
-                Sathish, S. · <em>Symmetry</em> 18(6):1043 · 2026 · experiments on NVIDIA DGX
-                Spark (GB10) · code, data and this application are public
+                Talk delivered by <strong style={{ color: 'var(--cream)' }}>Dr Sharath
+                Sathish</strong> · <em>Symmetry</em> 18(6):1043 · 2026 · experiments on NVIDIA
+                DGX Spark (GB10) · code, data and this application are public ·{' '}
+                <Link href="/author" style={{ color: 'var(--teal-bright)' }}>about the author →</Link>
               </p>
             </Reveal>
           </div>
           <div style={{ display: 'flex', justifyContent: 'center' }}>
-            <img
-              src="/paper-page1.png"
-              alt="First page of the Active Circuit Discovery paper in Symmetry"
+            <a
+              href="https://www.mdpi.com/2073-8994/18/6/1043"
+              target="_blank"
+              rel="noopener"
+              title="Open the paper on mdpi.com"
               style={{
-                maxHeight: 'min(62vh, 560px)', width: 'auto', maxWidth: '100%',
-                borderRadius: 10, border: '1px solid var(--navy-hairline)',
-                boxShadow: '0 18px 50px rgba(0,0,0,.5)', transform: 'rotate(1.2deg)',
+                display: 'block', textDecoration: 'none', background: '#fff', borderRadius: 12,
+                border: '1px solid var(--navy-hairline)', boxShadow: '0 18px 50px rgba(0,0,0,.5)',
+                transform: 'rotate(1.2deg)', overflow: 'hidden', maxWidth: '100%',
               }}
-            />
+            >
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '8px 14px', background: '#f4f6f8', borderBottom: '1px solid #dde3e8' }}>
+                <span style={{ fontFamily: 'var(--grotesk)', fontSize: '.72rem', color: '#2f6f8f', fontWeight: 700 }}>
+                  mdpi.com · Symmetry 18(6):1043 · Open Access
+                </span>
+                <span style={{ fontFamily: 'var(--grotesk)', fontSize: '.68rem', color: '#4a5b68' }}>
+                  open on MDPI ↗
+                </span>
+              </div>
+              <img
+                src="/paper-page1.png"
+                alt="First page of Active Circuit Discovery (Symmetry 18(6):1043) — click to open on mdpi.com"
+                style={{ maxHeight: 'min(56vh, 520px)', width: 'auto', maxWidth: '100%', display: 'block' }}
+              />
+            </a>
           </div>
         </div>
         <NextLead>Why this audience, specifically? Because two fields are asking one question.</NextLead>

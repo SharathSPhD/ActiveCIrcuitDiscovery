@@ -379,7 +379,11 @@ export default function ResultsDeck() {
             <p>
               Both patterns are the same objective responding to different environments. That is
               the difference between a schedule and an inference, made visible in a single figure
-              pair.
+              pair. One honest reading note: the prediction is of the <em>order</em> (ablate era
+              → steer era), not the timing — and on Gemma the handoff is abrupt (one opening
+              ablation), consistent with the κ-seeded prior collapsing beliefs quickly. The
+              discriminating evidence is the pair: handoff on Gemma, rational refusal to hand off
+              on Llama.
             </p>
           </>
         }
