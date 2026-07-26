@@ -409,32 +409,59 @@ export function StaticVsAdaptiveSVG() {
 
 /* ---------- chapter ladder / roadmap for Part I ---------- */
 export function LadderSVG({ stage = 5 }: { stage?: number }) {
-  const rungs = [
-    ['what a model does', 'next-token probabilities'],
-    ['features', 'the real units of meaning'],
-    ['circuits', 'features wired into algorithms'],
-    ['attribution graphs', 'a per-prompt causal map'],
-    ['the open problem', 'which experiment to run next?'],
+  const rungs: [string, string, string][] = [
+    ['what a model does', 'next-token probabilities', 'One job: read tokens, put a probability on every possible next token. Every ability the model has lives inside that single operation.'],
+    ['features', 'the real units of meaning', 'Single neurons mix unrelated concepts. The true units are features — learned directions recovered by sparse dictionaries.'],
+    ['circuits', 'features wired into algorithms', 'Features connect into circuits: real algorithms in the weights, like the one that answers “…John gave the bag to __”.'],
+    ['attribution graphs', 'a per-prompt causal map', 'Circuit tracing turns one prompt into a causal map — thousands of feature nodes, exact linear edges, a testable hypothesis.'],
+    ['the open problem', 'which experiment to run next?', '6,600 possible causal probes, a budget of ~20 — and no principled way to choose. This is where active inference enters.'],
   ];
+  const cur = Math.min(Math.max(stage, 1), 5) - 1;
   return (
-    <svg viewBox="0 0 860 250" style={{ width: '100%', height: 'auto' }} role="img"
+    <svg viewBox="0 0 860 330" style={{ width: '100%', height: 'auto' }} role="img"
       aria-label="The chapter climbs from what a model does, to features, circuits, graphs, and the experiment-selection problem">
-      {rungs.map(([t, s], i) => {
+      {rungs.map(([t, sub], i) => {
         const x = 30 + i * 166;
         const y = 170 - i * 32;
-        const on = i < stage;
+        const lit = i < stage;
+        const isCur = i === cur;
         return (
-          <g key={t} opacity={on ? 1 : 0.35}>
+          <g key={t} opacity={lit ? 1 : 0.32} style={{ transition: 'opacity .35s ease' }}>
+            {isCur && (
+              <rect x={x - 5} y={y - 5} width={160} height={64} rx={14} fill="none"
+                stroke={TEAL} strokeWidth={2} opacity={0.9}>
+                <animate attributeName="opacity" values=".9;.45;.9" dur="2s" repeatCount="indefinite" />
+              </rect>
+            )}
             <rect x={x} y={y} width={150} height={54} rx={11}
-              fill={on ? 'rgba(79,216,206,.09)' : PANEL} stroke={on ? TEAL : LINE} strokeWidth={1.4} />
-            <text x={x + 75} y={y + 22} fontSize={12.5} fontFamily={G} fontWeight={700} fill={on ? TEAL : SOFT} textAnchor="middle">{t}</text>
-            <text x={x + 75} y={y + 40} fontSize={10.5} fontFamily={G} fill={SOFT} textAnchor="middle">{s}</text>
+              fill={isCur ? 'rgba(79,216,206,.16)' : lit ? 'rgba(79,216,206,.07)' : PANEL}
+              stroke={lit ? TEAL : LINE} strokeWidth={isCur ? 1.8 : 1.2} />
+            <text x={x + 75} y={y + 22} fontSize={12.5} fontFamily={G} fontWeight={700}
+              fill={lit ? TEAL : SOFT} textAnchor="middle">{t}</text>
+            <text x={x + 75} y={y + 40} fontSize={10.5} fontFamily={G} fill={lit ? CREAM : SOFT} textAnchor="middle">{sub}</text>
             {i < rungs.length - 1 && (
-              <line x1={x + 152} y1={y + 12} x2={x + 176} y2={y - 6} stroke={on && i < stage - 1 ? TEAL : LINE} strokeWidth={2} />
+              <line x1={x + 152} y1={y + 12} x2={x + 176} y2={y - 6} stroke={i < stage - 1 ? TEAL : LINE} strokeWidth={2} />
             )}
           </g>
         );
       })}
+      {/* current-rung description card */}
+      <g style={{ transition: 'opacity .35s ease' }}>
+        <rect x={30} y={238} width={800} height={70} rx={12} fill="rgba(79,216,206,.06)" stroke={TEAL} strokeWidth={1.2} />
+        <text x={52} y={264} fontSize={13} fontFamily={G} fontWeight={700} fill={TEAL}>
+          {`rung ${cur + 1} of 5 — ${rungs[cur][0]}`}
+        </text>
+        {(() => {
+          const words = rungs[cur][2].split(' ');
+          const mid = Math.ceil(words.length / 2);
+          return (
+            <>
+              <text x={52} y={284} fontSize={12} fontFamily={G} fill={CREAM}>{words.slice(0, mid).join(' ')}</text>
+              <text x={52} y={301} fontSize={12} fontFamily={G} fill={CREAM}>{words.slice(mid).join(' ')}</text>
+            </>
+          );
+        })()}
+      </g>
     </svg>
   );
 }

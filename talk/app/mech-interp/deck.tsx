@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import Deck, { Slide, Reveal, NextLead } from '../../components/Deck';
+import Deck, { Slide, Reveal, NextLead, useSlideStep } from '../../components/Deck';
 import { Eq, M, LinkCards, Callout } from '../../components/Prose';
 import { SuperpositionSVG, TranscoderSVG, PipelineSVG, BudgetSVG } from '../../components/DiagramsPart1';
 import {
@@ -76,6 +76,12 @@ const GRAPH_CARDS = [
   },
 ];
 
+function LadderBuild() {
+  // advance the ladder rung-by-rung with the clicker (steps 0–4 → stages 1–5)
+  const step = useSlideStep();
+  return <LadderSVG stage={Math.min(step + 1, 5)} />;
+}
+
 export default function MechDeck() {
   return (
     <Deck part="Chapter I · Inside the black box" title="Mechanistic interpretability, from zero">
@@ -83,7 +89,7 @@ export default function MechDeck() {
       <Slide
         title="The climb ahead"
         brief="Chapter roadmap: from what a model does, to the experiment-selection problem"
-        steps={1}
+        steps={5}
         notes={
           <>
             <p>
@@ -107,9 +113,9 @@ export default function MechDeck() {
           Inside the <span className="accent">black box</span>
         </h1>
         <div className="fig-panel" style={{ maxWidth: 980 }}>
-          <LadderSVG stage={1} />
+          <LadderBuild />
         </div>
-        <Reveal at={1}>
+        <Reveal at={5}>
           <div className="take teal">
             Five rungs, each one earned. The chapter ends at a problem — <strong>and the problem
             is the point.</strong>

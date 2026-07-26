@@ -34,6 +34,11 @@ interface SlideState {
 
 const SlideCtx = createContext<SlideState>({ step: 99, active: true, visited: true });
 
+/** Read the current slide's reveal step — lets visuals advance stage-by-stage with the clicker. */
+export function useSlideStep(): number {
+  return useContext(SlideCtx).step;
+}
+
 export function Reveal({
   at,
   children,
@@ -104,6 +109,8 @@ export default function Deck({
   const [visited, setVisited] = useState<Set<number>>(() => new Set([0]));
   const [notesOpen, setNotesOpen] = useState(false);
   const [tocOpen, setTocOpen] = useState(false);
+  const [fullscreen, setFullscreen] = useState(false);
+  const rootRef = useRef<HTMLDivElement | null>(null);
   const posRef = useRef(pos);
   posRef.current = pos;
 
@@ -167,6 +174,22 @@ export default function Deck({
     [n, stepsOf]
   );
 
+  const toggleFullscreen = useCallback(() => {
+    const el = rootRef.current;
+    if (!el) return;
+    if (document.fullscreenElement) {
+      document.exitFullscreen().catch(() => {});
+    } else {
+      el.requestFullscreen().catch(() => {});
+    }
+  }, []);
+
+  useEffect(() => {
+    const onFs = () => setFullscreen(!!document.fullscreenElement);
+    document.addEventListener('fullscreenchange', onFs);
+    return () => document.removeEventListener('fullscreenchange', onFs);
+  }, []);
+
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const el = e.target as HTMLElement | null;
@@ -207,6 +230,11 @@ export default function Deck({
           setNotesOpen(false);
           setTocOpen((o) => !o);
           break;
+        case 'f':
+        case 'F':
+          e.preventDefault();
+          toggleFullscreen();
+          break;
         case 'Escape':
           setNotesOpen(false);
           setTocOpen(false);
@@ -215,13 +243,37 @@ export default function Deck({
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [go, jump, n]);
+  }, [go, jump, n, toggleFullscreen]);
+
+  // click anywhere on the slide advances — except on interactive elements and panels
+  const onDeckClick = useCallback(
+    (e: React.MouseEvent) => {
+      const el = e.target as HTMLElement;
+      if (
+        el.closest(
+          'a, button, input, select, textarea, iframe, [contenteditable], .deck-hud, .notes-panel, .notes-veil, .toc-panel, .toc-veil, svg [role="slider"]'
+        )
+      )
+        return;
+      // ignore clicks that are part of a text selection
+      if (window.getSelection()?.toString()) return;
+      go(1);
+    },
+    [go]
+  );
 
   const cur = slides[pos.s];
   const hasNotes = !!cur?.props.notes;
 
   return (
-    <div className="deck" role="region" aria-roledescription="slide deck" aria-label={`${part} — ${title}`}>
+    <div
+      ref={rootRef}
+      className={`deck ${fullscreen ? 'deck-fs' : ''}`}
+      role="region"
+      aria-roledescription="slide deck"
+      aria-label={`${part} — ${title}`}
+      onClick={onDeckClick}
+    >
       {slides.map((sl, i) => {
         const active = i === pos.s;
         const seen = visited.has(i);
@@ -266,6 +318,9 @@ export default function Deck({
           ))}
         </div>
         <div className="hud-right">
+          <button className={`hud-btn ${fullscreen ? 'on' : ''}`} onClick={toggleFullscreen} aria-label="Toggle fullscreen">
+            {fullscreen ? '⛶ Exit · F' : '⛶ Full · F'}
+          </button>
           {hasNotes && (
             <button className={`hud-btn ${notesOpen ? 'on' : ''}`} onClick={() => { setTocOpen(false); setNotesOpen((o) => !o); }}>
               Notes · N

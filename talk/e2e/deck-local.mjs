@@ -90,6 +90,18 @@ for (const d of DECKS) {
   ok('TOC closed after jump', (await page.locator('.toc-panel.open').count()) === 0);
 }
 
+// click-to-advance + fullscreen button
+console.log('\n/click-advance & fullscreen');
+await page.goto(BASE + '/mech-interp', { waitUntil: 'networkidle' });
+await page.waitForTimeout(400);
+ok('starts at rung 1', (await page.locator('text=rung 1 of 5').count()) >= 1);
+await page.mouse.click(720, 260); // background click on the slide
+await page.waitForTimeout(350);
+ok('background click advances (rung 1 → 2)', (await page.locator('text=rung 2 of 5').count()) >= 1);
+ok('fullscreen button present', (await page.locator('.deck-hud .hud-btn', { hasText: 'Full' }).count()) === 1);
+for (let i = 0; i < 5; i++) { await page.keyboard.press('ArrowRight'); await page.waitForTimeout(80); }
+ok('ladder reaches rung 5', (await page.locator('text=rung 5 of 5').count()) >= 1);
+
 // transition regression: arriving on a fresh slide must start with reveals hidden
 console.log('\n/transition regression');
 await page.goto(BASE + '/mech-interp', { waitUntil: 'networkidle' });

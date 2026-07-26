@@ -5,6 +5,92 @@ import Link from 'next/link';
 import Deck, { Slide, Reveal, NextLead } from '../components/Deck';
 import { TwoFieldsSVG } from '../components/TeachCore';
 
+const C = { cream: '#ede8dc', soft: '#b9b4a6', teal: '#4fd8ce', amber: '#f0a24b', violet: '#b49bf0', blue: '#9fb6e8', panel: '#10151f', line: '#1e2836' };
+const GF = 'var(--grotesk)';
+
+/* four take-away tiles with small pictograms */
+function PromisesSVG() {
+  const tiles: [string, string, JSX.Element][] = [
+    ['read a graph', C.blue, (
+      <g key="g1">{[[0,18],[14,4],[28,12],[42,0],[34,22]].map(([x,y],i)=>(<circle key={i} cx={x-21+0} cy={y-11} r={3.6} fill={C.blue} opacity={0.9} />))}
+        <line x1={-21} y1={7} x2={-7} y2={-7} stroke={C.blue} strokeWidth={1.4} opacity={.6}/>
+        <line x1={-7} y1={-7} x2={7} y2={1} stroke={C.blue} strokeWidth={1.4} opacity={.6}/>
+        <line x1={7} y1={1} x2={21} y2={-11} stroke={C.blue} strokeWidth={1.4} opacity={.6}/></g>)],
+    ['map the POMDP', C.teal, (
+      <g key="g2"><rect x={-22} y={-14} width={20} height={13} rx={3} fill="none" stroke={C.teal} strokeWidth={1.6}/>
+        <rect x={2} y={-14} width={20} height={13} rx={3} fill="none" stroke={C.teal} strokeWidth={1.6}/>
+        <rect x={-22} y={2} width={20} height={13} rx={3} fill="none" stroke={C.teal} strokeWidth={1.6}/>
+        <rect x={2} y={2} width={20} height={13} rx={3} fill="none" stroke={C.teal} strokeWidth={1.6}/>
+        <text x={-12} y={-4} fontSize={9} fontFamily={GF} fill={C.teal} textAnchor="middle">A</text>
+        <text x={12} y={-4} fontSize={9} fontFamily={GF} fill={C.teal} textAnchor="middle">B</text>
+        <text x={-12} y={12} fontSize={9} fontFamily={GF} fill={C.teal} textAnchor="middle">C</text>
+        <text x={12} y={12} fontSize={9} fontFamily={GF} fill={C.teal} textAnchor="middle">D</text></g>)],
+    ['judge the results', C.amber, (
+      <g key="g3"><line x1={0} y1={-16} x2={0} y2={14} stroke={C.amber} strokeWidth={2}/>
+        <line x1={-18} y1={-8} x2={18} y2={-8} stroke={C.amber} strokeWidth={2}/>
+        <path d="M -18 -8 L -24 4 A 7 7 0 0 0 -12 4 Z" fill="none" stroke={C.amber} strokeWidth={1.5}/>
+        <path d="M 18 -8 L 12 4 A 7 7 0 0 0 24 4 Z" fill="none" stroke={C.amber} strokeWidth={1.5}/></g>)],
+    ['run the system', C.violet, (
+      <g key="g4"><circle cx={0} cy={0} r={16} fill="none" stroke={C.violet} strokeWidth={1.8}/>
+        <path d="M -4 -8 L 9 0 L -4 8 Z" fill={C.violet}/></g>)],
+  ];
+  return (
+    <svg viewBox="0 0 860 130" style={{ width: '100%', height: 'auto' }} role="img" aria-label="Four take-aways: read a graph, map the POMDP, judge the results, run the system">
+      {tiles.map(([label, color, icon], i) => {
+        const x = 40 + i * 200;
+        return (
+          <g key={label} transform={`translate(${x + 90}, 52)`}>
+            <rect x={-90} y={-44} width={180} height={88} rx={13} fill={C.panel} stroke={color} strokeWidth={1.3} />
+            <g transform="translate(0,-8)">{icon}</g>
+            <text x={0} y={32} fontSize={12.5} fontFamily={GF} fontWeight={700} fill={color} textAnchor="middle">{label}</text>
+          </g>
+        );
+      })}
+    </svg>
+  );
+}
+
+/* scope: inside vs outside the claim */
+function ScopeSVG() {
+  return (
+    <svg viewBox="0 0 860 180" style={{ width: '100%', height: 'auto' }} role="img" aria-label="In scope: choosing 20 probes well. Out of scope: whole-circuit discovery, beating EAP">
+      <rect x={30} y={24} width={380} height={130} rx={14} fill="rgba(79,216,206,.07)" stroke={C.teal} strokeWidth={1.4} />
+      <text x={220} y={52} fontSize={13} fontFamily={GF} fontWeight={700} fill={C.teal} textAnchor="middle">what it is</text>
+      <text x={220} y={80} fontSize={12} fontFamily={GF} fill={C.cream} textAnchor="middle">a selection layer: spend 20 causal probes</text>
+      <text x={220} y={98} fontSize={12} fontFamily={GF} fill={C.cream} textAnchor="middle">per prompt, as informatively as possible</text>
+      <text x={220} y={128} fontSize={11} fontFamily={GF} fill={C.soft} textAnchor="middle">an emergent, model-sensitive explore→exploit policy</text>
+      <rect x={450} y={24} width={380} height={130} rx={14} fill="rgba(224,86,122,.05)" stroke="#e0567a" strokeWidth={1.4} />
+      <text x={640} y={52} fontSize={13} fontFamily={GF} fontWeight={700} fill="#e0567a" textAnchor="middle">what it is not</text>
+      <text x={640} y={80} fontSize={12} fontFamily={GF} fill={C.cream} textAnchor="middle">not a whole-circuit discovery method</text>
+      <text x={640} y={98} fontSize={12} fontFamily={GF} fill={C.cream} textAnchor="middle">no state-of-the-art claim — EAP stays unbeaten</text>
+      <text x={640} y={128} fontSize={11} fontFamily={GF} fill={C.soft} textAnchor="middle">both stated in the paper&rsquo;s own abstract</text>
+    </svg>
+  );
+}
+
+/* the route: five chapter stops on a path */
+function RouteSVG() {
+  const stops: [string, string][] = [
+    ['I', 'black box'], ['II', 'the bridge'], ['III', 'evidence'], ['IV', 'live lab'], ['V', 'questions'],
+  ];
+  return (
+    <svg viewBox="0 0 860 110" style={{ width: '100%', height: 'auto' }} role="img" aria-label="The route through five chapters">
+      <path d="M 60 62 C 200 20, 300 96, 430 58 C 560 22, 660 92, 800 52" fill="none" stroke={C.line} strokeWidth={2.5} />
+      {stops.map(([n, label], i) => {
+        const pts = [[60, 62], [245, 57], [430, 58], [615, 56], [800, 52]];
+        const [x, y] = pts[i];
+        return (
+          <g key={n}>
+            <circle cx={x} cy={y} r={15} fill={C.panel} stroke={C.teal} strokeWidth={1.6} />
+            <text x={x} y={y + 4} fontSize={11} fontFamily={GF} fontWeight={700} fill={C.teal} textAnchor="middle">{n}</text>
+            <text x={x} y={y + 34} fontSize={10.5} fontFamily={GF} fill={C.soft} textAnchor="middle">{label}</text>
+          </g>
+        );
+      })}
+    </svg>
+  );
+}
+
 const PARTS = [
   { href: '/mech-interp', num: 'I', title: 'Inside the black box', desc: 'Mechanistic interpretability from zero — features, circuits, graphs, and the experiment-selection problem', time: '16 slides' },
   { href: '/active-inference', num: 'II', title: 'The bridge', desc: 'Circuit discovery as active inference — intuitions first, then the full shipped machinery', time: '14 slides' },
@@ -42,7 +128,7 @@ export default function HomeDeck() {
           </>
         }
       >
-        <div className="cols cols-60">
+        <div className="cols">
           <div>
             <p className="kicker">A talk for the Active Inference community · delivered by Dr Sharath Sathish</p>
             <h1 style={{ maxWidth: '24ch' }}>
@@ -88,9 +174,9 @@ export default function HomeDeck() {
                 </span>
               </div>
               <img
-                src="/paper-page1.png"
-                alt="First page of Active Circuit Discovery (Symmetry 18(6):1043) — click to open on mdpi.com"
-                style={{ maxHeight: 'min(56vh, 520px)', width: 'auto', maxWidth: '100%', display: 'block' }}
+                src="/paper-mdpi.png"
+                alt="The published article on mdpi.com — Active Circuit Discovery, Symmetry 18(6):1043 — click to open"
+                style={{ maxWidth: 'min(46vw, 640px)', width: '100%', height: 'auto', display: 'block' }}
               />
             </a>
           </div>
@@ -151,7 +237,10 @@ export default function HomeDeck() {
       >
         <p className="kicker">Promises, up front</p>
         <h1>By the end, you can…</h1>
-        <ul className="pts">
+        <div className="fig-panel" style={{ maxWidth: 980, marginBottom: '0.8rem' }}>
+          <PromisesSVG />
+        </div>
+        <ul className="pts compact">
           <Reveal at={1}>
             <li>
               <strong>Read an attribution graph</strong> — and say what its nodes, edges and
@@ -213,7 +302,10 @@ export default function HomeDeck() {
         <h1>
           What this is — <span className="accent">and is not</span>
         </h1>
-        <ul className="pts">
+        <div className="fig-panel" style={{ maxWidth: 980, marginBottom: '0.8rem' }}>
+          <ScopeSVG />
+        </div>
+        <ul className="pts compact">
           <Reveal at={1}>
             <li>
               An <strong>intervention-selection layer</strong>: 20 causal probes per prompt,
@@ -255,7 +347,10 @@ export default function HomeDeck() {
       >
         <p className="kicker">The route</p>
         <h1>Five chapters</h1>
-        <div className="partgrid" style={{ marginTop: '1rem' }}>
+        <div className="fig-panel" style={{ maxWidth: 1020, margin: '0.4rem 0 0.8rem' }}>
+          <RouteSVG />
+        </div>
+        <div className="partgrid" style={{ marginTop: '0.4rem' }}>
           {PARTS.map((p) => (
             <Link key={p.href} href={p.href} className="partcard">
               <span className="pc-num">CHAPTER {p.num}</span>

@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
 const PARTS = [
+  { href: '/', label: '0 · Opening' },
   { href: '/mech-interp', label: 'I · Black Box' },
   { href: '/active-inference', label: 'II · The Bridge' },
   { href: '/results', label: 'III · Evidence' },
@@ -21,7 +22,11 @@ export default function TopNav() {
       </Link>
       <div className="navlinks">
         {PARTS.map((p) => (
-          <Link key={p.href} href={p.href} className={path?.startsWith(p.href) ? 'active' : ''}>
+          <Link
+            key={p.href}
+            href={p.href}
+            className={(p.href === '/' ? path === '/' : path?.startsWith(p.href)) ? 'active' : ''}
+          >
             {p.label}
           </Link>
         ))}

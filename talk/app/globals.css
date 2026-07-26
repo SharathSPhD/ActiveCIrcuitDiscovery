@@ -642,3 +642,7 @@ ul.pts em { color: var(--amber); font-style: normal; }
 
 /* light "paper figure" panels for the parchment-styled legacy diagrams */
 .fig-panel.light { background: var(--paper); color: var(--ink); border-color: rgba(27,26,22,.2); }
+
+/* fullscreen deck fills the real viewport */
+.deck.deck-fs { height: 100dvh; }
+.deck { cursor: default; }
