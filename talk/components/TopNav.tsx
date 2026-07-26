@@ -4,11 +4,11 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
 const PARTS = [
-  { href: '/mech-interp', label: 'I · Mech Interp' },
+  { href: '/mech-interp', label: 'I · Black Box' },
   { href: '/active-inference', label: 'II · The Bridge' },
-  { href: '/results', label: 'III · Results' },
-  { href: '/demo', label: 'IV · Live Demo' },
-  { href: '/qa', label: 'V · Q&A' },
+  { href: '/results', label: 'III · Evidence' },
+  { href: '/demo', label: 'IV · Live Lab' },
+  { href: '/qa', label: 'V · Questions' },
 ];
 
 export default function TopNav() {

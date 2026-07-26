@@ -62,6 +62,7 @@ export default function DemoApp() {
   const [live, setLive] = useState<boolean | null>(null); // null = probing
   const [health, setHealth] = useState<any>(null);
   const [source, setSource] = useState(REPLAYS[0].id);
+  const [customPrompt, setCustomPrompt] = useState('');
   const [running, setRunning] = useState(false);
   const [steps, setSteps] = useState<StepEv[]>([]);
   const [candidates, setCandidates] = useState<Candidate[]>([]);
@@ -128,8 +129,12 @@ export default function DemoApp() {
   const runLive = async () => {
     reset();
     const sel = REPLAYS.find((r) => r.id === source)!;
-    const prompt = sel.rep.prompts[sel.pi].prompt;
-    setPhase('requesting episode from the DGX Spark…');
+    const prompt = customPrompt.trim() || sel.rep.prompts[sel.pi].prompt;
+    setPhase(
+      customPrompt.trim()
+        ? 'requesting episode from the DGX Spark… (new prompt: one-off attribution-graph build, ~20 s, then steps stream fast)'
+        : 'requesting episode from the DGX Spark…'
+    );
     setRunning(true);
     abort.current = new AbortController();
     try {
@@ -232,6 +237,16 @@ export default function DemoApp() {
             <input type="range" min={200} max={1600} step={100} value={1800 - speed} onChange={(e) => setSpeed(1800 - Number(e.target.value))} />
           </label>
         )}
+        {live && (
+          <input
+            type="text"
+            value={customPrompt}
+            onChange={(e) => setCustomPrompt(e.target.value)}
+            disabled={running}
+            placeholder="…or type any prompt (one-off ~20 s graph build, then live steps)"
+            style={{ fontFamily: 'var(--grotesk)', fontSize: '.78rem', padding: '7px 10px', borderRadius: 8, background: 'var(--navy-2)', color: 'var(--cream)', border: '1px solid var(--navy-hairline)', flex: '1 1 300px', minWidth: 240 }}
+          />
+        )}
         <button
           onClick={running ? stop : run}
           style={{ fontFamily: 'var(--grotesk)', fontWeight: 700, fontSize: '.82rem', padding: '9px 20px', borderRadius: 999, cursor: 'pointer', border: 'none', background: running ? 'var(--rose)' : 'var(--teal)', color: '#fff' }}
@@ -245,8 +260,11 @@ export default function DemoApp() {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1rem' }}>
         {/* step feed */}
         <div style={{ ...panel, maxHeight: 420, overflowY: 'auto' }}>
-          <div style={{ fontFamily: 'var(--grotesk)', fontSize: '.7rem', letterSpacing: '.12em', textTransform: 'uppercase', opacity: 0.7, marginBottom: 8 }}>
+          <div style={{ fontFamily: 'var(--grotesk)', fontSize: '.7rem', letterSpacing: '.12em', textTransform: 'uppercase', opacity: 0.7, marginBottom: 2 }}>
             intervention log
+          </div>
+          <div style={{ fontFamily: 'var(--grotesk)', fontSize: '.68rem', opacity: 0.5, marginBottom: 8 }}>
+            each row = one causal experiment chosen by EFE · watch the action column: ablations first, then (on Gemma) a flip to steering
           </div>
           {steps.length === 0 && <div style={{ fontSize: '.85rem', opacity: 0.55 }}>Press run. Each row is one causal experiment chosen by EFE.</div>}
           {[...steps].reverse().map((s) => (
@@ -262,8 +280,11 @@ export default function DemoApp() {
 
         {/* beliefs or entropy */}
         <div style={panel}>
-          <div style={{ fontFamily: 'var(--grotesk)', fontSize: '.7rem', letterSpacing: '.12em', textTransform: 'uppercase', opacity: 0.7, marginBottom: 8 }}>
+          <div style={{ fontFamily: 'var(--grotesk)', fontSize: '.7rem', letterSpacing: '.12em', textTransform: 'uppercase', opacity: 0.7, marginBottom: 2 }}>
             {last?.beliefs ? 'posterior beliefs (current feature)' : 'belief entropy (total, per step)'}
+          </div>
+          <div style={{ fontFamily: 'var(--grotesk)', fontSize: '.68rem', opacity: 0.5, marginBottom: 8 }}>
+            the agent&rsquo;s state of knowledge · entropy should fall monotonically; the ✓ appears when rolling belief-KL &lt; 0.01
           </div>
           {last?.beliefs ? (
             <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap' }}>
@@ -303,8 +324,11 @@ export default function DemoApp() {
 
         {/* KL race */}
         <div style={panel}>
-          <div style={{ fontFamily: 'var(--grotesk)', fontSize: '.7rem', letterSpacing: '.12em', textTransform: 'uppercase', opacity: 0.7, marginBottom: 8 }}>
+          <div style={{ fontFamily: 'var(--grotesk)', fontSize: '.7rem', letterSpacing: '.12em', textTransform: 'uppercase', opacity: 0.7, marginBottom: 2 }}>
             cumulative KL race {live ? '(live agent)' : '(vs recorded baselines)'}
+          </div>
+          <div style={{ fontFamily: 'var(--grotesk)', fontSize: '.68rem', opacity: 0.5, marginBottom: 8 }}>
+            causal effect found so far · the agent&rsquo;s bar dwarfing ablation-only baselines is the RCK amplification from Chapter III, not a discovery claim
           </div>
           {raceRows.map(([name, v, c]) => (
             <div key={name} style={{ marginBottom: 9 }}>
@@ -325,7 +349,7 @@ export default function DemoApp() {
           {!live && steps.length > 0 && (
             <p style={{ fontSize: '.72rem', opacity: 0.6, fontFamily: 'var(--grotesk)', marginBottom: 0 }}>
               Note: the agent trace is the multi-action run — steering steps produce KLs far above the
-              ablation-only baselines. That gap is the RCK story from Part III, visible live.
+              ablation-only baselines. That gap is the RCK story from Chapter III, visible live.
             </p>
           )}
         </div>

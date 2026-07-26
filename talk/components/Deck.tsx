@@ -1,19 +1,19 @@
 'use client';
 
 /**
- * Deck — full-screen slide framework for the talk.
+ * Deck — full-screen teaching-slide framework.
  *
- * <Deck part="Part I" title="Mech Interp">
- *   <Slide steps={2} notes={<>long-form content</>}>
+ * <Deck part="Chapter I" title="Inside the black box">
+ *   <Slide title="Neurons lie" brief="Why single neurons can't be the unit of analysis"
+ *          steps={2} notes={<>long-form content</>}>
  *     <h1>Big claim</h1>
  *     <Reveal at={1}>appears on first advance</Reveal>
- *     <Reveal at={2}>appears on second advance</Reveal>
  *   </Slide>
  * </Deck>
  *
  * Keys: → / ↓ / Space / PageDown advance (through reveals, then slides);
- *       ← / ↑ / PageUp go back; Home/End jump; N toggles the notes panel.
- * URL hash (#3) keeps the position across reloads.
+ *       ← / ↑ / PageUp back; Home/End jump; N notes; T chapter contents.
+ * URL hash (#3) keeps position across reloads and manual edits.
  */
 
 import React, {
@@ -27,7 +27,7 @@ import React, {
 } from 'react';
 
 interface SlideState {
-  step: number; // current reveal step for this slide
+  step: number;
   active: boolean;
   visited: boolean;
 }
@@ -53,21 +53,33 @@ export function Reveal({
   );
 }
 
+/** Standard bottom-of-slide bridge to the next idea. */
+export function NextLead({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="next-lead">
+      <span className="nl-arrow" aria-hidden>⟶</span>
+      <span>{children}</span>
+    </div>
+  );
+}
+
 export interface SlideProps {
   children: React.ReactNode;
+  /** short title shown in the chapter contents */
+  title?: string;
+  /** one-line brief shown in the chapter contents */
+  brief?: string;
   /** number of build steps (max `at` used by Reveals inside) */
   steps?: number;
   /** long-form notes shown in the side panel (press N) */
   notes?: React.ReactNode;
   /** don't mount children until the slide is first visited (heavy embeds) */
   lazy?: boolean;
-  /** extra class on the slide, e.g. 'sl-center' */
   className?: string;
 }
 
 export function Slide(_props: SlideProps) {
-  // Rendered by Deck; never directly.
-  return null;
+  return null; // rendered by Deck
 }
 
 export default function Deck({
@@ -91,6 +103,7 @@ export default function Deck({
   const [pos, setPos] = useState<{ s: number; step: number }>({ s: 0, step: 0 });
   const [visited, setVisited] = useState<Set<number>>(() => new Set([0]));
   const [notesOpen, setNotesOpen] = useState(false);
+  const [tocOpen, setTocOpen] = useState(false);
   const posRef = useRef(pos);
   posRef.current = pos;
 
@@ -119,6 +132,7 @@ export default function Deck({
   const go = useCallback(
     (dir: 1 | -1) => {
       setNotesOpen(false);
+      setTocOpen(false);
       setPos((p) => {
         if (dir === 1) {
           if (p.step < stepsOf(p.s)) return { s: p.s, step: p.step + 1 };
@@ -145,6 +159,7 @@ export default function Deck({
   const jump = useCallback(
     (s: number, fullStep = false) => {
       setNotesOpen(false);
+      setTocOpen(false);
       const t = Math.min(Math.max(s, 0), n - 1);
       setVisited((v) => new Set(v).add(t));
       setPos({ s: t, step: fullStep ? stepsOf(t) : 0 });
@@ -155,9 +170,10 @@ export default function Deck({
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const el = e.target as HTMLElement | null;
-      if (el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.isContentEditable)) return;
+      if (el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.tagName === 'SELECT' || el.isContentEditable)) return;
       switch (e.key) {
         case 'ArrowRight':
+        case 'Right':
         case 'ArrowDown':
         case ' ':
         case 'PageDown':
@@ -165,6 +181,7 @@ export default function Deck({
           go(1);
           break;
         case 'ArrowLeft':
+        case 'Left':
         case 'ArrowUp':
         case 'PageUp':
           e.preventDefault();
@@ -181,10 +198,18 @@ export default function Deck({
         case 'n':
         case 'N':
           e.preventDefault();
+          setTocOpen(false);
           setNotesOpen((o) => !o);
+          break;
+        case 't':
+        case 'T':
+          e.preventDefault();
+          setNotesOpen(false);
+          setTocOpen((o) => !o);
           break;
         case 'Escape':
           setNotesOpen(false);
+          setTocOpen(false);
           break;
       }
     };
@@ -220,35 +245,58 @@ export default function Deck({
 
       {/* HUD */}
       <div className="deck-hud">
+        <button className="hud-btn hud-toc" onClick={() => { setNotesOpen(false); setTocOpen((o) => !o); }}>
+          ☰ Contents · T
+        </button>
         <span className="hud-part">{part}</span>
         <div className="hud-dots" aria-hidden>
-          {slides.map((_, i) => (
+          {slides.map((sl, i) => (
             <button
               key={i}
               className={`dot ${i === pos.s ? 'on' : ''}`}
               onClick={() => jump(i)}
               tabIndex={-1}
-              aria-label={`Slide ${i + 1}`}
+              aria-label={sl.props.title ?? `Slide ${i + 1}`}
+              title={sl.props.title ?? `Slide ${i + 1}`}
             />
           ))}
         </div>
         <div className="hud-right">
           {hasNotes && (
-            <button className={`hud-btn ${notesOpen ? 'on' : ''}`} onClick={() => setNotesOpen((o) => !o)}>
+            <button className={`hud-btn ${notesOpen ? 'on' : ''}`} onClick={() => { setTocOpen(false); setNotesOpen((o) => !o); }}>
               Notes · N
             </button>
           )}
-          <button className="hud-btn" onClick={() => go(-1)} aria-label="Previous">
-            ←
-          </button>
-          <span className="hud-count">
-            {pos.s + 1} / {n}
-          </span>
-          <button className="hud-btn" onClick={() => go(1)} aria-label="Next">
-            →
-          </button>
+          <button className="hud-btn" onClick={() => go(-1)} aria-label="Previous">←</button>
+          <span className="hud-count">{pos.s + 1} / {n}</span>
+          <button className="hud-btn" onClick={() => go(1)} aria-label="Next">→</button>
         </div>
       </div>
+
+      {/* Chapter contents overlay */}
+      <div className={`toc-veil ${tocOpen ? 'open' : ''}`} onClick={() => setTocOpen(false)} />
+      <aside className={`toc-panel ${tocOpen ? 'open' : ''}`} aria-label="Chapter contents">
+        <div className="toc-head">
+          <div>
+            <div className="toc-part">{part}</div>
+            <div className="toc-title">{title}</div>
+          </div>
+          <button className="hud-btn" onClick={() => setTocOpen(false)}>Close · Esc</button>
+        </div>
+        <div className="toc-grid">
+          {slides.map((sl, i) => (
+            <button
+              key={i}
+              className={`toc-card ${i === pos.s ? 'on' : ''} ${visited.has(i) ? 'seen' : ''}`}
+              onClick={() => jump(i)}
+            >
+              <span className="tc-num">{i + 1}</span>
+              <span className="tc-title">{sl.props.title ?? `Slide ${i + 1}`}</span>
+              {sl.props.brief && <span className="tc-brief">{sl.props.brief}</span>}
+            </button>
+          ))}
+        </div>
+      </aside>
 
       {/* Notes drawer */}
       {hasNotes && (
@@ -256,12 +304,8 @@ export default function Deck({
           <div className={`notes-veil ${notesOpen ? 'open' : ''}`} onClick={() => setNotesOpen(false)} />
           <aside className={`notes-panel ${notesOpen ? 'open' : ''}`} aria-label="Slide notes">
             <div className="notes-head">
-              <span>
-                Notes — slide {pos.s + 1} / {n}
-              </span>
-              <button className="hud-btn" onClick={() => setNotesOpen(false)}>
-                Close · Esc
-              </button>
+              <span>Notes — {cur?.props.title ?? `slide ${pos.s + 1}`}</span>
+              <button className="hud-btn" onClick={() => setNotesOpen(false)}>Close · Esc</button>
             </div>
             <div className="notes-body">{cur?.props.notes}</div>
           </aside>

@@ -377,7 +377,7 @@ a.partcard:hover { border-color: var(--teal-bright); transform: translateY(-3px)
   max-width: 1240px;
   max-height: 100%;
   overflow-y: auto;
-  padding: clamp(1.6rem, 4vh, 3.4rem) clamp(1.4rem, 4.5vw, 4rem);
+  padding: clamp(1.6rem, 4vh, 3.4rem) clamp(1.4rem, 4.5vw, 4rem) 4.2rem;
 }
 
 /* slide typography — presentation scale */
@@ -586,3 +586,59 @@ ul.pts em { color: var(--amber); font-style: normal; }
 @media (max-width: 880px) {
   .hud-dots { display: none; }
 }
+
+/* ---------- chapter contents (TOC) ---------- */
+.toc-veil {
+  position: fixed; inset: 0; z-index: 72;
+  background: rgba(8, 11, 17, 0.6);
+  opacity: 0; pointer-events: none; transition: opacity 0.25s ease;
+}
+.toc-veil.open { opacity: 1; pointer-events: auto; }
+.toc-panel {
+  position: fixed; left: 50%; top: 50%; z-index: 73;
+  transform: translate(-50%, -50%) scale(0.97);
+  width: min(1100px, 94vw); max-height: 86vh;
+  background: var(--navy-2); color: var(--cream);
+  border: 1px solid var(--navy-hairline); border-radius: 18px;
+  box-shadow: 0 30px 80px rgba(0,0,0,.55);
+  opacity: 0; pointer-events: none; transition: opacity .25s ease, transform .25s ease;
+  display: flex; flex-direction: column;
+}
+.toc-panel.open { opacity: 1; pointer-events: auto; transform: translate(-50%, -50%) scale(1); }
+.toc-head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 1.1rem 1.5rem 0.9rem; border-bottom: 1px solid var(--navy-hairline);
+}
+.toc-part { font-family: var(--grotesk); font-size: .7rem; letter-spacing: .2em; text-transform: uppercase; color: var(--teal-bright); }
+.toc-title { font-family: var(--grotesk); font-weight: 700; font-size: 1.25rem; }
+.toc-grid {
+  overflow-y: auto; padding: 1.1rem 1.4rem 1.4rem;
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(235px, 1fr)); gap: .7rem;
+}
+.toc-card {
+  text-align: left; cursor: pointer;
+  background: var(--navy-panel); color: var(--cream);
+  border: 1px solid var(--navy-hairline); border-radius: 12px;
+  padding: .75rem .9rem; display: flex; flex-direction: column; gap: .25rem;
+  transition: border-color .15s ease, transform .15s ease;
+}
+.toc-card:hover { border-color: var(--teal-bright); transform: translateY(-2px); }
+.toc-card.on { border-color: var(--teal-bright); background: rgba(79,216,206,.08); }
+.toc-card .tc-num { font-family: var(--mono); font-size: .62rem; color: var(--teal-bright); letter-spacing: .14em; }
+.toc-card .tc-title { font-family: var(--grotesk); font-weight: 600; font-size: .88rem; line-height: 1.25; }
+.toc-card .tc-brief { font-family: var(--grotesk); font-size: .72rem; color: var(--cream-soft); line-height: 1.4; }
+
+/* ---------- next-lead bridge ---------- */
+.next-lead {
+  margin-top: 1.4rem;
+  display: inline-flex; align-items: baseline; gap: .6rem;
+  font-family: var(--grotesk); font-size: clamp(.9rem, 1.4vw, 1.1rem);
+  color: var(--cream-soft); font-style: italic;
+}
+.next-lead .nl-arrow { color: var(--teal-bright); font-style: normal; }
+
+.hud-toc { white-space: nowrap; }
+@media (max-width: 880px) { .hud-part { display: none; } }
+
+/* light "paper figure" panels for the parchment-styled legacy diagrams */
+.fig-panel.light { background: var(--paper); color: var(--ink); border-color: rgba(27,26,22,.2); }

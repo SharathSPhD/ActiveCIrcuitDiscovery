@@ -4,10 +4,10 @@ import { chromium } from 'playwright';
 
 const BASE = process.env.BASE || 'http://localhost:3100';
 const DECKS = [
-  { path: '/', slides: 3 },
-  { path: '/mech-interp', slides: 13 },
-  { path: '/active-inference', slides: 11 },
-  { path: '/results', slides: 13 },
+  { path: '/', slides: 5 },
+  { path: '/mech-interp', slides: 16 },
+  { path: '/active-inference', slides: 14 },
+  { path: '/results', slides: 14 },
 ];
 
 let failures = 0;
@@ -75,11 +75,24 @@ for (const d of DECKS) {
   } else {
     ok('notes button present on slide 1', false);
   }
+
+  // chapter contents (TOC)
+  await page.keyboard.press('t');
+  await page.waitForTimeout(350);
+  ok('TOC opens (T)', await page.locator('.toc-panel.open').isVisible());
+  const tocCards = await page.locator('.toc-card').count();
+  ok(`TOC lists all ${d.slides} slides`, tocCards === d.slides, `got ${tocCards}`);
+  const briefs = await page.locator('.toc-card .tc-brief').count();
+  ok('TOC cards have briefs', briefs === d.slides, `got ${briefs}`);
+  await page.locator('.toc-card').nth(2).click();
+  await page.waitForTimeout(350);
+  ok('TOC click jumps to slide 3', (await activeIndex()) === 2);
+  ok('TOC closed after jump', (await page.locator('.toc-panel.open').count()) === 0);
 }
 
 // results deck: charts render (svg inside fig panels)
 console.log('\n/results charts');
-await page.goto(BASE + '/results#3', { waitUntil: 'networkidle' });
+await page.goto(BASE + '/results#4', { waitUntil: 'networkidle' });
 await page.waitForTimeout(600);
 ok('EffBars svg renders', (await page.locator('.slide.slide-on svg').count()) > 0);
 
@@ -87,9 +100,9 @@ ok('EffBars svg renders', (await page.locator('.slide.slide-on svg').count()) > 
 console.log('\n/mech-interp lazy embed');
 await page.goto(BASE + '/mech-interp', { waitUntil: 'networkidle' });
 ok('iframe NOT mounted before visit', (await page.locator('iframe').count()) === 0);
-await page.goto(BASE + '/mech-interp#6', { waitUntil: 'networkidle' });
+await page.goto(BASE + '/mech-interp#8', { waitUntil: 'networkidle' });
 await page.waitForTimeout(600);
-ok('iframe mounted on slide 6', (await page.locator('iframe').count()) === 1);
+ok('iframe mounted on slide 8', (await page.locator('iframe').count()) === 1);
 
 // demo page: still functional, replay fallback badge appears (no DGX from here)
 console.log('\n/demo');
@@ -98,6 +111,9 @@ await page.waitForTimeout(4000);
 const badge = await page.locator('.badge-live').innerText().catch(() => '');
 ok('demo badge rendered', badge.length > 0, badge.replace(/\s+/g, ' '));
 ok('demo app present', (await page.locator('button').count()) > 0);
+
+// steering lab present (offline → recorded dose-response)
+ok('steering lab rendered', (await page.locator('text=steering laboratory').count()) > 0);
 
 // qa page
 console.log('\n/qa');
