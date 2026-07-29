@@ -49,6 +49,19 @@ ensure_kv() {
   printf '%s' "$id"
 }
 
+
+# Print the current pointer, or "(unset)" -- a missing key comes back as a
+# Cloudflare error envelope rather than an empty body.
+gateway_url() {
+  local kv="$1"
+  curl -s -m 30 "$API/accounts/$CF_ACCT/storage/kv/namespaces/$kv/values/gateway_url" "${auth[@]}" \
+    | python3 -c "
+import sys
+v=sys.stdin.read().strip()
+print('(unset)' if (not v or v.startswith('{')) else v)
+"
+}
+
 case "${1:-status}" in
 
   deploy)
@@ -89,7 +102,7 @@ sys.exit(0 if d['success'] else 1)
 
   get)
     KV=$(ensure_kv)
-    echo "gateway_url = $(curl -s -m 30 "$API/accounts/$CF_ACCT/storage/kv/namespaces/$KV/values/gateway_url" "${auth[@]}")"
+    echo "gateway_url = $(gateway_url "$KV")"
     ;;
 
   clear)
@@ -110,7 +123,7 @@ sys.exit(0 if d['success'] else 1)
     KV=$(ensure_kv)
     echo "worker    : $WORKER_URL"
     echo "kv        : $KV_TITLE ($KV)"
-    echo "points at : $(curl -s -m 30 "$API/accounts/$CF_ACCT/storage/kv/namespaces/$KV/values/gateway_url" "${auth[@]}")"
+    echo "points at : $(gateway_url "$KV")"
     echo "health    : $(curl -s -m 30 "$WORKER_URL/health" | head -c 200)"
     ;;
 
