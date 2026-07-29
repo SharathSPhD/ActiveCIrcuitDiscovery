@@ -1,5 +1,7 @@
 # ACD live-demo backend (DGX Spark + Cloudflare tunnel)
 
+> **Just want to start or stop it?** See [RUNNING.md](RUNNING.md) — two commands.
+
 FastAPI server that lets the talk site (`talk/` on Vercel) run **real POMDP
 episodes on the DGX Spark** during the presentation. The demo page works
 without it (replay mode); when this server is reachable, the page flips to
@@ -78,7 +80,8 @@ All POSTs require header `x-acd-key`.
 | Script | What it does |
 |---|---|
 | `./dgx-server/golive.sh` | backend (if down) + tunnel + repoint gateway + verify. One command to go on air (~15 s warm). |
-| `./dgx-server/golive.sh --status` | reports backend / tunnel / public health, changes nothing |
+| `./dgx-server/golive.sh --stop` | stop tunnel + backend, free the ~47 GB of GPU memory |
+| `./dgx-server/golive.sh --status` | reports backend / tunnel / gateway / public health, changes nothing |
 | `./dgx-server/golive.sh --tunnel-only` | backend already warm — just re-tunnel and repoint the gateway |
 | `./dgx-server/cf.sh status\|set <url>\|deploy\|get` | Cloudflare gateway: inspect, repoint by hand, or redeploy `worker.js` |
 | `./dgx-server/verify.sh` | pre-talk smoke test of the whole chain (16 checks, no browser needed) |

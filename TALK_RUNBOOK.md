@@ -35,17 +35,27 @@ cd ~/projects/ActiveCIrcuitDiscovery && ./dgx-server/golive.sh
 ```
 
 That starts the backend if it is down (model + 5 precomputed graphs, ~2–3 min),
-opens the Cloudflare tunnel, writes `DGX_TUNNEL_URL`/`DGX_API_KEY` into the
-Vercel project, deploys to production, and verifies
+opens the Cloudflare tunnel, repoints the gateway at it, and verifies
 `https://acd-talk.vercel.app/api/dgx/health` before it reports success. Then
 open `/demo` — the badge should read **LIVE · NVIDIA GB10**.
+
+It does **not** deploy anything to Vercel, so it will never publish
+work-in-progress from your working tree.
+
+And to take it down again afterwards (frees ~47 GB of GPU memory):
+
+```bash
+./dgx-server/golive.sh --stop
+```
 
 Other modes:
 
 ```bash
 ./dgx-server/golive.sh --status        # what's up right now, changes nothing
-./dgx-server/golive.sh --tunnel-only   # backend already warm; just re-tunnel + redeploy
+./dgx-server/golive.sh --tunnel-only   # backend already warm; just re-tunnel
 ```
+
+Full start/stop reference: `dgx-server/RUNNING.md`.
 
 **No redeploy needed when the tunnel restarts.** Vercel points at a permanent
 Cloudflare Worker (`acd-demo.sharath-sathish.workers.dev`) which reads the

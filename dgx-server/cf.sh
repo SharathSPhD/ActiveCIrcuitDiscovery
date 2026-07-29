@@ -5,6 +5,7 @@
 #   ./dgx-server/cf.sh deploy        # (re)deploy the Worker from worker.js
 #   ./dgx-server/cf.sh set <url>     # point the gateway at a tunnel URL
 #   ./dgx-server/cf.sh get           # what the gateway currently points at
+#   ./dgx-server/cf.sh clear         # unset the pointer (demo goes OFFLINE cleanly)
 #   ./dgx-server/cf.sh status        # gateway + backend health
 #
 # Credentials come from ~/.cloudflare-creds.env (CF_EMAIL / CF_KEY / CF_ACCT),
@@ -91,6 +92,20 @@ sys.exit(0 if d['success'] else 1)
     echo "gateway_url = $(curl -s -m 30 "$API/accounts/$CF_ACCT/storage/kv/namespaces/$KV/values/gateway_url" "${auth[@]}")"
     ;;
 
+  clear)
+    # Drop the pointer so the Worker answers a clean 503 "offline" immediately,
+    # instead of waiting to discover the tunnel is gone.
+    KV=$(ensure_kv)
+    curl -s -m 30 -X DELETE "$API/accounts/$CF_ACCT/storage/kv/namespaces/$KV/values/gateway_url" \
+      "${auth[@]}" \
+      | python3 -c "
+import json,sys
+d=json.load(sys.stdin)
+print('gateway_url cleared' if d['success'] else 'FAILED '+str(d.get('errors')))
+sys.exit(0 if d['success'] else 1)
+"
+    ;;
+
   status)
     KV=$(ensure_kv)
     echo "worker    : $WORKER_URL"
@@ -99,5 +114,5 @@ sys.exit(0 if d['success'] else 1)
     echo "health    : $(curl -s -m 30 "$WORKER_URL/health" | head -c 200)"
     ;;
 
-  *) echo "usage: cf.sh {deploy|set <url>|get|status}" >&2; exit 1;;
+  *) echo "usage: cf.sh {deploy|set <url>|get|clear|status}" >&2; exit 1;;
 esac

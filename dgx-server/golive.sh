@@ -3,6 +3,7 @@
 #
 #   ./dgx-server/golive.sh                # start backend (if down) + tunnel + repoint gateway
 #   ./dgx-server/golive.sh --tunnel-only  # backend already warm; just re-tunnel
+#   ./dgx-server/golive.sh --stop         # stop tunnel + backend, free the GPU
 #   ./dgx-server/golive.sh --status       # report what's up, change nothing
 #
 # Architecture:
@@ -56,6 +57,50 @@ if [ "${1:-}" = "--status" ]; then
   fi
   echo "gateway  : $WORKER_URL -> $("$REPO/dgx-server/cf.sh" get 2>/dev/null | sed 's/^gateway_url = //')"
   echo "public   : $(curl -s -m 25 "$SITE/api/dgx/health" | head -c 200)"
+  exit 0
+fi
+
+# ---------------------------------------------------------------- --stop
+if [ "${1:-}" = "--stop" ]; then
+  say "stopping the live demo"
+
+  # 1. Clear the gateway pointer FIRST, so the site flips to replay cleanly
+  #    rather than briefly hanging on a tunnel that is about to disappear.
+  "$REPO/dgx-server/cf.sh" clear || echo "warning: could not clear the KV pointer"
+
+  # 2. Tunnel.
+  n=0
+  for pid in $(pgrep -f "^${CFD} tunnel --url http://localhost:${PORT}( |$)" 2>/dev/null); do
+    kill "$pid" 2>/dev/null && { echo "stopped tunnel pid $pid"; n=$((n+1)); }
+  done
+  [ "$n" = 0 ] && echo "no tunnel was running"
+  rm -f "$RUN/tunnel_url.txt"
+
+  # 3. Backend. SIGTERM first so uvicorn shuts down and the GPU allocator
+  #    releases; escalate only if it is still there.
+  for pid in $(pgrep -f "dgx-server/server.py" 2>/dev/null); do
+    kill "$pid" 2>/dev/null && echo "stopping backend pid $pid (SIGTERM)"
+  done
+  for _ in $(seq 1 20); do
+    pgrep -f "dgx-server/server.py" >/dev/null 2>&1 || break
+    sleep 1
+  done
+  for pid in $(pgrep -f "dgx-server/server.py" 2>/dev/null); do
+    kill -9 "$pid" 2>/dev/null && echo "backend pid $pid did not exit; sent SIGKILL"
+  done
+  pgrep -f "dgx-server/server.py" >/dev/null 2>&1 && die "backend still running" \
+    || echo "backend stopped"
+
+  say "memory"
+  free -h | awk 'NR==1||NR==2'
+  echo "GPU processes still holding memory:"
+  nvidia-smi --query-compute-apps=pid,used_memory --format=csv,noheader 2>/dev/null \
+    | sed 's/^/  /' || echo "  (none reported)"
+
+  say "public site"
+  echo "$(curl -s -m 30 "$SITE/api/dgx/health" | head -c 160)"
+  echo "The demo page now reads OFFLINE · REPLAY MODE and replays recorded runs."
+  echo "Restart any time with: ./dgx-server/golive.sh"
   exit 0
 fi
 
